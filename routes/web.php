@@ -42,10 +42,22 @@ use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 
+// authentication
+Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
+Route::post('/auth/login-basic', [LoginBasic::class, 'validate'])->name('validate-login');
+
+Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('register');
+Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('reset-password');
+
+
+Route::middleware('auth:web')->group(function () {
+  Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
+  Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
+});
 // Main Page Route
-Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
 
 // layout
 Route::get('/layouts/without-menu', [WithoutMenu::class, 'index'])->name('layouts-without-menu');
@@ -60,11 +72,6 @@ Route::get('/pages/account-settings-notifications', [AccountSettingsNotification
 Route::get('/pages/account-settings-connections', [AccountSettingsConnections::class, 'index'])->name('pages-account-settings-connections');
 Route::get('/pages/misc-error', [MiscError::class, 'index'])->name('pages-misc-error');
 Route::get('/pages/misc-under-maintenance', [MiscUnderMaintenance::class, 'index'])->name('pages-misc-under-maintenance');
-
-// authentication
-Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('auth-login-basic');
-Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-register-basic');
-Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('auth-reset-password-basic');
 
 // cards
 Route::get('/cards/basic', [CardBasic::class, 'index'])->name('cards-basic');

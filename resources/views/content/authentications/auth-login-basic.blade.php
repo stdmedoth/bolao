@@ -4,7 +4,7 @@
 
 @section('page-style')
 @vite([
-  'resources/assets/vendor/scss/pages/page-auth.scss'
+'resources/assets/vendor/scss/pages/page-auth.scss'
 ])
 @endsection
 
@@ -26,18 +26,26 @@
           <h4 class="mb-1">Welcome to {{config('variables.templateName')}}! 👋</h4>
           <p class="mb-6">Please sign-in to your account and start the adventure</p>
 
-          <form id="formAuthentication" class="mb-6" action="{{url('/')}}" method="GET">
+          <form id="formAuthentication" class="mb-6" action="{{url('/auth/login-basic')}}" method="POST">
             <div class="mb-6">
               <label for="email" class="form-label">Email or Username</label>
-              <input type="text" class="form-control" id="email" name="email-username" placeholder="Enter your email or username" autofocus>
+              <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" autofocus>
             </div>
             <div class="mb-6 form-password-toggle">
               <label class="form-label" for="password">Password</label>
               <div class="input-group input-group-merge">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}" />
                 <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password" />
                 <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
               </div>
             </div>
+            @if(count($errors) > 0)
+            @foreach( $errors->all() as $message )
+            <div class="alert alert-danger display-hide">
+              <span>{{ $message }}</span>
+            </div>
+            @endforeach
+            @endif
             <div class="mb-8">
               <div class="d-flex justify-content-between mt-8">
                 <div class="form-check mb-0 ms-2">
