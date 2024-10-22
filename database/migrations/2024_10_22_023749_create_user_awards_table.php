@@ -11,20 +11,18 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('purchases', function (Blueprint $table) {
+    Schema::create('user_awards', function (Blueprint $table) {
       $table->id();
 
-      $table->string('numbers');
 
-      $table->string('gambler_phone')->nullable();
-      $table->string('gambler_name')->nullable();
-
-      $table->unsignedBigInteger('game_id');
+      $table->unsignedBigInteger('purchase_id');
       $table->unsignedBigInteger('user_id');
 
+      $table->float('amount')->nullable();
 
-      $table->foreign('game_id')->references('id')->on('games');
+      $table->foreign('purchase_id')->references('id')->on('purchases');
       $table->foreign('user_id')->references('id')->on('users');
+
       $table->timestamps();
     });
   }
@@ -34,6 +32,6 @@ return new class extends Migration
    */
   public function down(): void
   {
-    Schema::dropIfExists('purchases');
+    Schema::dropIfExists('user_awards');
   }
 };

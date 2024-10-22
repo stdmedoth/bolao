@@ -11,17 +11,17 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('game_awards', function (Blueprint $table) {
+    Schema::create('games', function (Blueprint $table) {
       $table->id();
 
-      $table->enum('condition_type', ['MINIMUM_POINT', 'EXACT_POINT']);
+      $table->string('name');
 
-      $table->float('amount')->nullable();
+      $table->float('price', 8, 2);
 
-      $table->unsignedBigInteger('game_id');
+      $table->datetime('open_at');
+      $table->datetime('close_at');
 
-      $table->foreign('game_id')->references('id')->on('games');
-
+      $table->boolean('active');
       $table->timestamps();
     });
   }
@@ -31,6 +31,6 @@ return new class extends Migration
    */
   public function down(): void
   {
-    Schema::dropIfExists('game_awards');
+    Schema::dropIfExists('games');
   }
 };

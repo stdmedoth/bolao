@@ -15,7 +15,9 @@ use App\Http\Controllers\pages\MiscUnderMaintenance;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\authentications\ForgotPasswordBasic;
+use App\Http\Controllers\UserAwardController;
 use App\Http\Controllers\cards\CardBasic;
+use App\Http\Controllers\DepositController;
 use App\Http\Controllers\user_interface\Accordion;
 use App\Http\Controllers\user_interface\Alerts;
 use App\Http\Controllers\user_interface\Badges;
@@ -44,6 +46,8 @@ use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
+use App\Http\Controllers\WithdrawalController;
+use App\Models\Deposit;
 
 // authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
@@ -56,6 +60,9 @@ Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])
 Route::middleware('auth:web')->group(function () {
   Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
+  Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
+  Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
+  Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
 });
 // Main Page Route
 
