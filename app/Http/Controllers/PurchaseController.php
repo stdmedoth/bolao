@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Purchase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseController extends Controller
 {
@@ -13,7 +14,8 @@ class PurchaseController extends Controller
   public function index()
   {
     //
-    return view('content.purchase.my-purchases');
+    $purchases = Purchase::where('user_id', Auth::user()->id)->get();
+    return view('content.purchase.my-purchases', ['purchases' => $purchases]);
   }
 
   /**
