@@ -23,6 +23,8 @@ return new class extends Migration
       $table->foreign('purchase_id')->references('id')->on('purchases');
       $table->foreign('user_id')->references('id')->on('users');
 
+      $table->enum('status', ['PAID', 'PENDING', 'REVOKED',]);
+
       $table->timestamps();
     });
   }

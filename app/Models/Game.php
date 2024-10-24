@@ -7,5 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Game extends Model
 {
-    use HasFactory;
+  use HasFactory;
+
+  protected $fillable = [
+    'name',
+    'price',
+    'open_at',
+    'close_at',
+    'active'
+  ];
+
+  protected $with = "awards";
+
+  public function awards()
+  {
+    return $this->hasMany(GameAward::class);
+  }
 }

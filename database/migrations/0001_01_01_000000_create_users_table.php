@@ -22,6 +22,7 @@ return new class extends Migration
       $table->id();
       $table->string('name');
       $table->string('email')->unique();
+      $table->float('balance')->default(0);
 
       $table->unsignedBigInteger('role_user_id');
       $table->foreign('role_user_id')->references('id')->on('role_users');

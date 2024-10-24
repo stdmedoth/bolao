@@ -15,6 +15,7 @@ return new class extends Migration
       $table->id();
 
       $table->enum('condition_type', ['MINIMUM_POINT', 'EXACT_POINT']);
+      $table->integer('minimum_point_value')->nullable();
 
       $table->float('amount')->nullable();
 

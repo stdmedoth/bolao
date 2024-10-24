@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\dashboard\Analytics;
 use App\Http\Controllers\layouts\WithoutMenu;
@@ -44,6 +45,7 @@ use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WithdrawalController;
@@ -59,6 +61,18 @@ Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])
 
 Route::middleware('auth:web')->group(function () {
   Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
+
+  Route::get('/concursos/create_game_form', [AdminController::class, 'create_game_form'])->name('create-game-form');
+  Route::post('/concursos/create', [AdminController::class, 'createGame'])->name('create-game');
+  Route::get('/concursos/open/{id}', [AdminController::class, 'openGame'])->name('open-game');
+  Route::get('/concursos/close/{id}', [AdminController::class, 'closeGame'])->name('close-game');
+
+
+  Route::get('/concursos', [GameController::class, 'index'])->name('games');
+  Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
+
+
+
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');

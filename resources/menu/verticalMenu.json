@@ -1,6 +1,13 @@
 {
   "menu": [
     {
+      "url": "/concursos",
+      "name": "Concursos",
+      "icon": "menu-icon tf-icons bx bx-shopping-bag",
+      "slug": "app-email",
+      "target": "_blank"
+    },
+    {
       "url": "/minhas_compras",
       "name": "Minhas Compras",
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
