@@ -21,6 +21,7 @@ return new class extends Migration
 
       $table->enum('status', ['PAID', 'PENDING', 'CANCELED',]);
 
+      $table->integer('quantity');
       $table->float('price', 8, 2);
 
       $table->unsignedBigInteger('game_id');

@@ -8,11 +8,11 @@ $navbarDetached = ($navbarDetached ?? '');
 <!-- Navbar -->
 @if(isset($navbarDetached) && $navbarDetached == 'navbar-detached')
 <nav class="layout-navbar {{$containerNav}} navbar navbar-expand-xl {{$navbarDetached}} align-items-center bg-navbar-theme" id="layout-navbar">
-@endif
-@if(isset($navbarDetached) && $navbarDetached == '')
-<nav class="layout-navbar navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
-  <div class="{{$containerNav}}">
-    @endif
+  @endif
+  @if(isset($navbarDetached) && $navbarDetached == '')
+  <nav class="layout-navbar navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
+    <div class="{{$containerNav}}">
+      @endif
 
       <!--  Brand demo (display only for navbar-full and hide on below xl) -->
       @if(isset($navbarFull))
@@ -46,7 +46,7 @@ $navbarDetached = ($navbarDetached ?? '');
 
           <!-- Place this tag where you want the button to render. -->
           <li class="nav-item lh-1 me-4">
-            <a class="github-button" href="{{config('variables.repository')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star themeselection/sneat-html-laravel-admin-template-free on GitHub">Star</a>
+            <a class="bx bx-money" href="{{route('deposito')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Saldo">Saldo: R$ {{number_format(auth()->user()->balance, 2, ',', '.')}}</a>
           </li>
 
           <!-- User -->

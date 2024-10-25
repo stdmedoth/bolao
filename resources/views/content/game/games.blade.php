@@ -16,62 +16,50 @@
 
 @section('content')
 
-<!-- Tabela de Compras -->
+<a class="btn" href="/concursos/create_game_form">Criar novo jogo</a>
+<!-- Lista de Jogos -->
 <div class="card">
   <h5 class="card-header">Jogos</h5>
-  <a class="btn" href="/concursos/create_game_form">Criar novo jogo</a>
-  <div class="table-responsive text-nowrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Jogo</th>
-          <th>Aberto em</th>
-          <th>Fecha em</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody class="table-border-bottom-0">
-        <!-- Aqui iteramos sobre as compras -->
-
-        <!-- A collection de compras como uma só -->
-        @foreach ($games as $game)
-        <tr>
-          <td>
-            <!-- Mostrando o nome do jogo relacionado -->
-            <a href="/concursos/{{$game->id}}">
-              <i class="bx bxl-game bx-md text-info me-4"></i>
-              <span>{{ $game->name }}</span>
-              <!-- Nome do jogo é o dia na semana em que se passa a aposta-->
-            </a>
-          </td>
-
-          <!-- Usar timestamp do próprio produto? -->
-
-          <td>{{ date('d/m/Y', strtotime($game->open_at)) }}</td>
-          <td>{{ date('d/m/Y', strtotime($game->close_at)) }}</td>
-          <td>
-            <!-- Mostrando o status da compra -->
-            <span class="badge bg-label-primary me-1">{{ $game->status }}</span>
-          </td>
-          <td>
-            <div class="dropdown">
-              <button type="button" class="btn p-0 dropdown-toggle hide-arrow"
-                data-bs-toggle="dropdown">
-                <i class="bx bx-dots-vertical-rounded"></i>
-              </button>
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="javascript:void(0);"><i
-                    class="bx bx-edit-alt me-1"></i> Editar </a>
-                <a class="dropdown-item" href="javascript:void(0);"> <i
-                    class="bx bx-trash me-1"></i> Excluir </a>
-              </div>
+  <div class="row mt-3">
+    <!-- Iterando sobre os jogos para exibir como cards -->
+    @foreach ($games as $game)
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <a href="/concursos/{{$game->id}}">
+            <i class="bx bxl-game bx-md text-info me-2"></i>
+            {{ $game->name }}
+          </a>
+          <div class="dropdown">
+            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+              <i class="bx bx-dots-vertical-rounded"></i>
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="javascript:void(0);"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+              <a class="dropdown-item" href="javascript:void(0);"><i class="bx bx-trash me-1"></i> Excluir</a>
             </div>
-          </td>
-        </tr>
-        @endforeach
-      </tbody>
-    </table>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-text"><strong>Aberto em:</strong> {{ date('d/m/Y', strtotime($game->open_at)) }}</p>
+          <p class="card-text"><strong>Fecha em:</strong> {{ date('d/m/Y', strtotime($game->close_at)) }}</p>
+          <p class="card-text">
+            <span class="badge bg-label-primary">{{ $game->status }}</span>
+          </p>
+          <p class="card-text"><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }} </p>
+          @if($game->awards->isEmpty())
+          @foreach($game->awards as $award)
+          <strong>Prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
+          @endforeach
+          @endif
+        </div>
+
+        <div class="card-footer">
+
+        </div>
+      </div>
+    </div>
+    @endforeach
   </div>
 </div>
 

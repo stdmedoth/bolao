@@ -73,6 +73,7 @@ Route::middleware('auth:web')->group(function () {
 
 
 
+  Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
