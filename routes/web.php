@@ -68,6 +68,13 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/concursos/close/{id}', [AdminController::class, 'closeGame'])->name('close-game');
 
 
+
+  Route::get('/usuarios', [AdminController::class, 'index'])->name('list-user');
+  Route::get('/usuarios/create_user', [AdminController::class, 'create_user_form'])->name('create-user-form');
+  Route::post('/usuarios', [AdminController::class, 'createUser'])->name('create-user');
+
+
+
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
 

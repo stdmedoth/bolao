@@ -8,8 +8,8 @@ use App\Models\RoleUser;
 use App\Models\Game;
 use App\Models\GameAward;
 use App\Models\GameHistory;
-use App\Models\UserAward;
 use App\Models\Purchase;
+use App\Models\UserAwards;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -21,19 +21,34 @@ class AdminController extends Controller
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:8',
-      'role' => 'required|in:seller,gambler',
+      'role_user_id' => 'required|in:seller,gambler',
     ]);
-
-    $roleUser = RoleUser::where('level_id', $request->role)->firstOrFail();
 
     $user = User::create([
       'name' => $request->name,
       'email' => $request->email,
       'password' => Hash::make($request->password),
-      'role_user_id' => $roleUser->id,
+      'role_user_id' => $request->role_user_id,
     ]);
 
-    return response()->json(['message' => 'Usuário criado com sucesso', 'user' => $user]);
+    return redirect(route('show-user', ['id' => $user->id]));
+  }
+
+  public function index(){
+    $users = User::get();
+
+    return view('content.users.users', ['users' => $users]);
+
+  }
+
+  public function show(){
+    return view('content.users.view_users');
+  }
+
+  public function create_user_form()
+  {
+    $roles = RoleUser::get();
+    return view('content.users.create_user', ['roles' => $roles]);
   }
 
   public function create_game_form()
@@ -119,7 +134,7 @@ class AdminController extends Controller
           $user->save();
 
           // Criar prêmio para o apostador com status "PENDING"
-          UserAward::create([
+          UserAwards::create([
             'purchase_id' => $purchase->id,
             'user_id' => $user->id,
             'amount' => $award->amount,
