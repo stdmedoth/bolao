@@ -18,7 +18,7 @@ class AdminController extends Controller
   public function delete($id){
     $user = User::findOrFail($id);
     $user->delete();
-    return redirect()->route('users.index')->with('success', 'Usuário deletado com sucesso.');
+    return redirect()->route('usuarios.index')->with('success', 'Usuário deletado com sucesso.');
 }
 
 
@@ -47,24 +47,29 @@ class AdminController extends Controller
     return redirect(route('show-user', ['id' => $user->id]));
   }
 
-  public function update(Request $request, $id){
+  // AdminController.php
+public function update(Request $request, $id){
+    $user = User::findOrFail($id);
     $request->validate([
-      'name' => 'required|string|max:255',
-      'email' => 'required|email|max:255|unique:users',
-      'password' => 'required|string|min:8',
-      'role_user_id' => 'required|in:seller,gambler',
-
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
+        'role_user_id' => 'required|in:seller,gambler',
     ]);
 
-    $user = User::findOrFail($id);
     $user->name = $request->input('name');
     $user->email = $request->input('email');
+         $user->role_user_id = $request->input('role_user_id');
+
+    // Update password only if a new one is provided
+    if ($request->filled('password')) {
+        $user->password = bcrypt($request->input('password'));
+    }
+
     $user->save();
 
-
-
     return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
-  }
+}
+
 
 
   public function index(){
