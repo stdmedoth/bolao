@@ -74,10 +74,15 @@ Route::middleware('auth:web')->group(function () {
   Route::post('/usuarios', [AdminController::class, 'createUser'])->name('create-user');
 
 
+  Route::delete('/usuarios/delete/{id}', [AdminController::class, 'delete'])->name('users.delete');
 
+
+                                                                            //edit
   Route::get('/usuarios/{id}/edit', [AdminController::class, 'editUserForm'])->name('edit-user-form');
-
   Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
+
+
+
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
 
   Route::get('/concursos/{id}/edit', [GameController::class, 'editGameForm'])->name('edit-game-form');

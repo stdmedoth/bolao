@@ -15,6 +15,13 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
 
+  public function delete($id){
+    $user = User::findOrFail($id);
+    $user->delete();
+    return redirect()->route('users.index')->with('success', 'Usuário deletado com sucesso.');
+}
+
+
   public function edit($id){
     $user = User::findOrFail($id);
     $roles = RoleUser::get(); // Para preencher as opções de papel
