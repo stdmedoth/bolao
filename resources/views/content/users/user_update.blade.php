@@ -1,0 +1,41 @@
+@extends('layouts/contentNavbarLayout')
+
+@section('title', 'Editar Usuário')
+
+@section('content')
+
+<div class="container">
+  <h2>Editar Usuário: {{ $user->name }}</h2>
+  <form action="{{ route('user-update', $user->id) }}" method="POST">
+    @csrf
+    @method('PUT')
+
+    <div class="form-group">
+      <label for="name">Nome:</label>
+      <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Senha:</label>
+      <input type="password" name="password" class="form-control" placeholder="Deixe em branco se não quiser alterar">
+    </div>
+
+    <div class="form-group">
+      <label for="role">Tipo de usuário:</label>
+      <select class="form-control" name="role_user_id" required>
+        @foreach ($roles as $role)
+          <option value="{{ $role->id }}" {{ $user->role_user_id == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+        @endforeach
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
+  </form>
+</div>
+
+@endsection

@@ -14,9 +14,15 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+
+  public function edit($id){
+    $user = User::findOrFail($id);
+    $roles = RoleUser::get(); // Para preencher as opções de papel
+    return view('usuarios.edit', compact('user', 'roles'));
+  }
+
   // Criar um usuário (vendedor ou apostador)
-  public function createUser(Request $request)
-  {
+  public function createUser(Request $request){
     $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
@@ -33,6 +39,26 @@ class AdminController extends Controller
 
     return redirect(route('show-user', ['id' => $user->id]));
   }
+
+  public function update(Request $request, $id){
+    $request->validate([
+      'name' => 'required|string|max:255',
+      'email' => 'required|email|max:255|unique:users',
+      'password' => 'required|string|min:8',
+      'role_user_id' => 'required|in:seller,gambler',
+
+    ]);
+
+    $user = User::findOrFail($id);
+    $user->name = $request->input('name');
+    $user->email = $request->input('email');
+    $user->save();
+
+
+
+    return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
+  }
+
 
   public function index(){
     $users = User::get();

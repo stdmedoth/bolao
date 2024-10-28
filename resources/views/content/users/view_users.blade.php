@@ -1,6 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Dashboard - Usuarios')
+@section('title', 'Dashboard - Usuários')
 
 @section('vendor-style')
 @vite('resources/assets/vendor/libs/apex-charts/apex-charts.scss')
@@ -16,30 +16,26 @@
 
 @section('content')
 
-<div class="container">
-  <h2>Criar Novo Jogo</h2>
-  <form action="{{ route('create-user') }}" method="POST">
-    @csrf
-    <div class="form-group">
-      <label for="name">Nome do Usuario:</label>
-      <input type="text" name="name" class="form-control" required>
-    </div>
+<a class="btn btn-primary" href="/usuarios/create_user">Criar novo usuário</a>
 
-    <div class="form-group">
-      <label for="text">Email:</label>
-      <input type="text" name="email" class="form-control" required>
+<!-- Lista de Usuários -->
+<div class="row mt-4">
+    @foreach($usuarios as $usuario)
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ $usuario->name }}</h5>
+                <p class="card-text">{{ $usuario->email }}</p>
+                <a href="/usuarios/edit/{{ $usuario->id }}" class="btn btn-warning">Editar</a>
+                <form action="/usuarios/delete/{{ $usuario->id }}" method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este usuário?');">Excluir</button>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-      <label for="password">Password:</label>
-      <input type="password" name="password" class="form-control" required>
-    </div>
-
-    <div class="form-group">
-      <label for="roles">Role:</label>
-      <input type="datetime-" name="close_at" class="form-control" required>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Criar Usuario</button>
-  </form>
+    @endforeach
 </div>
+
+@endsection

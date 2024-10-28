@@ -75,6 +75,15 @@ Route::middleware('auth:web')->group(function () {
 
 
 
+  Route::get('/usuarios/{id}/edit', [AdminController::class, 'editUserForm'])->name('edit-user-form');
+
+  Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
+  Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
+
+  Route::get('/concursos/{id}/edit', [GameController::class, 'editGameForm'])->name('edit-game-form');
+
+
+
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
 
