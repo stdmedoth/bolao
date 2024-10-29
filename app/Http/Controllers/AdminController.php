@@ -20,7 +20,7 @@ class AdminController extends Controller
 
     $roles = RoleUser::all();
 
-    return view('user.edit', compact('user', 'roles'));
+    return view('content.users.user_update', compact('user', 'roles'));
   }
 
   public function delete($id){
