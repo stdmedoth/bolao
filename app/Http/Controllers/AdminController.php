@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
 
+  public function editUserForm($id){
+    $user = User::findOrFail($id);
+
+    $roles = RoleUser::all();
+
+    return view('user.edit', compact('user', 'roles'));
+  }
+
   public function delete($id){
     $user = User::findOrFail($id);
     $user->delete();
@@ -48,7 +56,7 @@ class AdminController extends Controller
   }
 
   // AdminController.php
-public function update(Request $request, $id){
+  public function update(Request $request, $id){
     $user = User::findOrFail($id);
     $request->validate([
         'name' => 'required|string|max:255',
@@ -58,11 +66,12 @@ public function update(Request $request, $id){
 
     $user->name = $request->input('name');
     $user->email = $request->input('email');
-         $user->role_user_id = $request->input('role_user_id');
+    $user->role_user_id = $request->input('role_user_id');
 
     // Update password only if a new one is provided
     if ($request->filled('password')) {
-        $user->password = bcrypt($request->input('password'));
+        //$user->password = bcrypt($request->input('password'));
+        $user->password = Hash::make($request->input('password'));
     }
 
     $user->save();
