@@ -76,8 +76,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::delete('/usuarios/delete/{id}', [AdminController::class, 'delete'])->name('users.delete');
 
-
-                                                                            //edit
+  //edit
   Route::get('/usuarios/edit/{id}', [AdminController::class, 'editUserForm'])->name('edit-user-form');
   Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
 

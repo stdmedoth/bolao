@@ -12,7 +12,8 @@ class User extends Authenticatable
   use HasFactory, Notifiable;
 
 
-  public function purchases(){
+  public function purchases()
+  {
     return $this->hasMany(Purchase::class);
   }
 
@@ -25,6 +26,7 @@ class User extends Authenticatable
     'name',
     'email',
     'password',
+    'role_user_id'
   ];
 
   /**

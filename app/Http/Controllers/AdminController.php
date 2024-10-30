@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
 
-  public function editUserForm($id){
+  public function editUserForm($id)
+  {
     $user = User::findOrFail($id);
 
     $roles = RoleUser::all();
@@ -23,45 +24,59 @@ class AdminController extends Controller
     return view('content.users.user_update', compact('user', 'roles'));
   }
 
-  public function delete($id){
+  public function delete($id)
+  {
     $user = User::findOrFail($id);
     $user->delete();
-    return redirect()->route('usuarios.index')->with('success', 'Usuário deletado com sucesso.');
-}
+    return redirect()->route('list-user')->with('success', 'Usuário deletado com sucesso.');
+  }
 
 
-  public function edit($id){
+  public function edit($id)
+  {
     $user = User::findOrFail($id);
     $roles = RoleUser::get(); // Para preencher as opções de papel
     return view('usuarios.edit', compact('user', 'roles'));
   }
 
-  // Criar um usuário (vendedor ou apostador)
-  public function createUser(Request $request){
-    $request->validate([
+  // Cria um usuário (vendedor ou apostador)
+  public function createUser(Request $request)
+  {
+    // Validação dos dados de entrada
+    $validatedData = $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:8',
-      'role_user_id' => 'required|in:seller,gambler',
+      'role_user_id' => 'required|exists:role_users,id',
     ]);
 
-    $user = User::create([
-      'name' => $request->name,
-      'email' => $request->email,
-      'password' => Hash::make($request->password),
-      'role_user_id' => $request->role_user_id,
-    ]);
+    try {
+      // Criação do usuário com os dados validados
+      $user = User::create([
+        'name' => $validatedData['name'],
+        'email' => $validatedData['email'],
+        'password' => Hash::make($validatedData['password']),
+        'role_user_id' => $validatedData['role_user_id'],
+      ]);
 
-    return redirect(route('show-user', ['id' => $user->id]));
+      // Redireciona para a página de exibição do usuário criado
+      return redirect()->route('edit-user-form', ['id' => $user->id])
+        ->with('success', 'Usuário criado com sucesso!');
+    } catch (\Exception $e) {
+      // Retorna um erro em caso de falha na criação do usuário
+      return back()->withErrors(['error' => 'Falha ao criar usuário: ' . $e->getMessage()]);
+    }
   }
 
+
   // AdminController.php
-  public function update(Request $request, $id){
+  public function update(Request $request, $id)
+  {
     $user = User::findOrFail($id);
     $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
-        'role_user_id' => 'required|in:seller,gambler',
+      'name' => 'required|string|max:255',
+      'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
+      'role_user_id' => 'required|in:seller,gambler',
     ]);
 
     $user->name = $request->input('name');
@@ -70,25 +85,26 @@ class AdminController extends Controller
 
     // Update password only if a new one is provided
     if ($request->filled('password')) {
-        //$user->password = bcrypt($request->input('password'));
-        $user->password = Hash::make($request->input('password'));
+      //$user->password = bcrypt($request->input('password'));
+      $user->password = Hash::make($request->input('password'));
     }
 
     $user->save();
 
     return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
-}
+  }
 
 
 
-  public function index(){
+  public function index()
+  {
     $users = User::get();
 
     return view('content.users.users', ['users' => $users]);
-
   }
 
-  public function show(){
+  public function show()
+  {
     return view('content.users.view_users');
   }
 
