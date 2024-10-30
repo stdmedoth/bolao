@@ -18,7 +18,6 @@
 
 <a class="btn" href="/usuarios/create_user">Criar novo usuario</a>
 <!-- Lista de Usuarios -->
-  <!-- Lista de Usuários -->
 <table class="table table-bordered">
   <thead>
       <tr>
