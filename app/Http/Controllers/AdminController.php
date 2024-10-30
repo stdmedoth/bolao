@@ -39,6 +39,7 @@ class AdminController extends Controller
     return view('usuarios.edit', compact('user', 'roles'));
   }
 
+<<<<<<< Updated upstream
   // Cria um usuário (vendedor ou apostador)
   public function createUser(Request $request)
   {
@@ -69,6 +70,8 @@ class AdminController extends Controller
   }
 
 
+=======
+>>>>>>> Stashed changes
   // AdminController.php
   public function update(Request $request, $id)
   {
@@ -92,6 +95,29 @@ class AdminController extends Controller
     $user->save();
 
     return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
+<<<<<<< Updated upstream
+=======
+
+  }
+
+  // Criar um usuário (vendedor ou apostador)
+  public function createUser(Request $request){
+    $request->validate([
+      'name' => 'required|string|max:255',
+      'email' => 'required|string|email|max:255|unique:users',
+      'password' => 'required|string|min:8',
+      'role_user_id' => 'required|in:seller,gambler',
+    ]);
+
+    $user = User::create([
+      'name' => $request->name,
+      'email' => $request->email,
+      'password' => Hash::make($request->password),
+      'role_user_id' => $request->role_user_id,
+    ]);
+
+    return redirect(route('show-user', ['id' => $user->id]));
+>>>>>>> Stashed changes
   }
 
 

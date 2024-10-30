@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class GameController extends Controller
 {
@@ -46,10 +47,14 @@ class GameController extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit($id)
+  public function editGameForm($id)
   {
     $game = Game::findOrFail($id);
-    return view('concursos.edit', compact('game'));
+
+    $game->open_at = Carbon::parse($game->open_at);
+    $game->closed_at = Carbon::parse($game->closed_at);
+
+    return view('content.game.game_update', compact('game'));
   }
 
   /**

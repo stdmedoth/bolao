@@ -6,7 +6,7 @@
 
 <div class="container">
   <h2>Editar Jogo: {{ $game->name }}</h2>
-  <form action="{{ route('update-game', $game->id) }}" method="POST">
+  <form action="{{ route('game-update', $game->id) }}" method="POST">
     @csrf
     @method('PUT')
 
@@ -29,6 +29,7 @@
       <label for="closed_at">Data de Fechamento:</label>
       <input type="date" name="closed_at" class="form-control" value="{{ $game->closed_at->format('Y-m-d') }}" required>
     </div>
+
 
     <div class="form-group">
       <label for="status">Status:</label>
