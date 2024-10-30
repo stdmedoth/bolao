@@ -1,6 +1,13 @@
 {
   "menu": [
     {
+      "url": "/usuarios",
+      "name": "Usuarios",
+      "icon": "menu-icon tf-icons bx bxs-user-detail",
+      "slug": "app-email",
+      "target": "_blank"
+    },
+    {
       "url": "/concursos",
       "name": "Concursos",
       "icon": "menu-icon tf-icons bx bx-shopping-bag",

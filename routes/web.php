@@ -68,6 +68,27 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/concursos/close/{id}', [AdminController::class, 'closeGame'])->name('close-game');
 
 
+
+  Route::get('/usuarios', [AdminController::class, 'index'])->name('list-user');
+  Route::get('/usuarios/create_user', [AdminController::class, 'create_user_form'])->name('create-user-form');
+  Route::post('/usuarios', [AdminController::class, 'createUser'])->name('create-user');
+
+
+  Route::delete('/usuarios/delete/{id}', [AdminController::class, 'delete'])->name('users.delete');
+
+
+                                                                            //edit
+  Route::get('/usuarios/edit/{id}', [AdminController::class, 'editUserForm'])->name('edit-user-form');
+  Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
+
+
+
+  Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
+
+  Route::get('/concursos/edit/{id}', [GameController::class, 'editGameForm'])->name('edit-game-form');
+
+
+
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
 

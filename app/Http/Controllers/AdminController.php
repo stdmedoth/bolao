@@ -8,32 +8,94 @@ use App\Models\RoleUser;
 use App\Models\Game;
 use App\Models\GameAward;
 use App\Models\GameHistory;
-use App\Models\UserAward;
 use App\Models\Purchase;
+use App\Models\UserAwards;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+
+  public function editUserForm($id){
+    $user = User::findOrFail($id);
+
+    $roles = RoleUser::all();
+
+    return view('content.users.user_update', compact('user', 'roles'));
+  }
+
+  public function delete($id){
+    $user = User::findOrFail($id);
+    $user->delete();
+    return redirect()->route('usuarios.index')->with('success', 'Usuário deletado com sucesso.');
+}
+
+
+  public function edit($id){
+    $user = User::findOrFail($id);
+    $roles = RoleUser::get(); // Para preencher as opções de papel
+    return view('usuarios.edit', compact('user', 'roles'));
+  }
+
   // Criar um usuário (vendedor ou apostador)
-  public function createUser(Request $request)
-  {
+  public function createUser(Request $request){
     $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:8',
-      'role' => 'required|in:seller,gambler',
+      'role_user_id' => 'required|in:seller,gambler',
     ]);
-
-    $roleUser = RoleUser::where('level_id', $request->role)->firstOrFail();
 
     $user = User::create([
       'name' => $request->name,
       'email' => $request->email,
       'password' => Hash::make($request->password),
-      'role_user_id' => $roleUser->id,
+      'role_user_id' => $request->role_user_id,
     ]);
 
-    return response()->json(['message' => 'Usuário criado com sucesso', 'user' => $user]);
+    return redirect(route('show-user', ['id' => $user->id]));
+  }
+
+  // AdminController.php
+  public function update(Request $request, $id){
+    $user = User::findOrFail($id);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
+        'role_user_id' => 'required|in:seller,gambler',
+    ]);
+
+    $user->name = $request->input('name');
+    $user->email = $request->input('email');
+    $user->role_user_id = $request->input('role_user_id');
+
+    // Update password only if a new one is provided
+    if ($request->filled('password')) {
+        //$user->password = bcrypt($request->input('password'));
+        $user->password = Hash::make($request->input('password'));
+    }
+
+    $user->save();
+
+    return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
+}
+
+
+
+  public function index(){
+    $users = User::get();
+
+    return view('content.users.users', ['users' => $users]);
+
+  }
+
+  public function show(){
+    return view('content.users.view_users');
+  }
+
+  public function create_user_form()
+  {
+    $roles = RoleUser::get();
+    return view('content.users.create_user', ['roles' => $roles]);
   }
 
   public function create_game_form()
@@ -135,7 +197,7 @@ class AdminController extends Controller
           $user->save();
 
           // Criar prêmio para o apostador com status "PENDING"
-          UserAward::create([
+          UserAwards::create([
             'purchase_id' => $purchase->id,
             'user_id' => $user->id,
             'amount' => $award->amount,
