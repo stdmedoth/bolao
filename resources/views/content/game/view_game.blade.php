@@ -20,7 +20,11 @@
   <div class="card shadow-sm mb-4">
     <div class="card-body">
       <p><strong>Nome:</strong> {{ $game->name }}</p>
-      <p><strong>Status:</strong> {{ $game->status }}</p>
+      <p><strong>Status:</strong>
+      <p class="card-text">
+        <span class="badge bg-label-primary">{{ __($game->status) }}</span>
+      </p>
+      </p>
       <p><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }}</p>
       <p><strong>Aberto em:</strong> {{ date("d/m/Y", strtotime($game->open_at)) }}</p>
       <p><strong>Fecha em:</strong> {{ date("d/m/Y", strtotime($game->close_at)) }}</p>
@@ -123,11 +127,13 @@
       <ul class="list-group list-group-flush">
         @foreach($game->awards as $award)
         <li class="list-group-item">
-          <strong>Tipo:</strong> {{ $award->condition_type }} <br>
-          <strong>Valor:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
           @if($award->condition_type === 'MINIMUM_POINT')
-          <strong>Pontos Mínimos Necessários:</strong> {{ $award->minimum_point_value }}
+          Apostador deve fazer <strong>pelo menos {{ $award->minimum_point_value }} pontos </strong> <br>
           @endif
+          @if($award->condition_type === 'EXACT_POINT')
+          Apostador deve fazer <strong>exatamente {{ $award->minimum_point_value }} pontos </strong> <br>
+          @endif
+          <strong>Valor do prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
         </li>
         @endforeach
       </ul>

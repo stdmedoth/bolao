@@ -49,8 +49,13 @@ class AdminController extends Controller
       'price' => 'required|numeric|min:0',
       'open_at' => 'required|date',
       'close_at' => 'required|date|after:open_at',
+      'awards' => 'array',
+      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT',
+      'awards.*.minimum_point_value' => 'nullable|integer',
+      'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
+    // Criar o jogo
     $game = Game::create([
       'name' => $request->name,
       'price' => $request->price,
@@ -60,7 +65,15 @@ class AdminController extends Controller
       'active' => true,
     ]);
 
-    return redirect(route('show-game', ['id' => $game->id]));
+    // Criar os prêmios associados ao jogo
+    if ($request->has('awards')) {
+      foreach ($request->awards as $awardData) {
+        $awardData['game_id'] = $game->id;
+        GameAward::create($awardData);
+      }
+    }
+
+    return redirect(route('show-game', ['id' => $game->id]))->with('success', 'Jogo criado com sucesso, juntamente com os prêmios!');
   }
 
   public function openGame(Request $request, $id)
@@ -85,13 +98,16 @@ class AdminController extends Controller
       ]]);
     }
 
-
-    // Fechar o jogo
-    $game->status = 'CLOSED';
-    $game->save();
+    $last_closed_history = GameHistory::where('game_id', $game->id)
+      ->where('status', 'CLOSED')
+      ->orderBy('created_at', "DESC")->first();
 
     // Obter todas as compras relacionadas ao jogo
-    $purchases = Purchase::where('game_id', $game->id)->get();
+    $builder = Purchase::where('game_id', $game->id);
+    if ($last_closed_history) {
+      $builder = $builder->where('created_at', '>=', $last_history->createt_at);
+    }
+    $purchases = $builder->get();
 
     // Extrair os números do jogo
     $gameNumbers = explode(',', $game->numbers); // Números sorteados no jogo
@@ -128,6 +144,16 @@ class AdminController extends Controller
         }
       }
     }
+
+    GameHistory::create([
+      'status' => 'CLOSED',
+      'game_id' => $game->id
+    ]);
+
+
+    // Fechar o jogo
+    $game->status = 'CLOSED';
+    $game->save();
 
     return redirect(route('show-game', ['id' => $game->id]));
   }

@@ -7,5 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class GameHistory extends Model
 {
-    use HasFactory;
+  use HasFactory;
+  protected $fillable = [
+    "game_id",
+    "status",
+  ];
 }
