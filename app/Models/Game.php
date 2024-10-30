@@ -14,6 +14,7 @@ class Game extends Model
     'price',
     'open_at',
     'close_at',
+    'status',
     'active'
   ];
 
