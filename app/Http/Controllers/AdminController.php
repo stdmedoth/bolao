@@ -183,7 +183,7 @@ class AdminController extends Controller
     // Obter todas as compras relacionadas ao jogo
     $builder = Purchase::where('game_id', $game->id);
     if ($last_closed_history) {
-      $builder = $builder->where('created_at', '>=', $last_history->createt_at);
+      $builder = $builder->where('created_at', '>=', $last_closed_history->createt_at);
     }
     $purchases = $builder->get();
 

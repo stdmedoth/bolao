@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class GameController extends Controller
 {
@@ -46,10 +47,14 @@ class GameController extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit($id)
+  public function editGameForm($id)
   {
     $game = Game::findOrFail($id);
-    return view('concursos.edit', compact('game'));
+
+    $game->open_at = Carbon::parse($game->open_at)->format("Y-m-d");
+    $game->close_at = Carbon::parse($game->close_at)->format("Y-m-d");
+
+    return view('content.game.game_update', compact('game'));
   }
 
   /**
@@ -60,20 +65,20 @@ class GameController extends Controller
         'name' => 'required|string|max:255',
         'price' => 'required|numeric|min:0',
         'open_at' => 'required|date',
-        'closed_at' => 'required|date|after_or_equal:open_at',
-        'status' => 'required|in:active,pending,closed',
+        'close_at' => 'required|date|after_or_equal:open_at',
+        'status' => 'required|in:OPENED, CLOSED',
     ]);
 
     $game = Game::findOrFail($id);
     $game->name = $request->input('name');
     $game->price = $request->input('price');
     $game->open_at = $request->input('open_at');
-    $game->closed_at = $request->input('closed_at');
+    $game->close_at = $request->input('close_at');
     $game->status = $request->input('status');
 
     $game->save();
 
-    return redirect()->back()->with('success', 'Jogo atualizado com sucesso!');
+    return view('content.game.view_game', ['game' => $game]);
 }
 
 

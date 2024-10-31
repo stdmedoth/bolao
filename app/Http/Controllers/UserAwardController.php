@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Awards;
 use App\Models\UserAwards;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class UserAwardController extends Controller
@@ -40,7 +41,7 @@ class UserAwardController extends Controller
   /**
    * Display the specified resource.
    */
-  public function show(Awards $awards)
+  public function show(UserAwards $awards)
   {
     //
   }
@@ -48,7 +49,7 @@ class UserAwardController extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit(Awards $awards)
+  public function edit(UserAwards $awards)
   {
     //
   }
@@ -56,7 +57,7 @@ class UserAwardController extends Controller
   /**
    * Update the specified resource in storage.
    */
-  public function update(Request $request, Awards $awards)
+  public function update(Request $request, UserAwards $awards)
   {
     //
   }
@@ -64,7 +65,7 @@ class UserAwardController extends Controller
   /**
    * Remove the specified resource from storage.
    */
-  public function destroy(Awards $awards)
+  public function destroy(UserAwards $awards)
   {
     //
   }

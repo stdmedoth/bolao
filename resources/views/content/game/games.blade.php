@@ -33,6 +33,14 @@
             <i class="menu-icon tf-icons bx bxs-barcode"></i>
             {{ $game->name }}
           </a>
+          <div class="dropdown">
+            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+              <i class="bx bx-dots-vertical-rounded"></i>
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+            </div>
+          </div>
         </div>
         <div class="card-body" onclick="window.location = '/concursos/{{$game->id}}'">
           <p class="card-text"><strong>Aberto em:</strong> {{ date('d/m/Y', strtotime($game->open_at)) }}</p>

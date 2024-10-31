@@ -20,7 +20,6 @@
 <a class="btn btn-secondary" href="/usuarios/create_user">Criar novo usuario</a>
 @endif
 
-<!-- Lista de Usuarios -->
 <!-- Lista de Usuários -->
 <table class="table table-bordered">
   <thead>
