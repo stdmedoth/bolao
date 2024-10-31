@@ -11,5 +11,6 @@ class GameHistory extends Model
   protected $fillable = [
     "game_id",
     "status",
+    "numbers"
   ];
 }

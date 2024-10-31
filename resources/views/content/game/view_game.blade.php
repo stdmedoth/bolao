@@ -43,6 +43,7 @@
     @endif
   </div>
 
+  @if($game->status == "OPENED")
   <div class="card shadow-sm mb-4">
     <div class="card-body">
       <form id="form" action="{{ route('purchase-store', $game->id) }}" method="POST">
@@ -72,6 +73,7 @@
 
     </div>
   </div>
+  @endif
 
   <script>
     document.getElementById('numbers').addEventListener('input', function(e) {
