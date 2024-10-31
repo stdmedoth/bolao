@@ -34,4 +34,8 @@ class LoginBasic extends Controller
       ]
     );
   }
-}
+
+  public function logout()
+  {
+    return redirect(route('login'))->with(Auth::logout());
+  }
