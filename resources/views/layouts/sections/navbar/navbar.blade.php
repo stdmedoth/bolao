@@ -97,7 +97,7 @@ $navbarDetached = ($navbarDetached ?? '');
                 <div class="dropdown-divider my-1"></div>
               </li>
               <li>
-                <a class="dropdown-item" href="javascript:void(0);">
+                <a class="dropdown-item" href="{{route('logout')}}">
                   <i class="bx bx-power-off bx-md me-3"></i><span>Log Out</span>
                 </a>
               </li>

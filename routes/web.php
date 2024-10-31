@@ -54,6 +54,7 @@ use App\Models\Deposit;
 // authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
 Route::post('/auth/login-basic', [LoginBasic::class, 'validate'])->name('validate-login');
+Route::get('/auth/logout', [LoginBasic::class, 'logout'])->name('logout');
 
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('register');
 Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('reset-password');
