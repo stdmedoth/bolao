@@ -3,6 +3,7 @@
     {
       "url": "/usuarios",
       "name": "Usuarios",
+      "only_admin": true,
       "icon": "menu-icon tf-icons bx bxs-user-detail",
       "slug": "app-email",
       "target": "_blank"
@@ -10,6 +11,7 @@
     {
       "url": "/concursos",
       "name": "Concursos",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -17,6 +19,7 @@
     {
       "url": "/minhas_compras",
       "name": "Minhas Compras",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -24,6 +27,7 @@
     {
       "url": "/meus_premios",
       "name": "Meus Prêmios",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-medal",
       "slug": "app-email",
       "target": "_blank"
@@ -31,6 +35,7 @@
     {
       "url": "/deposito",
       "name": "Depositar",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-money",
       "slug": "app-email",
       "target": "_blank"
@@ -38,6 +43,7 @@
     {
       "url": "/saque",
       "name": "Sacar",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-dollar",
       "slug": "app-email",
       "target": "_blank"
@@ -45,6 +51,7 @@
     {
       "url": "/extrato_saque",
       "name": "Extrato de Saque",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-list-ul",
       "slug": "app-email",
       "target": "_blank"
@@ -52,6 +59,7 @@
     {
       "url": "/meu_cadastro",
       "name": "Meu Cadastro",
+      "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-user",
       "slug": "app-email",
       "target": "_blank"

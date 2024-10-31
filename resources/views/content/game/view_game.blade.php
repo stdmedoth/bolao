@@ -30,12 +30,17 @@
       <p><strong>Fecha em:</strong> {{ date("d/m/Y", strtotime($game->close_at)) }}</p>
       <p><strong>Ativo:</strong> {{ $game->active ? 'Sim' : 'Não' }}</p>
     </div>
+    @if (auth()->user()->role->level_id == 'admin')
     <div class="card-footer d-flex justify-content-between">
       @if($game->status == "CLOSED")
       <a href="/concursos/open/{{ $game->id }}" class="btn btn-success">Abrir</a>
       @endif
+
+      @if($game->status == "OPENED")
       <a href="/concursos/close/{{ $game->id }}" class="btn btn-danger">Fechar Jogo</a>
+      @endif
     </div>
+    @endif
   </div>
 
   <div class="card shadow-sm mb-4">

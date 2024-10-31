@@ -16,9 +16,12 @@
 
 @section('content')
 
-<a class="btn" href="/concursos/create_game_form">Criar novo jogo</a>
+@if (auth()->user()->role->level_id == 'admin')
+<a class="btn btn-secondary" href="/concursos/create_game_form">Criar novo jogo</a>
+@endif
+
 <!-- Lista de Jogos -->
-<div class="card">
+<div class="card shadow-lg p-3 mb-5 bg-white rounded">
   <h5 class="card-header">Jogos</h5>
   <div class="row mt-3">
     <!-- Iterando sobre os jogos para exibir como cards -->

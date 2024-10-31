@@ -11,11 +11,9 @@ class User extends Authenticatable
 {
   use HasFactory, Notifiable;
 
-
-  public function purchases()
-  {
-    return $this->hasMany(Purchase::class);
-  }
+  protected $with = [
+    'role'
+  ];
 
   /**
    * The attributes that are mass assignable.
@@ -50,5 +48,15 @@ class User extends Authenticatable
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
     ];
+  }
+
+  public function purchases()
+  {
+    return $this->hasMany(Purchase::class);
+  }
+
+  public function role()
+  {
+    return $this->belongsTo(RoleUser::class, 'role_user_id', 'id');
   }
 }

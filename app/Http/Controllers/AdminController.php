@@ -187,8 +187,13 @@ class AdminController extends Controller
     }
     $purchases = $builder->get();
 
-    // Extrair os números do jogo
-    $gameNumbers = explode(',', $game->numbers); // Números sorteados no jogo
+    $gameNumbers = [];
+    do {
+      $number = rand(1, 100);
+      if (!in_array($number, $gameNumbers)) {
+        $gameNumbers[] = $number;
+      }
+    } while (count($gameNumbers) < 11);
 
     // Verificar cada compra para ver se se qualifica para algum prêmio
     foreach ($purchases as $purchase) {
@@ -225,6 +230,7 @@ class AdminController extends Controller
 
     GameHistory::create([
       'status' => 'CLOSED',
+      'numbers' => implode(" ", $gameNumbers),
       'game_id' => $game->id
     ]);
 

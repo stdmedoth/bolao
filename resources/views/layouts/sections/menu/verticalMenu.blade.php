@@ -17,6 +17,12 @@
   <ul class="menu-inner py-1">
     @foreach ($menuData[0]->menu as $menu)
 
+    @if ($menu->only_admin)
+    @if (auth()->user()->role->level_id !== 'admin')
+    @continue;
+    @endif
+    @endif
+
     {{-- adding active and open class if child is active --}}
 
     {{-- menu headers --}}
