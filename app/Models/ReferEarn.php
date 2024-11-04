@@ -14,5 +14,6 @@ class ReferEarn extends Model
     'invited_user_id',
     'invited_user_bought',
     'earn_paid',
+    'amount',
   ];
 }

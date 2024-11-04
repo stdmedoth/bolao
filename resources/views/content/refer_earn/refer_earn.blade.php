@@ -36,7 +36,7 @@
             <div class="card border-info mb-3">
               <div class="card-body text-center">
                 <h6 class="card-title">Pessoas Cadastradas</h6>
-                <p class="display-4" id="totalRegistrations">15</p>
+                <p class="display-4" id="totalRegistrations">{{$refered_qnt}}</p>
               </div>
             </div>
           </div>
@@ -44,7 +44,7 @@
             <div class="card border-success mb-3">
               <div class="card-body text-center">
                 <h6 class="card-title">Pessoas que Compraram</h6>
-                <p class="display-4" id="totalPurchases">5</p>
+                <p class="display-4" id="totalPurchases">{{$refered_qnt_bought}}</p>
               </div>
             </div>
           </div>
@@ -52,7 +52,7 @@
             <div class="card border-warning mb-3">
               <div class="card-body text-center">
                 <h6 class="card-title">Valor Recebido por Indicação</h6>
-                <p class="display-4" id="totalEarned">R$ 200,00</p>
+                <p class="display-4" id="totalEarned">R$ {{number_format($refered_amount_earned, 2, ',', '.')}}</p>
               </div>
             </div>
           </div>

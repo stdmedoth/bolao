@@ -17,135 +17,327 @@
 @section('content')
 <div class="container">
   <h1 class="my-4">Detalhes do Jogo</h1>
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <p><strong>Nome:</strong> {{ $game->name }}</p>
-      <p><strong>Status:</strong>
-      <p class="card-text">
-        <span class="badge bg-label-primary">{{ __($game->status) }}</span>
-      </p>
-      </p>
-      <p><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }}</p>
-      <p><strong>Aberto em:</strong> {{ date("d/m/Y", strtotime($game->open_at)) }}</p>
-      <p><strong>Fecha em:</strong> {{ date("d/m/Y", strtotime($game->close_at)) }}</p>
-      <p><strong>Ativo:</strong> {{ $game->active ? 'Sim' : 'Não' }}</p>
-    </div>
-    @if (auth()->user()->role->level_id == 'admin')
-    <div class="card-footer d-flex justify-content-between">
-      @if($game->status == "CLOSED")
-      <a href="/concursos/open/{{ $game->id }}" class="btn btn-success">Abrir</a>
-      @endif
 
-      @if($game->status == "OPENED")
-      <a href="/concursos/close/{{ $game->id }}" class="btn btn-danger">Fechar Jogo</a>
-      @endif
-    </div>
-    @endif
+  <!-- Exibição da mensagem de erro geral -->
+  @if ($errors->has('error'))
+  <div class="alert alert-danger">
+    {{ $errors->first('error') }}
   </div>
+  @endif
 
-  @if($game->status == "OPENED")
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <form id="form" action="{{ route('purchase-store', $game->id) }}" method="POST">
+  <ul class="nav nav-tabs" id="gameTabs" role="tablist">
+    <!-- Tabs existentes -->
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">Detalhes</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="bet-form-tab" data-bs-toggle="tab" href="#bet-form" role="tab" aria-controls="bet-form" aria-selected="false">Apostar</a>
+    </li>
+    <!-- Demais abas não alteradas -->
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="mybets-tab" data-bs-toggle="tab" href="#mybets" role="tab" aria-controls="mybets" aria-selected="false">Minhas apostas</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="results-tab" data-bs-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="false">Resultados</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="winners-tab" data-bs-toggle="tab" href="#winners" role="tab" aria-controls="winners" aria-selected="false">Ganhadores</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="prizes-tab" data-bs-toggle="tab" href="#prizes" role="tab" aria-controls="prizes" aria-selected="false">Prêmios</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="rules-tab" data-bs-toggle="tab" href="#rules" role="tab" aria-controls="rules" aria-selected="false">Regras</a>
+    </li>
+  </ul>
+
+  <div class="tab-content mt-4" id="gameTabsContent">
+    <!-- Aba Detalhes -->
+    <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+      <div class="card shadow-sm mb-4">
+        @if (auth()->user()->role->level_id == 'admin')
+        <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+        @endif
+        <div class="card-body">
+          <p><strong>Nome:</strong> {{ $game->name }}</p>
+          <p><strong>Status:</strong>
+            <span class="badge bg-label-primary">{{ __($game->status) }}</span>
+          </p>
+          <p><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }}</p>
+          <p><strong>Aberto em:</strong> {{ date("d/m/Y", strtotime($game->open_at)) }}</p>
+          <p><strong>Fecha em:</strong> {{ date("d/m/Y", strtotime($game->close_at)) }}</p>
+          <p><strong>Ativo:</strong> {{ $game->active ? 'Sim' : 'Não' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba Formulário de Aposta com grade interativa -->
+    <div class="tab-pane fade" id="bet-form" role="tabpanel" aria-labelledby="bet-form-tab">
+      @if($game->status == "OPENED")
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form id="form" action="{{ route('purchase-store', $game->id) }}" method="POST">
+            @csrf
+            <div class="form-group">
+              <label for="gambler_name">Nome do Apostador</label>
+              <input type="text" class="form-control" id="gambler_name" name="gambler_name" placeholder="Digite seu nome" required>
+            </div>
+
+            <div class="form-group">
+              <label for="gambler_phone">Telefone do Apostador</label>
+              <input type="text" class="form-control" id="gambler_phone" name="gambler_phone" placeholder="Digite seu telefone">
+            </div>
+
+            <!-- Grade de seleção de números -->
+            <div class="form-group">
+              <label>Escolha suas dezenas (máximo de 11)</label>
+              <div class="number-grid mb-3">
+                @for ($i = 1; $i <= 100; $i++)
+                  <button type="button" class="btn btn-outline-primary m-1 number-button" data-number="{{ $i }}">{{ $i }}</button>
+                  @endfor
+              </div>
+              <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
+              <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
+            </div>
+
+            <input type="hidden" name="user_id" value="{{auth()->user()->id}}">
+            <input type="hidden" name="game_id" value=" {{$game->id}}">
+
+            <!-- Campo oculto para armazenar os números selecionados -->
+            <input type="hidden" id="numbers" name="numbers" value="">
+
+            <button type="submit" class="btn btn-primary">Comprar Dezenas</button>
+          </form>
+        </div>
+      </div>
+      @else
+      <p class="text-muted">O jogo já está encerrado.</p>
+      @endif
+    </div>
+
+    <!-- Aba Resultados -->
+    <div class="tab-pane fade" id="results" role="tabpanel" aria-labelledby="results-tab">
+      <h3 class="mb-4">Histórico de Resultados</h3>
+
+      <form id="result_form" action="{{ route('add-game-history', $game->id) }}" method="POST">
         @csrf
         <div class="form-group">
-          <label for="gambler_name">Nome do Apostador</label>
-          <input type="text" class="form-control" id="gambler_name" name="gambler_name" placeholder="Digite seu nome" required>
+          <label for="description">Descrição para os novos números</label>
+          <input type="text" class="form-control" id="description" name="description" placeholder="Descrição para novo resultado">
         </div>
-
+        <!-- Grade de seleção de números -->
         <div class="form-group">
-          <label for="gambler_phone">Telefone do Apostador</label>
-          <input type="text" class="form-control" id="gambler_phone" name="gambler_phone" placeholder="Digite seu telefone">
-        </div>
-
-        <div class="form-group">
-          <label for="numbers">Escolha suas dezenas (11 números por vez, separados por espaços)</label>
-          <input type="text" class="form-control" id="numbers" name="numbers" placeholder="Exemplo: 11 22 12 32 12 43 12 54 65 23 12" required>
-          <small class="form-text text-muted">As dezenas devem ter dois dígitos cada e serem separadas por espaços, em grupos de 11 números.</small>
+          <label>Escolha suas dezenas (máximo de 11)</label>
+          <div class="number-grid mb-3">
+            @for ($i = 1; $i <= 100; $i++)
+              <button type="button" class="btn btn-outline-primary m-1 result_number-button" data-number="{{ $i }}">{{ $i }}</button>
+              @endfor
+          </div>
+          <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
           <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
         </div>
 
-        <input type="hidden" name="game_id" value="{{ $game->id }}">
-        <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
+        <input type="hidden" name="game_id" value=" {{$game->id}}">
 
-        <button type="submit" class="btn btn-primary">Comprar Dezenas</button>
+        <!-- Campo oculto para armazenar os números selecionados -->
+        <input type="hidden" id="result_numbers" name="result_numbers" value="">
+        <button type="submit" class="btn btn-primary">Adicionar novo resultado</button>
       </form>
 
+      <div class="card shadow-sm h-100">
+        <h5 class="card-title">Lista de resultados</h5>
+        <div class="card-body">
+          @if($histories->isEmpty())
+          <p class="text-muted">Não há registros de resultados para este jogo.</p>
+          @else
+          <div class="row">
+            @foreach($histories as $history)
+            <div class="col-md-4 mb-4">
+              <div class="card shadow-lg h-100">
+                <div class="card-body">
+                  <h3 class="card-title">{{ $history->description }}</h3>
+                  <h5 class="card-text">{{ $history->created_at->format('l, d/m/Y') }}</h5>
+                  @foreach(explode(" ", $history->numbers) as $key => $number)
+                  <h5 class="card-text">{{$key+1}}º: <strong>{{ $number }}</strong></h5>
+                  @endforeach
+                  <p class="card-text"><small class="text-muted">Cadastrado: {{ $history->created_at->format('d/m/Y H:i') }}</small></p>
+                </div>
+              </div>
+            </div>
+            @endforeach
+          </div>
+          @endif
+        </div>
+      </div>
     </div>
-  </div>
-  @endif
 
-  <script>
-    document.getElementById('numbers').addEventListener('input', function(e) {
-      let input = e.target.value.replace(/[^\d]/g, ''); // Remove caracteres não numéricos
-      let formatted = input.match(/.{1,2}/g) || []; // Divide em pares de dígitos
 
-      // Formata para grupos de 11 dezenas, separados por espaços
-      let output = [];
-      for (let i = 0; i < formatted.length; i++) {
-        output.push(formatted[i]);
-        // Adiciona um espaço se não for o último número do grupo de 11
-        if ((i + 1) % 11 !== 0 && i !== formatted.length - 1) {
-          output.push(' ');
-        }
-        // Adiciona uma vírgula se for o final de um grupo de 11, mas não o último número
-        if ((i + 1) % 11 === 0 && i !== formatted.length - 1) {
-          output.push(', ');
-        }
-      }
+    <div class="tab-pane fade" id="prizes" role="tabpanel" aria-labelledby="prizes-tab">
+      <h3 class="mb-0">Prêmios Disponíveis</h3>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          @if($game->awards->isEmpty())
+          <p class="text-muted">Nenhum prêmio foi configurado para este jogo.</p>
+          @else
+          <ul class="list-group list-group-flush">
+            @foreach($game->awards as $award)
+            <li class="list-group-item">
+              @if($award->condition_type === 'MINIMUM_POINT')
+              Apostador deve fazer <strong>pelo menos {{ $award->minimum_point_value }} pontos </strong> <br>
+              @endif
+              @if($award->condition_type === 'EXACT_POINT')
+              Apostador deve fazer <strong>exatamente {{ $award->minimum_point_value }} pontos </strong> <br>
+              @endif
+              <strong>Valor do prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
+            </li>
+            @endforeach
+          </ul>
+          @endif
+        </div>
+      </div>
+    </div>
 
-      // Atualiza o valor do campo com o formato desejado
-      e.target.value = output.join('');
-    });
+    <div class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
+      <p>Conteúdo das regras...</p>
+    </div>
 
-    document.getElementById('form').addEventListener('submit', function(e) {
-      const numbersValue = document.getElementById('numbers').value.trim();
-      const groups = numbersValue.split(/,\s*/); // Divide grupos separados por vírgula
-
-      errorMessage = document.getElementById('error-message')
-      for (let group of groups) {
-        const numbersArray = group.trim().split(/\s+/); // Divide o grupo em números
-        if (numbersArray.length < 11) {
-          e.preventDefault(); // Evita o envio do formulário
-          errorMessage.textContent = 'Cada grupo deve conter pelo menos 11 números.';
-          errorMessage.style.display = 'block';
-          return;
-        }
-      }
-
-      errorMessage.style.display = 'none'; // Oculta a mensagem de erro se tudo estiver certo
-    });
-  </script>
-  @if(count($errors) > 0)
-  <div class="alert alert-danger">
-    @foreach( $errors->all() as $message )
-    <span>{{ $message }}</span><br>
-    @endforeach
-  </div>
-  @endif
-
-  <h3 class="mb-0">Prêmios Disponíveis</h3>
-  <div class="card shadow-sm mb-4">
-
-    <div class="card-body">
-      @if($game->awards->isEmpty())
-      <p class="text-muted">Nenhum prêmio foi configurado para este jogo.</p>
+    <!-- Aba Meus jogos -->
+    <div class="tab-pane fade" id="mybets" role="tabpanel" aria-labelledby="mybets-tab">
+      @if($purchases->isEmpty())
+      <p class="text-muted">Você ainda não realizou nenhuma aposta para este jogo.</p>
       @else
-      <ul class="list-group list-group-flush">
-        @foreach($game->awards as $award)
-        <li class="list-group-item">
-          @if($award->condition_type === 'MINIMUM_POINT')
-          Apostador deve fazer <strong>pelo menos {{ $award->minimum_point_value }} pontos </strong> <br>
-          @endif
-          @if($award->condition_type === 'EXACT_POINT')
-          Apostador deve fazer <strong>exatamente {{ $award->minimum_point_value }} pontos </strong> <br>
-          @endif
-          <strong>Valor do prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
-        </li>
-        @endforeach
-      </ul>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>Nome do Apostador</th>
+              <th>Telefone</th>
+              <th>Números</th>
+              <th>Quantidade</th>
+              <th>Preço</th>
+              <th>Status</th>
+              <th>Data da Aposta</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($purchases as $purchase)
+            <tr>
+              <td>{{ $purchase->gambler_name }}</td>
+              <td>{{ $purchase->gambler_phone }}</td>
+              <td>{{ $purchase->numbers }}</td>
+              <td>{{ $purchase->quantity }}</td>
+              <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
+              <td><span class="badge bg-label-primary">{{ __($purchase->status) }}</span></td>
+              <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
       @endif
     </div>
   </div>
 </div>
+
+<script>
+  const selectedNumbers = [];
+  const selectedResultNumbers = [];
+  const maxNumbers = 11;
+
+  document.querySelectorAll('.number-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const number = this.getAttribute('data-number');
+
+      if (selectedNumbers.includes(number)) {
+        selectedNumbers.splice(selectedNumbers.indexOf(number), 1);
+        this.classList.remove('active');
+      } else {
+        if (selectedNumbers.length < maxNumbers) {
+          selectedNumbers.push(number);
+          this.classList.add('active');
+        } else {
+          document.getElementById('error-message').textContent = 'Você só pode selecionar até 11 números.';
+          document.getElementById('error-message').style.display = 'block';
+          return;
+        }
+      }
+
+      document.getElementById('numbers').value = selectedNumbers.join(' ');
+
+      if (selectedNumbers.length <= maxNumbers) {
+        document.getElementById('error-message').style.display = 'none';
+      }
+    });
+  });
+
+  document.querySelectorAll('.result_number-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const number = this.getAttribute('data-number');
+
+      if (selectedResultNumbers.includes(number)) {
+        selectedResultNumbers.splice(selectedResultNumbers.indexOf(number), 1);
+        this.classList.remove('active');
+      } else {
+
+        /*
+        if (selectedResultNumbers.length < maxNumbers) {
+          selectedResultNumbers.push(number);
+          this.classList.add('active');
+        } else {
+          document.getElementById('error-message').textContent = 'Você só pode selecionar até 11 números.';
+          document.getElementById('error-message').style.display = 'block';
+          return;
+        }
+        */
+        selectedResultNumbers.push(number);
+        this.classList.add('active');
+      }
+
+      document.getElementById('result_numbers').value = selectedResultNumbers.join(' ');
+
+      /*
+      if (selectedResultNumbers.length <= maxNumbers) {
+        document.getElementById('error-message').style.display = 'none';
+      }
+      */
+    });
+  });
+
+  document.getElementById('form').addEventListener('submit', function(e) {
+    if (selectedNumbers.length !== maxNumbers) {
+      e.preventDefault();
+      document.getElementById('error-message').textContent = 'Você deve selecionar exatamente 11 números.';
+      document.getElementById('error-message').style.display = 'block';
+    }
+  });
+
+  document.getElementById('result_form').addEventListener('submit', function(e) {
+    /*
+    if (selectedResultNumbers.length !== maxNumbers) {
+      e.preventDefault();
+      document.getElementById('error-message').textContent = 'Você deve selecionar exatamente 11 números.';
+      document.getElementById('error-message').style.display = 'block';
+    }
+    */
+  });
+</script>
+
+<style>
+  .number-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+  }
+
+  .number-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .number-button.active {
+    background-color: #007bff;
+    color: white;
+  }
+</style>
+
 @endsection

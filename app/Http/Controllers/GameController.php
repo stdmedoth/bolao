@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\GameHistory;
+use App\Models\Purchase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class GameController extends Controller
 {
@@ -41,7 +44,13 @@ class GameController extends Controller
   {
     //
     $game = Game::find($id);
-    return view('content.game.view_game', ['game' => $game]);
+    $purchases = Purchase::where('user_id', Auth::user()->id)->where('game_id', $id)->get();
+    $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->get();
+    return view('content.game.view_game', [
+      'game' => $game,
+      'purchases' => $purchases,
+      'histories' => $histories
+    ]);
   }
 
   /**
@@ -60,13 +69,14 @@ class GameController extends Controller
   /**
    * Update the specified resource in storage.
    */
-  public function update(Request $request, $id){
+  public function update(Request $request, $id)
+  {
     $request->validate([
-        'name' => 'required|string|max:255',
-        'price' => 'required|numeric|min:0',
-        'open_at' => 'required|date',
-        'close_at' => 'required|date|after_or_equal:open_at',
-        'status' => 'required|in:OPENED, CLOSED',
+      'name' => 'required|string|max:255',
+      'price' => 'required|numeric|min:0',
+      'open_at' => 'required|date',
+      'close_at' => 'required|date|after_or_equal:open_at',
+      'status' => 'required|in:OPENED,CLOSED',
     ]);
 
     $game = Game::findOrFail($id);
@@ -78,8 +88,8 @@ class GameController extends Controller
 
     $game->save();
 
-    return view('content.game.view_game', ['game' => $game]);
-}
+    return redirect(route("show-game", $game->id));
+  }
 
 
 

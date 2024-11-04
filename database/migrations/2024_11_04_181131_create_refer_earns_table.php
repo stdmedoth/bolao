@@ -19,6 +19,8 @@ return new class extends Migration
       $table->boolean('invited_user_bought')->default(false);
       $table->boolean('earn_paid')->default(false);
 
+      $table->float('amount')->nullable();
+
       $table->foreign('refer_user_id')->references('id')->on('users');
       $table->timestamps();
     });

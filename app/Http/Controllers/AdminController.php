@@ -161,39 +161,48 @@ class AdminController extends Controller
     $game->status = 'OPENED';
     $game->save();
 
+    $game_history = GameHistory::create([
+      "description" => "JOGO ABERTO",
+      "numbers" => "",
+      "type" => "OPENED",
+      'game_id' => $game->id,
+    ]);
+
     return redirect(route('show-game', ['id' => $game->id]));
   }
 
   // Fechar o jogo e definir o status para "CLOSED"
   // Escolher um ganhador para o jogo e atribuir o prêmio
-  public function closeGame(Request $request, $id)
+  public function addGameHistory(Request $request, $id)
   {
     $game = Game::findOrFail($id);
-
-    if ($game->status !== 'OPENED') {
-      return redirect()->back()->withErrors(['errors' => [
-        "Jogo já está fechado"
+    if ($game->status !== 'CLOSED') {
+      return redirect()->back()->withErrors(['error' => [
+        "Jogo ainda está aberto"
       ]]);
     }
 
+    $game = Game::findOrFail($id);
+
     $last_closed_history = GameHistory::where('game_id', $game->id)
-      ->where('status', 'CLOSED')
+      ->where('type', 'OPENED')
       ->orderBy('created_at', "DESC")->first();
+
+    $game_history = GameHistory::create([
+      "description" => $request->description,
+      "type" => 'ADDING_NUMBER',
+      "numbers" => $request->result_numbers,
+      'game_id' => $game->id,
+    ]);
 
     // Obter todas as compras relacionadas ao jogo
     $builder = Purchase::where('game_id', $game->id);
     if ($last_closed_history) {
-      $builder = $builder->where('created_at', '>=', $last_closed_history->createt_at);
+      $builder = $builder->where('created_at', '>=', $last_closed_history->created_at);
     }
     $purchases = $builder->get();
 
-    $gameNumbers = [];
-    do {
-      $number = rand(1, 100);
-      if (!in_array($number, $gameNumbers)) {
-        $gameNumbers[] = $number;
-      }
-    } while (count($gameNumbers) < 11);
+    $gameNumbers = explode(" ", $request->numbers);
 
     // Verificar cada compra para ver se se qualifica para algum prêmio
     foreach ($purchases as $purchase) {
@@ -227,17 +236,6 @@ class AdminController extends Controller
         }
       }
     }
-
-    GameHistory::create([
-      'status' => 'CLOSED',
-      'numbers' => implode(" ", $gameNumbers),
-      'game_id' => $game->id
-    ]);
-
-
-    // Fechar o jogo
-    $game->status = 'CLOSED';
-    $game->save();
 
     return redirect(route('show-game', ['id' => $game->id]));
   }

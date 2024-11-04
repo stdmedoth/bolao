@@ -14,7 +14,15 @@ class ReferEarnController extends Controller
   public function index()
   {
     //
-    return view('content.refer_earn.refer_earn', ['code' => base64_encode('refered_by_' . Auth::user()->id)]);
+    $refered_qnt = ReferEarn::where('refer_user_id', Auth::user()->id)->count();
+    $refered_qnt_bought = ReferEarn::where('refer_user_id', Auth::user()->id)->where('invited_user_bought', true)->count();
+    $refered_amount_earned = ReferEarn::where('refer_user_id', Auth::user()->id)->where('invited_user_bought', true)->sum('amount');
+    return view('content.refer_earn.refer_earn', [
+      'refered_qnt' => $refered_qnt,
+      'refered_qnt_bought' => $refered_qnt_bought,
+      'refered_amount_earned' => $refered_amount_earned,
+      'code' => base64_encode('refered_by_' . Auth::user()->id)
+    ]);
   }
 
   /**
@@ -28,7 +36,7 @@ class ReferEarnController extends Controller
 
 
 
-    return view("content.authentications.auth-register-basic");
+    return view("content.authentications.auth-register-basic", ['refered_by_id' => $refered_by_id]);
   }
 
   /**

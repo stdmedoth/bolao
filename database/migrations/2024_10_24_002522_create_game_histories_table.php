@@ -13,8 +13,10 @@ return new class extends Migration
   {
     Schema::create('game_histories', function (Blueprint $table) {
       $table->id();
-      $table->enum('status', ['OPENED', 'CLOSED',]);
-      $table->string('numbers');
+
+      $table->string('description');
+      $table->enum('type', ['OPENED', 'ADDING_NUMBER', 'CLOSED',]);
+      $table->string('numbers')->nullable();
 
       $table->unsignedBigInteger('game_id');
       $table->foreign('game_id')->references('id')->on('games');

@@ -90,11 +90,13 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
-
+  Route::post('/concursos/add_game_history/{id}', [AdminController::class, 'addGameHistory'])->name('add-game-history');
 
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
+  Route::get('/minhas_compras/{id}', [PurchaseController::class, 'show'])->name('minhas_compras-view');
+
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');

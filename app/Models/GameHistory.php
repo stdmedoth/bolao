@@ -10,7 +10,8 @@ class GameHistory extends Model
   use HasFactory;
   protected $fillable = [
     "game_id",
-    "status",
+    "description",
+    "type",
     "numbers"
   ];
 }
