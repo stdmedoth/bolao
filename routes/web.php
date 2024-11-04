@@ -47,9 +47,9 @@ use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReferEarnController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\WithdrawalController;
-use App\Models\Deposit;
 
 // authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
@@ -57,6 +57,7 @@ Route::post('/auth/login-basic', [LoginBasic::class, 'validate'])->name('validat
 Route::get('/auth/logout', [LoginBasic::class, 'logout'])->name('logout');
 
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('register');
+Route::post('/auth/register-basic', [RegisterBasic::class, 'validate'])->name('register-validate');
 Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('reset-password');
 
 
@@ -97,7 +98,14 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
+
+
+  Route::get('/indique_ganhe', [ReferEarnController::class, 'index'])->name('refer_earn-view');
 });
+
+
+Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-view');
+
 // Main Page Route
 
 // layout

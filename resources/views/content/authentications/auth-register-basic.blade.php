@@ -4,7 +4,7 @@
 
 @section('page-style')
 @vite([
-  'resources/assets/vendor/scss/pages/page-auth.scss'
+'resources/assets/vendor/scss/pages/page-auth.scss'
 ])
 @endsection
 
@@ -27,10 +27,10 @@
           <h4 class="mb-1">Adventure starts here 🚀</h4>
           <p class="mb-6">Make your app management easy and fun!</p>
 
-          <form id="formAuthentication" class="mb-6" action="{{url('/')}}" method="GET">
+          <form id="formAuthentication" class="mb-6" action="{{route('register-validate')}}" method="POST">
             <div class="mb-6">
               <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" autofocus>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Enter your username" autofocus>
             </div>
             <div class="mb-6">
               <label for="email" class="form-label">Email</label>
@@ -39,10 +39,19 @@
             <div class="mb-6 form-password-toggle">
               <label class="form-label" for="password">Password</label>
               <div class="input-group input-group-merge">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}" />
                 <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password" />
                 <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
               </div>
             </div>
+            @if(count($errors) > 0)
+            @foreach( $errors->all() as $message )
+            <div class="alert alert-danger display-hide">
+              <span>{{ $message }}</span>
+            </div>
+            @endforeach
+            @endif
+            <input type="hidden" id="refered_by_id" class="form-control" name="refered_by_id" />
 
             <div class="my-8">
               <div class="form-check mb-0 ms-2">
