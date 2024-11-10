@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Game extends Model
 {
@@ -20,7 +21,7 @@ class Game extends Model
 
   protected $with = "awards";
 
-  public function awards()
+  public function awards(): HasMany
   {
     return $this->hasMany(GameAward::class);
   }
