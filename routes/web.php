@@ -87,6 +87,9 @@ Route::middleware('auth:web')->group(function () {
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
 
 
+  Route::get('/meus_premios/edit/{id}', [UserAwardController::class, 'editMyAwards'])->name('edit-award-form');
+  Route::put('/meus_premios/{id}', [UserAwardController::class, 'update'])->name('award-update');
+
 
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');

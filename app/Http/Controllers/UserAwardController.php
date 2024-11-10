@@ -49,18 +49,39 @@ class UserAwardController extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit(UserAwards $awards)
+  public function editMyAwards(UserAwards $awards)
   {
-    //
+    // 
+    $user_awards = UserAwards::get();
+    return view('content.awards.update-my-awards', ['user_awards' => $user_awards]);
   }
 
   /**
    * Update the specified resource in storage.
    */
-  public function update(Request $request, UserAwards $awards)
+  public function update(Request $request, $id)
   {
-    //
+      $user_awards = UserAward::findOrFail($id);
+  
+      // Valida os dados de entrada
+      $request->validate([
+          'purchase_id' => 'required|string|max:255',
+          'amount' => 'required|numeric|min:0',
+          'status' => 'required|in:active,pending,closed',
+      ]);
+  
+      // Atualiza os campos do prêmio
+      $user_awards->purchase_id = $request->input('purchase_id');
+      $user_awards->amount = $request->input('amount');
+      $user_awards->status = $request->input('status');
+  
+      $user_awards->save();
+  
+      // Redireciona de volta para a lista de prêmios com uma mensagem de sucesso
+      return redirect()->route('awards.index')->with('success', 'Prêmio atualizado com sucesso!');
   }
+  
+  
 
   /**
    * Remove the specified resource from storage.
