@@ -74,27 +74,34 @@ class GameController extends Controller
    * Update the specified resource in storage.
    */
   public function update(Request $request, $id)
-  {
+{
     $request->validate([
-      'name' => 'required|string|max:255',
-      'price' => 'required|numeric|min:0',
-      'open_at' => 'required|date',
-      'close_at' => 'required|date|after_or_equal:open_at',
-      'status' => 'required|in:OPENED,CLOSED',
+        'name' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'open_at' => 'required|date',
+        'close_at' => 'required|date|after_or_equal:open_at',
+        'status' => 'required|in:OPENED,CLOSED',
+        'awards' => 'array',
+        'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT',
+        'awards.*.minimum_point_value' => 'nullable|integer',
+        'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
     $game = Game::findOrFail($id);
-    $game->name = $request->input('name');
-    $game->price = $request->input('price');
-    $game->open_at = $request->input('open_at');
-    $game->close_at = $request->input('close_at');
-    $game->status = $request->input('status');
+    $game->update([
+        'name' => $request->input('name'),
+        'price' => $request->input('price'),
+        'open_at' => $request->input('open_at'),
+        'close_at' => $request->input('close_at'),
+        'status' => $request->input('status'),
+    ]);
 
-    $game->save();
+    // Chama o método para atualizar os prêmios
+    app(GameAwardController::class)->updateAwards($request, $game);
 
-    return redirect(route("show-game", $game->id));
-  }
-
+    return redirect(route("show-game", $game->id))->with('success', 'Jogo e prêmios atualizados com sucesso!');
+}
+  
 
 
 

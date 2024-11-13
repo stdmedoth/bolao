@@ -49,18 +49,20 @@ class UserAwardController extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit(UserAwards $awards)
+  public function editMyAwards(UserAwards $awards)
   {
-    //
+    // 
   }
 
   /**
    * Update the specified resource in storage.
    */
-  public function update(Request $request, UserAwards $awards)
+  public function update(Request $request, $id)
   {
     //
   }
+  
+  
 
   /**
    * Remove the specified resource from storage.

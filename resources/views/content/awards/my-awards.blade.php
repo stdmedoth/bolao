@@ -26,6 +26,7 @@
                 <th>Valor</th>
                 <th>Status</th>
                 <th>Data de Criação</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +41,9 @@
                         </span>
                     </td>
                     <td>{{ \Carbon\Carbon::parse($award->created_at)->format('Y-m-d H:i') }}</td>
+                    <td>
+                        <a href="{{ route('edit-award-form', $award->id) }}" class="btn btn-sm btn-primary">Editar</a>
+                    </td>
                 </tr>
             @endforeach
         </tbody>

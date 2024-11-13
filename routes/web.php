@@ -87,7 +87,6 @@ Route::middleware('auth:web')->group(function () {
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
 
 
-
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
   Route::post('/concursos/add_game_history/{id}', [AdminController::class, 'addGameHistory'])->name('add-game-history');
