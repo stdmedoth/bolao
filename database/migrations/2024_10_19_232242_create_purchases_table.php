@@ -19,7 +19,7 @@ return new class extends Migration
       $table->string('gambler_phone')->nullable();
       $table->string('gambler_name')->nullable();
 
-      $table->enum('status', ['PAID', 'PENDING', 'CANCELED',]);
+      $table->enum('status', ['PAID', 'PENDING', 'CANCELED', 'FINISHED']);
 
       $table->integer('quantity');
       $table->float('price', 8, 2);

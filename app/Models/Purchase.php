@@ -23,11 +23,17 @@ class Purchase extends Model
   ];
 
   protected $with = [
-    "game"
+    "game",
+    "user"
   ];
 
   public function game(): BelongsTo
   {
     return $this->belongsTo(Game::class);
+  }
+
+  public function user(): BelongsTo
+  {
+    return $this->belongsTo(User::class);
   }
 }

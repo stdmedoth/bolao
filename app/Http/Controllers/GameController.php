@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\GameHistory;
 use App\Models\Purchase;
+use App\Models\UserAwards;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -46,10 +47,13 @@ class GameController extends Controller
     $game = Game::find($id);
     $purchases = Purchase::where('user_id', Auth::user()->id)->where('game_id', $id)->get();
     $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->get();
+    $winners = UserAwards::where('game_id', $id)->get();
+
     return view('content.game.view_game', [
       'game' => $game,
       'purchases' => $purchases,
-      'histories' => $histories
+      'histories' => $histories,
+      'winners' => $winners,
     ]);
   }
 

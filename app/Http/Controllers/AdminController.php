@@ -48,16 +48,12 @@ class AdminController extends Controller
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:8',
       'role_user_id' => 'required|exists:role_users,id',
+      'invited_by_id' => 'exists:users,id',
     ]);
 
     try {
       // Criação do usuário com os dados validados
-      $user = User::create([
-        'name' => $validatedData['name'],
-        'email' => $validatedData['email'],
-        'password' => Hash::make($validatedData['password']),
-        'role_user_id' => $validatedData['role_user_id'],
-      ]);
+      $user = User::create($validatedData);
 
       // Redireciona para a página de exibição do usuário criado
       return redirect()->route('edit-user-form', ['id' => $user->id])
@@ -111,7 +107,8 @@ class AdminController extends Controller
   public function create_user_form()
   {
     $roles = RoleUser::get();
-    return view('content.users.create_user', ['roles' => $roles]);
+    $sellers = User::where('role_user_id', 2)->get();
+    return view('content.users.create_user', ['roles' => $roles, 'sellers' => $sellers]);
   }
 
   public function create_game_form()
@@ -128,8 +125,9 @@ class AdminController extends Controller
       'open_at' => 'required|date',
       'close_at' => 'required|date|after:open_at',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT',
-      'awards.*.minimum_point_value' => 'nullable|integer',
+      'awards.*.condition_type' => 'required|in:EXACT_POINT,LOWEST_POINT,WINNER',
+      'awards.*.exact_point_value' => 'nullable|integer',
+      'awards.*.winner_point_value' => 'nullable|integer',
       'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
@@ -184,58 +182,112 @@ class AdminController extends Controller
 
     $game = Game::findOrFail($id);
 
-    $last_closed_history = GameHistory::where('game_id', $game->id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', "DESC")->first();
+    $result_numbers_arr = explode(", ", $request->result_numbers);
+    foreach ($result_numbers_arr as $result_numbers) {
+      $result_numbers = explode(" ", $result_numbers);
 
-    $game_history = GameHistory::create([
-      "description" => $request->description,
-      "type" => 'ADDING_NUMBER',
-      "numbers" => $request->result_numbers,
-      'game_id' => $game->id,
-    ]);
+      // vê quando que o concurso foi aberto pela ultima vez
+      $last_closed_history = GameHistory::where('game_id', $game->id)
+        ->where('type', 'OPENED')
+        ->orderBy('created_at', "DESC")->first();
 
-    // Obter todas as compras relacionadas ao jogo
-    $builder = Purchase::where('game_id', $game->id);
-    if ($last_closed_history) {
-      $builder = $builder->where('created_at', '>=', $last_closed_history->created_at);
-    }
-    $purchases = $builder->get();
+      $added_numbers  = [];
+      if ($last_closed_history) {
+        // Pega todos os numeros que já foram inputados até o momento
+        $added_numbers_history = GameHistory::where('game_id', $game->id)
+          ->where('type', 'ADDING_NUMBER')
+          ->where('created_at', '>=', $last_closed_history->created_at)->get();
+        $added_numbers = array_map(fn($e) => explode(" ", $e->numbers), $added_numbers_history->toArray());
+        $added_numbers = array_merge(...$added_numbers);
+      }
 
-    $gameNumbers = explode(" ", $request->numbers);
 
-    // Verificar cada compra para ver se se qualifica para algum prêmio
-    foreach ($purchases as $purchase) {
-      $purchaseNumbers = explode(',', $purchase->numbers); // Números apostados
-      $matchedNumbers = array_intersect($gameNumbers, $purchaseNumbers);
-      $pointsAchieved = count($matchedNumbers);
+      $numbers = [];
+      foreach ($result_numbers as $result_number) {
+        $numbers[] = substr($result_number, -2);
+      }
+      // Adiciona os novos numeros
+      $game_history = GameHistory::create([
+        "description" => $request->description,
+        "type" => 'ADDING_NUMBER',
+        "result_numbers" => implode(" ", $result_numbers),
+        "numbers" => implode(" ", $numbers),
+        'game_id' => $game->id,
+      ]);
 
-      // Verificar as condições dos prêmios definidos no GameAwards
-      $awards = GameAward::where('game_id', $game->id)->get();
-      foreach ($awards as $award) {
-        $userAwardCreated = false;
-        if ($award->condition_type === 'MINIMUM_POINT' && $pointsAchieved >= $award->minimum_point_value) {
-          $userAwardCreated = true;
-        } elseif ($award->condition_type === 'EXACT_POINT' && $pointsAchieved == count($gameNumbers)) {
-          $userAwardCreated = true;
+      // Remove os numeros repetidos
+      $commonElements = array_intersect($added_numbers, $result_numbers);
+      $gameNumbers = array_diff($result_numbers, $commonElements);
+
+
+      // Obter todas as compras relacionadas ao jogo
+      $builder = Purchase::where('game_id', $game->id)->whereIn('status', ['PAID',]);
+      if ($last_closed_history) {
+        $builder = $builder->where('created_at', '>=', $last_closed_history->created_at);
+      }
+      $purchases = $builder->get();
+
+      // Verificar cada compra para ver se se qualifica para algum prêmio
+      foreach ($purchases as $purchase) {
+        $purchaseNumbers = explode(' ', $purchase->numbers); // Números apostados
+
+        // If the number is repeated, dont consider again
+        foreach ($purchaseNumbers as $key => $number) {
+          if (in_array($number, $added_numbers)) {
+            unset($purchaseNumbers[$key]);
+            $purchaseNumbers = array_values($purchaseNumbers);
+          }
         }
 
-        if ($userAwardCreated) {
+        $matchedNumbers = array_intersect($gameNumbers, $purchaseNumbers);
+        $pointsAchieved = count($matchedNumbers);
+
+        $winners = [];
+        // Verificar as condições dos prêmios definidos no GameAwards
+        $awards = GameAward::where('game_id', $game->id)->get();
+        foreach ($awards as $award) {
+          $userAwardCreated = false;
+
+          // Quem acertar minimum_point_value primeiro, ganha esse premio
+          if ($award->condition_type === 'EXACT_POINT' && ($pointsAchieved == $award->exact_point_value)) {
+            $userAwardCreated = true;
+          }
+
+          // Quem acertar winner_point_value primeiro, vence o jogo
+          if ($award->condition_type === 'WINNER' && ($pointsAchieved == $award->winner_point_value)) {
+            $userAwardCreated = true;
+          }
+
+          if ($userAwardCreated) {
+            $user = $purchase->user;
+            $winners[] = [
+              'purchase_id' => $purchase->id,
+              'game_id' => $purchase->game_id,
+              'user_id' => $user->id,
+              'game_award_id' => $award->id,
+              'amount' => $award->amount,
+              'status' => 'PAID',
+            ];
+          }
+        }
+        foreach ($winners as $winner) {
+          $purchase = Purchase::findOrFail($winner['purchase_id']);
+          $purchase->status = 'FINISHED';
+          $purchase->save();
+
+          $user_id = $winner['user_id'];
+
+          $user = User::findOrFail($user_id);
           // Atualizar o saldo do usuário
-          $user = $purchase->user;
           $user->balance += $award->amount;
           $user->save();
 
           // Criar prêmio para o apostador com status "PENDING"
-          UserAwards::create([
-            'purchase_id' => $purchase->id,
-            'user_id' => $user->id,
-            'amount' => $award->amount,
-            'status' => 'PAID',
-          ]);
+          UserAwards::create($winner);
         }
       }
     }
+
 
     return redirect(route('show-game', ['id' => $game->id]));
   }

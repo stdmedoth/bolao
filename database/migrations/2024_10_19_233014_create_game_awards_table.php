@@ -14,8 +14,11 @@ return new class extends Migration
     Schema::create('game_awards', function (Blueprint $table) {
       $table->id();
 
-      $table->enum('condition_type', ['MINIMUM_POINT', 'EXACT_POINT']);
-      $table->integer('minimum_point_value')->nullable();
+      $table->string("name");
+      $table->enum('condition_type', ['EXACT_POINT', 'LOWEST_POINT', 'WINNER']);
+
+      $table->integer('exact_point_value')->nullable();
+      $table->integer('winner_point_value')->nullable();
 
       $table->float('amount')->nullable();
 

@@ -70,6 +70,21 @@
       @enderror
     </div>
 
+
+    <!-- Convidado por -->
+    <div class="form-group">
+      <label for="invited_by_id">Convidado por:</label>
+      <select class="form-control" name="invited_by_id">
+        <option value="" disabled selected>Selecione o vendedor que convidou</option>
+        @foreach ($sellers as $seller)
+        <option value="{{ $seller->id }}" {{ old('invited_by_id') == $seller->id ? 'selected' : '' }}>{{ $seller->name }}</option>
+        @endforeach
+      </select>
+      @error('invited_by_id')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+    </div>
+
     <!-- Botão de Submissão -->
     <button type="submit" class="btn btn-primary mt-3">Criar Usuário</button>
   </form>

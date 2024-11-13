@@ -14,9 +14,9 @@
       <div class="card-body">
         <form>
           <div class="row mb-6">
-            <label class="col-sm-2 col-form-label" for="basic-default-name">Name</label>
+            <label class="col-sm-2 col-form-label" for="basic-default-name">Nome</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="basic-default-name" placeholder="John Doe" />
+              <input type="text" class="form-control" id="basic-default-name" placeholder="Nome" />
             </div>
           </div>
           <div class="row mb-6">

@@ -10,8 +10,10 @@ class GameAward extends Model
   use HasFactory;
 
   protected $fillable = [
+    'name',
     'condition_type',
-    'minimum_point_value',
+    'exact_point_value',
+    'winner_point_value',
     'amount',
     'game_id'
   ];

@@ -16,6 +16,8 @@ return new class extends Migration
 
       $table->string('description');
       $table->enum('type', ['OPENED', 'ADDING_NUMBER', 'CLOSED',]);
+
+      $table->string('result_numbers')->nullable();
       $table->string('numbers')->nullable();
 
       $table->unsignedBigInteger('game_id');

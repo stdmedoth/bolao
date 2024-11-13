@@ -27,6 +27,8 @@ return new class extends Migration
       $table->unsignedBigInteger('role_user_id');
       $table->foreign('role_user_id')->references('id')->on('role_users');
 
+      $table->unsignedBigInteger('invited_by_id')->nullable();
+
       $table->timestamp('email_verified_at')->nullable();
       $table->string('password');
       $table->rememberToken();

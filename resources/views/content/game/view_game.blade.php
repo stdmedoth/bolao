@@ -92,7 +92,7 @@
             <div class="form-group">
               <label>Escolha suas dezenas (máximo de 11)</label>
               <div class="number-grid mb-3">
-                @for ($i = 1; $i <= 100; $i++)
+                @for ($i = 0; $i <= 99; $i++)
                   <button type="button" class="btn btn-outline-primary m-1 number-button" data-number="{{ $i }}">{{ $i }}</button>
                   @endfor
               </div>
@@ -119,33 +119,27 @@
     <div class="tab-pane fade" id="results" role="tabpanel" aria-labelledby="results-tab">
       <h3 class="mb-4">Histórico de Resultados</h3>
 
+      @if (auth()->user()->role->level_id == 'admin')
       <form id="result_form" action="{{ route('add-game-history', $game->id) }}" method="POST">
         @csrf
         <div class="form-group">
           <label for="description">Descrição para os novos números</label>
           <input type="text" class="form-control" id="description" name="description" placeholder="Descrição para novo resultado">
         </div>
-        <!-- Grade de seleção de números -->
         <div class="form-group">
-          <label>Escolha suas dezenas (máximo de 11)</label>
-          <div class="number-grid mb-3">
-            @for ($i = 1; $i <= 100; $i++)
-              <button type="button" class="btn btn-outline-primary m-1 result_number-button" data-number="{{ $i }}">{{ $i }}</button>
-              @endfor
-          </div>
-          <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
+          <label for="result_numbers">Escolha suas dezenas (11 números por vez, separados por espaços)</label>
+          <input type="text" class="form-control" id="result_numbers" name="result_numbers" placeholder="Exemplo: 1111 2211 1211 3211 1211 4311 1211 5411 6511 2311 1211" required>
+          <small class="form-text text-muted">As dezenas devem ter dois dígitos cada e serem separadas por espaços, em grupos de 11 números.</small>
           <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
         </div>
 
         <input type="hidden" name="game_id" value=" {{$game->id}}">
 
-        <!-- Campo oculto para armazenar os números selecionados -->
-        <input type="hidden" id="result_numbers" name="result_numbers" value="">
         <button type="submit" class="btn btn-primary">Adicionar novo resultado</button>
       </form>
+      @endif
 
       <div class="card shadow-sm h-100">
-        <h5 class="card-title">Lista de resultados</h5>
         <div class="card-body">
           @if($histories->isEmpty())
           <p class="text-muted">Não há registros de resultados para este jogo.</p>
@@ -157,8 +151,8 @@
                 <div class="card-body">
                   <h3 class="card-title">{{ $history->description }}</h3>
                   <h5 class="card-text">{{ $history->created_at->format('l, d/m/Y') }}</h5>
-                  @foreach(explode(" ", $history->numbers) as $key => $number)
-                  <h5 class="card-text">{{$key+1}}º: <strong>{{ $number }}</strong></h5>
+                  @foreach(explode(" ", $history->result_numbers) as $key => $result_number)
+                  <h5 class="card-text">{{$key+1}}º: <strong>{{ $result_number }}</strong> => {{explode(" ", $history->numbers)[$key]}}</h5>
                   @endforeach
                   <p class="card-text"><small class="text-muted">Cadastrado: {{ $history->created_at->format('d/m/Y H:i') }}</small></p>
                 </div>
@@ -182,11 +176,12 @@
           <ul class="list-group list-group-flush">
             @foreach($game->awards as $award)
             <li class="list-group-item">
-              @if($award->condition_type === 'MINIMUM_POINT')
-              Apostador deve fazer <strong>pelo menos {{ $award->minimum_point_value }} pontos </strong> <br>
-              @endif
+              <h4>{{ $award->name }}</h4>
               @if($award->condition_type === 'EXACT_POINT')
-              Apostador deve fazer <strong>exatamente {{ $award->minimum_point_value }} pontos </strong> <br>
+              Quem fizer <strong> {{ $award->exact_point_value }} </strong> pontos ganha<br>
+              @endif
+              @if($award->condition_type === 'WINNER')
+              Quem fizer <strong> {{ $award->winner_point_value }} </strong> pontos vence o torneio em primeiro<br>
               @endif
               <strong>Valor do prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
             </li>
@@ -237,9 +232,84 @@
       @endif
     </div>
   </div>
+
+
+  <div class="tab-pane fade" id="winners" role="tabpanel" aria-labelledby="winners-tab">
+    @if($winners->isEmpty())
+    <p class="text-muted">Não há ganhadores ainda.</p>
+    @else
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Nome do Apostador</th>
+            <th>Números</th>
+            <th>Quantidade</th>
+            <th>Vlr. Aposta</th>
+            <th>Prêmio</th>
+            <th>Data da Aposta</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($winners as $winner)
+          <tr>
+            <td>{{ $winner->purchase->gambler_name }}</td>
+            <td>{{ $winner->purchase->numbers }}</td>
+            <td>{{ $winner->purchase->quantity }}</td>
+            <td>R$ {{ number_format($winner->purchase->price, 2, ',', '.') }}</td>
+            <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
+            <td>{{ $winner->purchase->created_at->format('d/m/Y H:i') }}</td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+    @endif
+  </div>
 </div>
 
 <script>
+  document.getElementById('result_numbers').addEventListener('input', function(e) {
+    let input = e.target.value.replace(/[^\d]/g, ''); // Remove caracteres não numéricos
+    let formatted = input.match(/.{1,4}/g) || []; // Divide em pares de dígitos
+
+    // Formata para grupos de 5 dezenas, separados por espaços
+    let output = [];
+    for (let i = 0; i < formatted.length; i++) {
+      output.push(formatted[i]);
+      // Adiciona um espaço se não for o último número do grupo de 11
+      if ((i + 1) % 5 !== 0 && i !== formatted.length - 1) {
+        output.push(' ');
+      }
+      // Adiciona uma vírgula se for o final de um grupo de 5, mas não o último número
+      if ((i + 1) % 5 === 0 && i !== formatted.length - 1) {
+        output.push(', ');
+      }
+    }
+
+    // Atualiza o valor do campo com o formato desejado
+    e.target.value = output.join('');
+  });
+
+  document.getElementById('form').addEventListener('submit', function(e) {
+    const numbersValue = document.getElementById('result_numbers').value.trim();
+    const groups = numbersValue.split(/,\s*/); // Divide grupos separados por vírgula
+
+    errorMessage = document.getElementById('error-message')
+    for (let group of groups) {
+      const numbersArray = group.trim().split(/\s+/); // Divide o grupo em números
+      if (numbersArray.length < 11) {
+        e.preventDefault(); // Evita o envio do formulário
+        errorMessage.textContent = 'Cada grupo deve conter pelo menos 5 números.';
+        errorMessage.style.display = 'block';
+        return;
+      }
+    }
+
+    errorMessage.style.display = 'none'; // Oculta a mensagem de erro se tudo estiver certo
+  });
+
+
   const selectedNumbers = [];
   const selectedResultNumbers = [];
   const maxNumbers = 11;
