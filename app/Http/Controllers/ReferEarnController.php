@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReferEarn;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,15 +15,31 @@ class ReferEarnController extends Controller
   public function index()
   {
     //
-    $refered_qnt = ReferEarn::where('refer_user_id', Auth::user()->id)->count();
-    $refered_qnt_bought = ReferEarn::where('refer_user_id', Auth::user()->id)->where('invited_user_bought', true)->count();
-    $refered_amount_earned = ReferEarn::where('refer_user_id', Auth::user()->id)->where('invited_user_bought', true)->sum('amount');
-    return view('content.refer_earn.refer_earn', [
+    $refered_qnt = ReferEarn::where('refer_user_id', Auth::user()->id)
+      ->count();
+
+    $refered_qnt_bought = ReferEarn::where('refer_user_id', Auth::user()->id)
+      ->where('invited_user_bought', true)
+      ->count();
+
+    $refered_amount_earned = ReferEarn::where('refer_user_id', Auth::user()->id)
+      ->where('invited_user_bought', true)
+      ->where('earn_paid', true)
+      ->sum('amount');
+
+    $data = [
       'refered_qnt' => $refered_qnt,
       'refered_qnt_bought' => $refered_qnt_bought,
       'refered_amount_earned' => $refered_amount_earned,
       'code' => base64_encode('refered_by_' . Auth::user()->id)
-    ]);
+    ];
+
+    if (Auth::user()->role->level_id == 'admin') {
+      $referEarns = ReferEarn::with(['referUser', 'invitedUser'])->get();
+      $data['referEarns'] = $referEarns;
+    }
+
+    return view('content.refer_earn.refer_earn', $data);
   }
 
   /**
@@ -33,8 +50,6 @@ class ReferEarnController extends Controller
     $code = $request->input('code');
     $code = base64_decode($code);
     $refered_by_id = str_replace('refered_by_', "", $code);
-
-
 
     return view("content.authentications.auth-register-basic", ['refered_by_id' => $refered_by_id]);
   }
@@ -77,5 +92,38 @@ class ReferEarnController extends Controller
   public function destroy(ReferEarn $referEarn)
   {
     //
+  }
+
+  public function pay(Request $request, $id)
+  {
+
+    $refer = ReferEarn::find($id);
+
+    $user = User::find($refer->refer_user_id);
+    $user->balance +=  $refer->amount;
+    $user->save();
+
+    $refer->earn_paid = true;
+    $refer->save();
+
+
+    return redirect(route('refer_earn-view'));
+  }
+
+
+  public function payback(Request $request, $id)
+  {
+
+    $refer = ReferEarn::find($id);
+
+    $user = User::find($refer->refer_user_id);
+    $user->balance -=  $refer->amount;
+    $user->save();
+
+    $refer->earn_paid = false;
+    $refer->save();
+
+
+    return redirect(route('refer_earn-view'));
   }
 }

@@ -21,7 +21,7 @@ return new class extends Migration
       $table->datetime('open_at');
       $table->datetime('close_at');
 
-      $table->enum('status', ['OPENED', 'CLOSED',]);
+      $table->enum('status', ['OPENED', 'CLOSED', 'FINISHED']);
       $table->boolean('active');
       $table->timestamps();
     });

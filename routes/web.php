@@ -100,12 +100,13 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
 
-
+  Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
+  Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');
   Route::get('/indique_ganhe', [ReferEarnController::class, 'index'])->name('refer_earn-view');
 });
 
+Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-register');
 
-Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-view');
 
 // Main Page Route
 

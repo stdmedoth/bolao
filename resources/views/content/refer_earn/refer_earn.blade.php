@@ -84,4 +84,49 @@
     });
   }
 </script>
+
+@if (auth()->user()->role->level_id == 'admin')
+<div class="container">
+  <h1>Convites</h1>
+
+  @if (session('success'))
+  <div class="alert alert-success">{{ session('success') }}</div>
+  @endif
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Vendedor</th>
+        <th>Convidado</th>
+        <th>Convidado Comprou?</th>
+        <th>Pago?</th>
+        <!--<th>Valor</th>-->
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach ($referEarns as $earn)
+      <tr>
+        <td>{{ $earn->id }}</td>
+        <td>{{ $earn->referUser->name ?? 'N/A' }}</td>
+        <td>{{ $earn->invitedUser->name ?? 'N/A' }}</td>
+        <td>{{ $earn->invited_user_bought ? 'Sim' : 'Não' }}</td>
+        <td>{{ $earn->earn_paid ? 'Sim' : 'Não' }}</td>
+        <!--<td>{{ $earn->amount }}</td>-->
+        <td>
+          @if( $earn->earn_paid )
+          <a href="{{ route('refer_earns_payback', $earn->id) }}" class="btn btn-warning">Estornar</a>
+          @endif
+          @if( !$earn->earn_paid )
+          <a href="{{ route('refer_earns_pay', $earn->id) }}" class="btn btn-success">Pagar</a>
+          @endif
+        </td>
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
+</div>
+@endif
+
 @endsection

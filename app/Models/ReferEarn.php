@@ -16,4 +16,14 @@ class ReferEarn extends Model
     'earn_paid',
     'amount',
   ];
+
+  public function referUser()
+  {
+    return $this->belongsTo(User::class, 'refer_user_id');
+  }
+
+  public function invitedUser()
+  {
+    return $this->belongsTo(User::class, 'invited_user_id');
+  }
 }

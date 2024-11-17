@@ -39,6 +39,7 @@ class RegisterBasic extends Controller
           'refer_user_id' =>  $request->input('refered_by_id'),
           'invited_user_id' => $user->id,
           'invited_user_bought' => FALSE,
+          'amount' => 10,
           'earn_paid' => FALSE,
         ]);
       }
