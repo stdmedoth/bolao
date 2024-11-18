@@ -27,6 +27,15 @@
       @enderror
     </div>
 
+
+    <div class="form-group">
+      <label for="document">Email:</label>
+      <input type="document" name="document" class="form-control" value="{{ $user->document }}" required>
+      @error('document')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+    </div>
+
     <div class="form-group">
       <label for="email">Email:</label>
       <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>

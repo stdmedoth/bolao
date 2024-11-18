@@ -21,8 +21,11 @@ return new class extends Migration
     Schema::create('users', function (Blueprint $table) {
       $table->id();
       $table->string('name');
+      $table->string('document');
       $table->string('email')->unique();
       $table->float('balance')->default(0);
+
+      $table->string('external_finnancial_id')->nullable();
 
       $table->unsignedBigInteger('role_user_id');
       $table->foreign('role_user_id')->references('id')->on('role_users');

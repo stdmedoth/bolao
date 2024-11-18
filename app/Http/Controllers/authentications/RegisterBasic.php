@@ -21,6 +21,7 @@ class RegisterBasic extends Controller
     // Validação dos dados de entrada
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
+      'document' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:8',
     ]);
@@ -30,6 +31,7 @@ class RegisterBasic extends Controller
       $user = User::create([
         'name' => $validatedData['name'],
         'email' => $validatedData['email'],
+        'document' => $validatedData['document'],
         'password' => Hash::make($validatedData['password']),
         'role_user_id' => 3,
       ]);

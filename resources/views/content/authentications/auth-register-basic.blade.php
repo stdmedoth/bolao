@@ -29,15 +29,19 @@
 
           <form id="formAuthentication" class="mb-6" action="{{route('register-validate')}}" method="POST">
             <div class="mb-6">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="name" name="name" placeholder="Enter your username" autofocus>
+              <label for="username" class="form-label">Nome</label>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Insira seu nome" autofocus>
+            </div>
+            <div class="mb-6">
+              <label for="document" class="form-label">Documento</label>
+              <input type="text" class="form-control" id="document" name="document" placeholder="Insira seu documento" autofocus>
             </div>
             <div class="mb-6">
               <label for="email" class="form-label">Email</label>
               <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email">
             </div>
             <div class="mb-6 form-password-toggle">
-              <label class="form-label" for="password">Password</label>
+              <label class="form-label" for="password">Senha</label>
               <div class="input-group input-group-merge">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}" />
                 <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password" />
