@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Deposit;
+use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -88,6 +89,9 @@ class DepositController extends Controller
 
   public function pay_credit_card(Request $request)
   {
+
+    $data = $request->all();
+
     $user_id = Auth::user()->id;
     $user = User::find($user_id);
 
@@ -106,7 +110,7 @@ class DepositController extends Controller
 
       $client = $asaas->Cliente()->create($client_data);
       if (isset($client->errors)) {
-        return redirect('/deposito')->withErrors(['error' => array_map(fn($e)=> $e->description, $client->errors)]);
+        return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
       }
       $user->update(['external_finnancial_id' => $client->id]);
       $user->external_finnancial_id = $client->id;
@@ -130,21 +134,31 @@ class DepositController extends Controller
         'name'           => $user->name,
         'email'          => $user->email,
         'cpfCnpj'        => $user->document,
-        'postalCode'     => $user->postal_code,
+        'phone'          => $data['phone'],
+        'postalCode'     => $data['postal_code'],
+        'addressNumber'     => $data['address_number'],
       ],
     ];
 
     $cobranca = $asaas->Cobranca()->create($paymentData);
 
     if (isset($cobranca->errors)) {
-      return redirect('/deposito')->withErrors(['error' => array_map(fn($e)=> $e->description, $cobranca->errors)]);
+      return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
 
+    $user->balance += $amount;
+    $user->save();
+
+    Transactions::create(
+      [
+        "type" => 'DEPOSIT',
+        "amount" => $amount,
+        "user_id" => $user->id,
+      ]
+    );
+
     // Retorna a visão de sucesso
-    return view('content.deposit.success', [
-      'amount' => $amount,
-      'payment_id' => $cobranca->id,
-    ]);
+    return redirect('/deposito');
   }
 
 

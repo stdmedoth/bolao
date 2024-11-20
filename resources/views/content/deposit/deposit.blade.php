@@ -30,75 +30,104 @@
 <div class="card">
   <h5 class="card-header">Depositar</h5>
   <div class="card-body">
-    <div class="row">
-      @if(isset($pix))
-      <div class="col">
-        <img src="data:image/jpeg;base64, {{ $pix }}" />
-        <p id="pix_data_copy">{{$copy_paste}}</p>
-        <button onclick="copyToClipboard()">Copiar</button>
-      </div>
-      @endif
+    <form id="depositForm" action="{{ route('deposit-create-pix') }}" method="POST">
+      <div class="row">
+        @if(isset($pix))
+        <div class="col" id="pix_qrcode_image">
+          <img src="data:image/jpeg;base64, {{ $pix }}" />
+          <p id="pix_data_copy">{{$copy_paste}}</p>
+          <button onclick="copyToClipboard()">Copiar</button>
+        </div>
+        @endif
 
-      <div class="col">
-        <form id="depositForm" action="{{ route('deposit-create-pix') }}" method="POST">
-          @csrf
-          <div class="form-group">
-            <label for="amount" class="form-label">Valor do Depósito</label>
-            <input type="number" class="form-control" id="amount" name="amount" placeholder="Digite o valor" value="{{ isset($amount) ? $amount : '' }}" required>
+        <div class="col">
+          <div class="row">
+            @csrf
+            <div class="form-group">
+              <label for="amount" class="form-label">Valor do Depósito</label>
+              <input type="number" class="form-control" id="amount" name="amount" min="20" placeholder="Digite o valor" value="{{ isset($amount) ? $amount : '' }}" required>
+            </div>
+            <div class="form-group">
+              <label for="payment_method" class="form-label">Forma de Pagamento</label>
+              <select class="form-control" name="payment_method" id="payment_method">
+                <option value="pix">Pix</option>
+                <option value="credit_card">Cartão Credito</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="payment_method" class="form-label">Forma de Pagamento</label>
-            <select class="form-control" name="payment_method" id="payment_method">
-              <option value="pix">Pix</option>
-              <option value="credit_card">Cartão Credito</option>
-            </select>
+          <div class="row">
+            <div id="credit_card_address_info" class="card">
+            <div class="form-group">
+                <label for="phone" class="form-label">Celular (DDD)</label>
+                <input class="form-control" type="text" name="phone" value="{{auth()->user()->phone}}">
+              </div>  
+            <div class="form-group">
+                <label for="postal_code" class="form-label">CEP</label>
+                <input class="form-control" type="text" name="postal_code" value="{{auth()->user()->postal_code}}">
+              </div>
+              <div class="form-group">
+                <label for="address_number" class="form-label">Numero Endereço</label>
+                <input class="form-control" type="text" name="address_number" value="{{auth()->user()->address_number}}">
+              </div>
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary">Depositar</button>
-        </form>
-      </div>
 
-      <div class="col">
-        <div id="credit_card_infos" class="card">
-          <div class="form-group">
-            <label for="cc_name" class="form-label">Nome no cartão</label>
-            <input class="form-control" type="text" name="cc_name" value="{{auth()->user()->cc_name}}">
-          </div>
-          <div class="form-group">
-            <label for="cc_number" class="form-label">Número no cartão</label>
-            <input class="form-control" type="text" name="cc_number" value="{{auth()->user()->cc_number}}">
-          </div>
-          <div class="form-group">
-            <label for="cc_expiry_month" class="form-label">Mês de expiração</label>
-            <input class="form-control" type="number" name="cc_expiry_month" value="{{auth()->user()->cc_expiry_month}}">
-          </div>
-          <div class="form-group">
-            <label for="cc_expiry_year" class="form-label">Ano de expiração</label>
-            <input class="form-control" type="number" name="cc_expiry_year" value="{{auth()->user()->cc_expiry_year}}">
-          </div>
-          <div class="form-group">
-            <label for="cc_ccv" class="form-label">Código de Segurança</label>
-            <input class="form-control" type="number" name="cc_ccv" value="{{auth()->user()->cc_ccv}}">
+        </div>
+
+        <div class="col">
+          <div id="credit_card_infos" class="card">
+            <div class="form-group">
+              <label for="cc_name" class="form-label">Nome no cartão</label>
+              <input class="form-control" type="text" name="cc_name" value="{{auth()->user()->cc_name}}">
+            </div>
+            <div class="form-group">
+              <label for="cc_number" class="form-label">Número no cartão</label>
+              <input class="form-control" type="text" name="cc_number" value="{{auth()->user()->cc_number}}">
+            </div>
+            <div class="form-group">
+              <label for="cc_expiry_month" class="form-label">Mês de expiração</label>
+              <input class="form-control" type="number" name="cc_expiry_month" value="{{auth()->user()->cc_expiry_month}}">
+            </div>
+            <div class="form-group">
+              <label for="cc_expiry_year" class="form-label">Ano de expiração</label>
+              <input class="form-control" type="number" name="cc_expiry_year" value="{{auth()->user()->cc_expiry_year}}">
+            </div>
+            <div class="form-group">
+              <label for="cc_ccv" class="form-label">Código de Segurança</label>
+              <input class="form-control" type="number" name="cc_ccv" value="{{auth()->user()->cc_ccv}}">
+            </div>
           </div>
         </div>
       </div>
-
-    </div>
+      <button type="submit" class="btn btn-primary">Depositar</button>
+    </form>
   </div>
 </div>
 <!--/ Basic Bootstrap Table -->
 
 <script>
   document.getElementById("credit_card_infos").style.display = 'none';
+  document.getElementById("credit_card_address_info").style.display = 'none';
+
   document.getElementById('payment_method').addEventListener('change', function() {
     const form = document.getElementById('depositForm');
     const selectedMethod = this.value;
 
     if (selectedMethod === 'pix') {
       form.action = "{{ route('deposit-create-pix') }}";
+      if(document.getElementById("pix_qrcode_image")){
+        document.getElementById("pix_qrcode_image").style.display = 'block';
+      }
       document.getElementById("credit_card_infos").style.display = 'none';
+      document.getElementById("credit_card_address_info").style.display = 'none';
+
     } else if (selectedMethod === 'credit_card') {
       form.action = "{{ route('deposit-create-credit-card') }}";
+      if(document.getElementById("pix_qrcode_image")){
+        document.getElementById("pix_qrcode_image").style.display = 'none';
+      }
       document.getElementById("credit_card_infos").style.display = 'block';
+      document.getElementById("credit_card_address_info").style.display = 'block';
     }
   });
 

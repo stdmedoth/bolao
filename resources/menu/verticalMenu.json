@@ -49,8 +49,8 @@
       "target": "_blank"
     },
     {
-      "url": "/extrato_saque",
-      "name": "Extrato de Saque",
+      "url": "/extrato",
+      "name": "Extrato",
       "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-list-ul",
       "slug": "app-email",

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReferEarn;
+use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,11 +28,28 @@ class ReferEarnController extends Controller
       ->where('earn_paid', true)
       ->sum('amount');
 
+    $referEarns = ReferEarn::where('refer_user_id', Auth::user()->id)
+                    ->get();
+
+    // Traduções para os status
+    $statusTranslations = [
+      'invited_user_bought' => [
+        true => 'Sim',
+        false => 'Não',
+      ],
+      'earn_paid' => [
+        true => 'Pago',
+        false => 'Pendente',
+      ],
+    ];
+
     $data = [
       'refered_qnt' => $refered_qnt,
       'refered_qnt_bought' => $refered_qnt_bought,
       'refered_amount_earned' => $refered_amount_earned,
-      'code' => base64_encode('refered_by_' . Auth::user()->id)
+      'code' => base64_encode('refered_by_' . Auth::user()->id),
+      'referEarns' => $referEarns,
+      'statusTranslations' => $statusTranslations,
     ];
 
     if (Auth::user()->role->level_id == 'admin') {
@@ -106,6 +124,13 @@ class ReferEarnController extends Controller
     $refer->earn_paid = true;
     $refer->save();
 
+    Transactions::create(
+      [
+        "type" => 'REFER_EARN',
+        "amount" => $refer->amount,
+        "user_id" => $user->id,
+      ]
+    );
 
     return redirect(route('refer_earn-view'));
   }
@@ -123,6 +148,13 @@ class ReferEarnController extends Controller
     $refer->earn_paid = false;
     $refer->save();
 
+    Transactions::create(
+      [
+        "type" => 'REFER_EARN_REVERSAL',
+        "amount" => $refer->amount,
+        "user_id" => $user->id,
+      ]
+    );
 
     return redirect(route('refer_earn-view'));
   }

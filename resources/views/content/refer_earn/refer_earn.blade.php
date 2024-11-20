@@ -85,6 +85,48 @@
   }
 </script>
 
+
+<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+  <h5 class="card-header">Bônus de Indicação</h5>
+  <div class="row mt-3">
+    <div class="col-12">
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuário Indicador</th>
+              <th>Usuário Convidado</th>
+              <th>Convidado Comprou?</th>
+              <th>Bônus Pago?</th>
+              <th>Valor do Bônus</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($referEarns as $referEarn)
+            <tr>
+              <td>{{ $referEarn->id }}</td>
+              <td>{{ $referEarn->referUser->name }}</td>
+              <td>{{ $referEarn->invitedUser->name }}</td>
+              <td>{{ $statusTranslations['invited_user_bought'][$referEarn->invited_user_bought] ?? 'Indefinido' }}</td>
+              <td>{{ $statusTranslations['earn_paid'][$referEarn->earn_paid] ?? 'Indefinido' }}</td>
+              <td>{{ $referEarn->amount ? 'R$ ' . number_format($referEarn->amount, 2, ',', '.') : 'N/A' }}</td>
+              <td>{{ $referEarn->created_at }}</td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="7" class="text-center">Nenhum registro encontrado.</td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 @if (auth()->user()->role->level_id == 'admin')
 <div class="container">
   <h1>Convites</h1>
@@ -106,7 +148,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach ($referEarns as $earn)
+      @forelse ($referEarns as $earn)
       <tr>
         <td>{{ $earn->id }}</td>
         <td>{{ $earn->referUser->name ?? 'N/A' }}</td>
@@ -123,7 +165,11 @@
           @endif
         </td>
       </tr>
-      @endforeach
+      @empty
+      <tr>
+        <td colspan="7" class="text-center">Nenhum registro encontrado.</td>
+      </tr>
+      @endforelse
     </tbody>
   </table>
 </div>

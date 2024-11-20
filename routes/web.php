@@ -49,6 +49,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReferEarnController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
+use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\WithdrawalController;
 
 // authentication
@@ -104,6 +105,8 @@ Route::middleware('auth:web')->group(function () {
   
   
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
+
+  Route::get('/extrato', [TransactionsController::class, 'index'])->name('extract');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
   Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');
