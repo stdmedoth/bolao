@@ -57,7 +57,7 @@
       "target": "_blank"
     },
     {
-      "url": "/meu_cadastro",
+      "url": "/usuarios/me",
       "name": "Meu Cadastro",
       "only_admin": false,
       "icon": "menu-icon tf-icons bx bx-user",

@@ -23,11 +23,24 @@ class User extends Authenticatable
   protected $fillable = [
     'name',
     'email',
+    'phone',
     'document',
     'external_finnancial_id',
     'password',
     'role_user_id',
-    'invited_by_id'
+    'invited_by_id',
+
+    'cc_name',
+    'cc_number',
+    'cc_expiry_month',
+    'cc_expiry_year',
+    'cc_ccv',
+
+    'pix_key',
+
+    'postal_code',
+    'address_number',
+    
   ];
 
   /**

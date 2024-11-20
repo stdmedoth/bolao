@@ -10,7 +10,6 @@ class UserAwards extends Model
   use HasFactory;
 
   protected $fillable = [
-    'purchase_id',
     'game_id',
     'user_id',
     'game_award_id',
@@ -27,11 +26,6 @@ class UserAwards extends Model
   public function game_award()
   {
     return $this->belongsTo(GameAward::class, 'game_award_id', 'id');
-  }
-
-  public function purchase()
-  {
-    return $this->belongsTo(Purchase::class, 'purchase_id', 'id');
   }
 
   public function user()

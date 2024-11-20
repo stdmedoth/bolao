@@ -11,10 +11,20 @@ use App\Models\GameHistory;
 use App\Models\Purchase;
 use App\Models\ReferEarn;
 use App\Models\UserAwards;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
+
+  public function editMeForm(Request $request)
+  {
+    $user = Auth::user();
+
+    $roles = RoleUser::all();
+
+    return view('content.users.user_update', compact('user', 'roles'));
+  }
 
   public function editUserForm($id)
   {
@@ -150,6 +160,14 @@ class AdminController extends Controller
       }
     }
 
+    $game_history = GameHistory::create([
+      "description" => "JOGO ABERTO",
+      "numbers" => "",
+      "type" => "OPENED",
+      'game_id' => $game->id,
+    ]);
+
+
     return redirect(route('show-game', ['id' => $game->id]))->with('success', 'Jogo criado com sucesso, juntamente com os prêmios!');
   }
 
@@ -170,151 +188,124 @@ class AdminController extends Controller
     return redirect(route('show-game', ['id' => $game->id]));
   }
 
-  // Escolher os ganhadores para e atribuir os prêmios
   public function addGameHistory(Request $request, $id)
   {
     $game = Game::findOrFail($id);
+
+    // Verificar se o jogo está fechado
     if ($game->status !== 'CLOSED') {
-      return redirect()->back()->withErrors(['error' => [
-        "Jogo ainda está aberto"
-      ]]);
+      return redirect()->back()->withErrors(['error' => ["Jogo ainda está aberto"]]);
     }
 
-    $result_numbers_arr = explode(", ", $request->result_numbers);
-    foreach ($result_numbers_arr as $result_numbers) {
-      $result_numbers = explode(" ", $result_numbers);
+    $resultNumbersArray = explode(", ", $request->result_numbers);
 
-      // vê quando que o concurso foi aberto pela ultima vez
-      $last_closed_history = GameHistory::where('game_id', $game->id)
+    foreach ($resultNumbersArray as $resultNumbers) {
+      $resultNumbers = explode(" ", $resultNumbers);
+
+      // Última vez que o concurso foi aberto
+      $lastClosedHistory = GameHistory::where('game_id', $game->id)
         ->where('type', 'OPENED')
-        ->orderBy('created_at', "DESC")->first();
+        ->orderBy('created_at', 'DESC')
+        ->first();
 
-      $added_numbers  = [];
-      if ($last_closed_history) {
-        // Pega todos os numeros que já foram inputados até o momento
-        $added_numbers_history = GameHistory::where('game_id', $game->id)
-          ->where('type', 'ADDING_NUMBER')
-          ->where('created_at', '>=', $last_closed_history->created_at)->get();
-        $added_numbers = array_map(fn($e) => explode(" ", $e->numbers), $added_numbers_history->toArray());
-        $added_numbers = array_merge(...$added_numbers);
+      // Pegar números já inputados
+      $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
+        ->where('type', 'ADDING_NUMBER');
+
+      if ($lastClosedHistory) {
+        $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
       }
+      $gameHistories = $gameHistoriesBuilder->get();
 
+      $addedNumbers = $gameHistories->pluck('numbers')
+        ->flatMap(fn($numbers) => explode(" ", $numbers))
+        ->toArray();
 
-      $numbers = [];
-      foreach ($result_numbers as $result_number) {
-        $numbers[] = intval(substr($result_number, -2));
-      }
-      // Adiciona os novos numeros
-      $game_history = GameHistory::create([
+      // Extrair os últimos dois dígitos de cada número
+      $numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
+
+      // Adicionar os novos números
+      GameHistory::create([
         "description" => $request->description,
         "type" => 'ADDING_NUMBER',
-        "result_numbers" => implode(" ", $result_numbers),
+        "result_numbers" => implode(" ", $resultNumbers),
         "numbers" => implode(" ", $numbers),
         'game_id' => $game->id,
       ]);
 
-      // Remove os numeros repetidos
-      $commonElements = array_intersect($added_numbers, $numbers);
-      $gameNumbers = array_diff($numbers, $commonElements);
-
+      // Remover números duplicados
+      $uniqueNumbers = array_diff($addedNumbers, $numbers);
 
       // Obter todas as compras relacionadas ao jogo
-      $builder = Purchase::where('game_id', $game->id)->whereIn('status', ['PAID',]);
-      if ($last_closed_history) {
-        $builder = $builder->where('created_at', '>=', $last_closed_history->created_at);
+      $purchasesBuilder = Purchase::where('game_id', $game->id)
+        ->whereIn('status', ['PAID']);
+
+      if ($lastClosedHistory) {
+        $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
       }
-      $purchases = $builder->get();
+      $purchases = $purchasesBuilder->get();
 
-      // Verificar cada compra para ver se se qualifica para algum prêmio
+      // Agrupar pontos por usuário
+      $userPoints = [];
+      $purchasesNumbers = [];
       foreach ($purchases as $purchase) {
-        $purchaseNumbers = explode(' ', $purchase->numbers); // Números apostados
-        foreach ($purchaseNumbers as $key => $purchaseNumber) {
-          $purchaseNumbers[$key] = intval($purchaseNumbers[$key]);
-        }
+        $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+        //$purchaseNumbers = array_diff($purchaseNumbers, $addedNumbers); // Remover números já considerados
 
-        // If the number is repeated, dont consider again
-        foreach ($purchaseNumbers as $key => $number) {
-          if (in_array($number, $added_numbers)) {
-            unset($purchaseNumbers[$key]);
-            $purchaseNumbers = array_values($purchaseNumbers);
-          }
-        }
+        $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+        $purchasesNumbers[] = $purchaseNumbers;
+        // Adicionar os pontos para o usuário
+        $userPoints[$purchase->user_id] = (isset($userPoints[$purchase->user_id]) ? $userPoints[$purchase->user_id] :  0) + count($matchedNumbers);
+      }
 
-        $matchedNumbers = array_intersect($gameNumbers, $purchaseNumbers);
-        $pointsAchieved = count($matchedNumbers);
-
-        $winners = [];
-        // Verificar as condições dos prêmios definidos no GameAwards
-        $awards = GameAward::where('game_id', $game->id)->get();
-
-        foreach ($awards as $award) {
-          $winners = [];
-
-          foreach ($purchases as $purchase) {
-            // Verifica se o usuário se qualifica para o prêmio
-            $purchaseNumbers = explode(' ', $purchase->numbers);
-            $matchedNumbers = array_intersect($gameNumbers, $purchaseNumbers);
-            $pointsAchieved = count($matchedNumbers);
-
-            if (($award->condition_type === 'EXACT_POINT' && $pointsAchieved == $award->exact_point_value) ||
-              ($award->condition_type === 'WINNER' && $pointsAchieved == $award->winner_point_value)
-            ) {
-
-
-              // Verifica se algum outro usuario já nao ganhou esse mesmo premio depois de o jogo ter sido aberto pela ultima vez
-              $builder = UserAwards::where('game_id', $game->id)
-                ->where('game_award_id', $award->id);
-              if ($last_closed_history) {
-                $builder = $builder->where('created_at', '>=', $last_closed_history->created_at);
-              }
-              if ($builder->exists()) {
-                $winners[] = [
-                  'purchase_id' => $purchase->id,
-                  'user_id' => $purchase->user_id,
-                  'game_id' => $game->id,
-                  'game_award_id' => $award->id,
-                ];
-              }
+      $winners = [];
+      // Verificar condições de prêmios e distribuir
+      $awards = GameAward::where('game_id', $game->id)->get();
+      foreach ($awards as $award) {
+        foreach ($userPoints as $userId => $totalPoints) {
+          if (($award->condition_type === 'EXACT_POINT' && $totalPoints == $award->exact_point_value) ||
+            ($award->condition_type === 'WINNER' && $totalPoints >= $award->winner_point_value)
+          ) {
+            
+            // Verificar se o prêmio já foi concedido
+            $builder =  UserAwards::where('game_id', $game->id)
+              ->where('game_award_id', $award->id)
+              ->where('user_id', $userId);
+            if ($lastClosedHistory) {
+              $builder = $builder->where('created_at', '>=', optional($lastClosedHistory)->created_at);
             }
-          }
 
-          // Se houver múltiplos vencedores, dividir o prêmio
-          if (count($winners) > 1) {
-            $awardAmountPerWinner = $award->amount / count($winners);
-            foreach ($winners as &$winner) {
-              $winner['amount'] = $awardAmountPerWinner;
-              UserAwards::create($winner);
+            $awardExists = $builder->exists();
 
+            if (!$awardExists) {
+              UserAwards::create([
+                'user_id' => $userId,
+                'game_id' => $game->id,
+                'game_award_id' => $award->id,
+                'amount' => $award->amount,
+              ]);
 
-              $has_refer_earn = ReferEarn::where('refer_user_id')->where('invited_user_bought', false)->exists();
-              if ($has_refer_earn) {
-                $refer_earn = ReferEarn::where('refer_user_id')->where('invited_user_bought', false)->first();
-                $refer_earn->invited_user_bought = true;
-                $refer_earn->save();
-              }
-              /*
-              // Atualizar o saldo do usuário
-              $user = User::find($winner['user_id']);
-              $user->balance += $awardAmountPerWinner;
-              $user->save();
-              */
+              // Atualizar indicação e ganhos de referência
+              $this->updateReferEarn($userId);
             }
-          } elseif (count($winners) === 1) {
-            // Se houver apenas um vencedor, ele recebe o prêmio total
-            $winner = $winners[0];
-            $winner['amount'] = $award->amount;
-            UserAwards::create($winner);
-
-            /*
-            $user = User::find($winner['user_id']);
-            $user->balance += $award->amount;
-            $user->save();
-            */
           }
         }
       }
     }
 
     return redirect(route('show-game', ['id' => $game->id]));
+  }
+
+  // Atualizar indicação e ganhos de referência
+  private function updateReferEarn($userId)
+  {
+    $referEarn = ReferEarn::where('refer_user_id', $userId)
+      ->where('invited_user_bought', false)
+      ->first();
+
+    if ($referEarn) {
+      $referEarn->invited_user_bought = true;
+      $referEarn->save();
+    }
   }
 }

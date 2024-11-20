@@ -23,7 +23,20 @@ return new class extends Migration
       $table->string('name');
       $table->string('document');
       $table->string('email')->unique();
+      $table->string('phone')->unique();
+      
       $table->float('balance')->default(0);
+
+      $table->string('cc_name')->nullable();
+      $table->string('cc_number')->nullable();
+      $table->string('cc_expiry_month')->nullable();
+      $table->string('cc_expiry_year')->nullable();
+      $table->string('cc_ccv')->nullable();
+
+      $table->string('postal_code')->nullable();
+      $table->string('address_number')->nullable();
+
+      $table->string('pix_key')->nullable();
 
       $table->string('external_finnancial_id')->nullable();
 

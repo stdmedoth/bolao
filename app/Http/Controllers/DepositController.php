@@ -29,6 +29,7 @@ class DepositController extends Controller
   }
 
 
+
   public function create_pix(Request $request)
   {
     $user_id = Auth::user()->id;
@@ -37,26 +38,26 @@ class DepositController extends Controller
     $amount = $request->amount;
 
     // Instancie o cliente Asaas usando a instância do adapter previamente criada.
-    $asaas = new Asaas(env('ASAAS_API_KEY', 'ASAAS_API_ENV'));
+    $asaas = new Asaas(env('ASAAS_API_KEY'), env('ASAAS_API_ENV'));
 
 
-    if(!$user->external_finnancial_id){
+    if (!$user->external_finnancial_id) {
       $client_data = [
         "name"              =>          $user->name,
         "cpfCnpj"           =>          $user->document,
         "email"             =>          $user->email,
-        "phone"             =>          $user->phone,
-        "mobilePhone"       =>          $user->cellphone,
-        "externalReference" =>          $user->account . "_" . $user->id
+        //"phone"             =>          $user->phone,
+        //"mobilePhone"       =>          $user->cellphone,
+        //"externalReference" =>          $user->account . "_" . $user->id
       ];
-  
-      $client = $asaas->Cliente()->create($client_data);
 
-      $user->update(['external_finnancial_id' => $client->getId()]);
+      $client = $asaas->Cliente()->create($client_data);
+      $user->update(['external_finnancial_id' => $client->id]);
+      $user->external_finnancial_id = $client->id;
     }
 
     $dadosCobranca = [
-      'customer'             => $client->external_finnancial_id,
+      'customer'             => $user->external_finnancial_id,
       'billingType'          => 'PIX',
       'value'                => $amount,
       'dueDate'              => date("Y-m-d H:i:s", strtotime("+1 day")), // TODO: Estipular vencimento em Y-m-d
@@ -72,14 +73,97 @@ class DepositController extends Controller
     ];
 
     $cobranca = $asaas->Cobranca()->create($dadosCobranca);
-
-    $Pix = $asaas->Pix()->create($cobranca->getId());
-    if ($Pix->success) {
-      return view('content.deposit.deposit', ['pix' => $Pix->encodedImage, 'value' => $amount]);
-    }else{
-      
+    if (isset($cobranca->error)) {
+      return redirect('/deposito');
     }
 
+    $Pix = $asaas->Pix()->create($cobranca->id);
+    if ($Pix->success) {
+      return view('content.deposit.deposit', ['pix' => $Pix->encodedImage, 'amount' => $amount, 'copy_paste' => $Pix->payload]);
+    }
+
+
+    return redirect('/deposito');
+  }
+
+  public function pay_credit_card(Request $request)
+  {
+    $user_id = Auth::user()->id;
+    $user = User::find($user_id);
+
+    $amount = $request->amount;
+
+    // Instancie o cliente Asaas
+    $asaas = new Asaas(env('ASAAS_API_KEY'), env('ASAAS_API_ENV'));
+
+    // Criar cliente no Asaas, se ainda não existir
+    if (!$user->external_finnancial_id) {
+      $client_data = [
+        "name"    => $user->name,
+        "cpfCnpj" => $user->document,
+        "email"   => $user->email,
+      ];
+
+      $client = $asaas->Cliente()->create($client_data);
+      if (isset($client->errors)) {
+        return redirect('/deposito')->withErrors(['error' => array_map(fn($e)=> $e->description, $client->errors)]);
+      }
+      $user->update(['external_finnancial_id' => $client->id]);
+      $user->external_finnancial_id = $client->id;
+    }
+
+    // Dados do pagamento usando informações armazenadas no usuário
+    $paymentData = [
+      'customer'         => $user->external_finnancial_id,
+      'billingType'      => 'CREDIT_CARD',
+      'value'            => $amount,
+      'dueDate'          => date("Y-m-d H:i:s", strtotime("+1 day")),
+      'description'      => "Depósito de saldo com cartão de crédito",
+      'creditCard'       => [
+        'holderName'      => $user->cc_name,
+        'number'          => $user->cc_number,
+        'expiryMonth'     => $user->cc_expiry_month,
+        'expiryYear'      => $user->cc_expiry_year,
+        'ccv'             => $user->cc_ccv,
+      ],
+      'creditCardHolderInfo' => [
+        'name'           => $user->name,
+        'email'          => $user->email,
+        'cpfCnpj'        => $user->document,
+        'postalCode'     => $user->postal_code,
+      ],
+    ];
+
+    $cobranca = $asaas->Cobranca()->create($paymentData);
+
+    if (isset($cobranca->errors)) {
+      return redirect('/deposito')->withErrors(['error' => array_map(fn($e)=> $e->description, $cobranca->errors)]);
+    }
+
+    // Retorna a visão de sucesso
+    return view('content.deposit.success', [
+      'amount' => $amount,
+      'payment_id' => $cobranca->id,
+    ]);
+  }
+
+
+
+  public function webhook(Request $request)
+  {
+    $data = $request->all();
+    switch ($data['event']) {
+      case 'PAYMENT_RECEIVED':
+        $customer_id = $data['payment']['customer'];
+        $user = User::where('external_finnancial_id', $customer_id)->first();
+        if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 400);
+
+        $user->balance += $data['payment']['value'];
+        $user->save();
+
+        break;
+    }
+    return response()->json(['message' => 'OK'], 200);
   }
 
   /**

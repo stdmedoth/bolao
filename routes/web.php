@@ -80,6 +80,7 @@ Route::middleware('auth:web')->group(function () {
 
   //edit
   Route::get('/usuarios/edit/{id}', [AdminController::class, 'editUserForm'])->name('edit-user-form');
+  Route::get('/usuarios/me', [AdminController::class, 'editMeForm'])->name('edit-user-me-form');
   Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
 
 
@@ -98,6 +99,10 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
+  Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
+  Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');
+  
+  
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
@@ -106,6 +111,9 @@ Route::middleware('auth:web')->group(function () {
 });
 
 Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-register');
+
+Route::post('/deposit/webhook', [DepositController::class, 'webhook'])->name('deposit-webhook');
+
 
 
 // Main Page Route

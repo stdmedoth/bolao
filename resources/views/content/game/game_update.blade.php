@@ -58,6 +58,7 @@
     </div>
 
 
+    @if (isset($awards))
     <h3>Prêmios</h3>
     <div id="awards-container">
       @foreach ($awards as $award)
@@ -95,8 +96,8 @@
         <br><br>
       </div>  
       @endforeach
-    </div>
-
+    </div>  
+    @endif
 
     <button type="submit" class="btn btn-primary">Atualizar Jogo</button>
   </form>

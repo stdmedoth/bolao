@@ -190,6 +190,9 @@
             @if($award->condition_type === 'WINNER')
             Quem fizer <strong> {{ $award->winner_point_value }} </strong> pontos vence o torneio em primeiro<br>
             @endif
+            @if($award->condition_type === 'LOWEST_POINT')
+            Quem fizer <strong> menos </strong> pontos ganha<br>
+            @endif
             <strong>Valor do prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
           </li>
           @endforeach
@@ -200,7 +203,24 @@
   </div>
 
   <div class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
-    <p>Conteúdo das regras...</p>
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="card-title fw-bold text-center mb-3">Regulamento</h3>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">1. Escolha suas dezenas de 0 a 99.</li>
+          <li class="list-group-item">2. Bolão concorre pelas loterias PT, PTN e Federal.</li>
+          <li class="list-group-item">3. Só valem as dezenas do 1º ao 5º, conforme mostrado no exemplo.</li>
+          <li class="list-group-item">4. Quem acertar as 11 dezenas primeiro ganha o bolão.</li>
+          <li class="list-group-item">5. Segundo lugar é quem acertar 10 dezenas.</li>
+          <li class="list-group-item">6. Não havendo ninguém com 10 dezenas, o segundo lugar será para quem estiver na sequência.</li>
+          <li class="list-group-item">7. "Pé frio" será quem obtiver a menor pontuação.</li>
+          <li class="list-group-item">8. Premiação para quem acertar da 1ª à 10ª dezena.</li>
+          <li class="list-group-item">9. Em caso de empate nos prêmios, o valor será dividido entre os ganhadores.</li>
+          <li class="list-group-item">10. Faça seu jogo em local de sua confiança. Prêmios pagos diretamente no local.</li>
+          <li class="list-group-item">11. Prêmios pagos em até 5 dias úteis.</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <!-- Aba Meus jogos -->
@@ -242,7 +262,7 @@
 
 
 <div class="tab-pane fade" id="winners" role="tabpanel" aria-labelledby="winners-tab">
-  @if($winners->isEmpty())
+  @if(!count($winners))
   <p class="text-muted">Não há ganhadores ainda.</p>
   @else
   <div class="table-responsive">
@@ -250,26 +270,51 @@
       <thead>
         <tr>
           <th>Nome do Apostador</th>
-          <th>Números</th>
-          <th>Quantidade</th>
-          <th>Vlr. Aposta</th>
           <th>Prêmio</th>
-          <th>Data da Aposta</th>
+          <th>Vlr. Prêmio</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
-        @foreach($winners as $winner)
+        @foreach($winners as $index => $winner)
         <tr>
-          <td>{{ $winner->purchase->gambler_name }}</td>
-          <td>{{ $winner->purchase->numbers }}</td>
-          <td>{{ $winner->purchase->quantity }}</td>
-          <td>R$ {{ number_format($winner->purchase->price, 2, ',', '.') }}</td>
+          <td>{{ $winner->user->name }}</td>
+          <td>{{ $winner->game_award->name }}</td>
           <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
-          <td>{{ $winner->purchase->created_at->format('d/m/Y H:i') }}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" data-toggle="collapse" data-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
+              Detalhes
+            </button>
+          </td>
+        </tr>
+        <tr class="collapse" id="details-{{ $index }}">
+          <td colspan="3">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th>Números</th>
+                  <th>Quantidade</th>
+                  <th>Vlr. Aposta</th>
+                  <th>Data da Aposta</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($winner->purchases as $purchase)
+                <tr>
+                  <td>{{ $purchase->numbers }}</td>
+                  <td>{{ $purchase->quantity }}</td>
+                  <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
+                  <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
+                </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </td>
         </tr>
         @endforeach
       </tbody>
     </table>
+
   </div>
   @endif
 </div>
