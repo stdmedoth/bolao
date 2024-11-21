@@ -24,7 +24,7 @@ return new class extends Migration
       $table->string('document');
       $table->string('email')->unique();
       $table->string('phone')->unique();
-      
+
       $table->float('balance')->default(0);
 
       $table->string('cc_name')->nullable();
@@ -37,6 +37,13 @@ return new class extends Migration
       $table->string('address_number')->nullable();
 
       $table->string('pix_key')->nullable();
+      $table->enum('pix_key_type', [
+        "CPF",
+        "CNPJ",
+        "EMAIL",
+        "PHONE",
+        "EVP",
+      ])->nullable();
 
       $table->string('external_finnancial_id')->nullable();
 

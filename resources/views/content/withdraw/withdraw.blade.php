@@ -16,6 +16,13 @@
 
 @section('content')
 
+
+<!-- Exibição da mensagem de erro geral -->
+@if ($errors->has('error'))
+<div class="alert alert-danger">
+  {{ $errors->first('error') }}
+</div>
+@endif
 <!-- Basic Bootstrap Table -->
 <div class="card">
   <h5 class="card-header">Sacar</h5>
@@ -26,20 +33,44 @@
         <label for="amount" class="form-label">Valor do Saque</label>
         <input type="number" class="form-control" id="amount" name="amount" placeholder="Digite o valor" required>
       </div>
+      @error('amount')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+
       <div class="form-group">
         <label for="payment_method" class="form-label">Forma de Pagamento</label>
         <select class="form-control" name="payment_method" id="payment_method">
           <option value="pix">Pix</option>
         </select>
       </div>
+
       <div class="form-group">
-        <label for="pix_key" class="form-label">Chave pix</label>
+        <label for="pix_key" class="form-label">Chave Pix</label>
         <input type="text" class="form-control" name="pix_key" placeholder="Digite sua Chave PIX">
       </div>
-      <button type="submit" class="btn btn-primary">Depositar</button>
+      @error('pix_key')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+      <div class="form-group">
+        <label for="pix_type" class="form-label">Tipo de Pix</label>
+        <select class="form-control" name="pix_type" id="pix_type">
+          <option value="CPF">CPF</option>
+          <option value="CNPJ">CNPJ</option>
+          <option value="EMAIL">E-mail</option>
+          <option value="PHONE">Telefone</option>
+          <option value="EVP">Chave Aleatória</option>
+        </select>
+      </div>
+      @error('pix_type')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+
+      <!-- Botão separado -->
+      <div class="form-group mt-4">
+        <button type="submit" class="btn btn-primary">Sacar</button>
+      </div>
     </form>
   </div>
 </div>
-<!--/ Basic Bootstrap Table -->
 
 @endsection

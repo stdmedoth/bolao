@@ -102,9 +102,10 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
   Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');
-  
-  
+
+
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
+  Route::post('/saque', [WithdrawalController::class, 'withdraw_pay'])->name('pay-withdraw');
 
   Route::get('/extrato', [TransactionsController::class, 'index'])->name('extract');
 
@@ -116,7 +117,6 @@ Route::middleware('auth:web')->group(function () {
 Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-register');
 
 Route::post('/deposit/webhook', [DepositController::class, 'webhook'])->name('deposit-webhook');
-
 
 
 // Main Page Route

@@ -90,6 +90,19 @@ class DepositController extends Controller
   public function pay_credit_card(Request $request)
   {
 
+    // Validações básicas
+    $validated = $request->validate([
+      'cc_name'        => 'required|string|max:255',
+      'cc_number'      => 'required|string|max:16',
+      'cc_expiry_month' => 'required|integer|min:1|max:12',
+      'cc_expiry_year' => 'required|integer|min:' . date('Y'),
+      'cc_ccv'         => 'required|integer|min:100|max:999',
+      'amount'         => 'required|numeric|min:1',
+      'phone'          => 'required|string',
+      'postal_code'    => 'required|string',
+      'address_number' => 'required|string',
+    ]);
+
     $data = $request->all();
 
     $user_id = Auth::user()->id;
@@ -116,29 +129,30 @@ class DepositController extends Controller
       $user->external_finnancial_id = $client->id;
     }
 
-    // Dados do pagamento usando informações armazenadas no usuário
+    // Dados do pagamento
     $paymentData = [
-      'customer'         => $user->external_finnancial_id,
-      'billingType'      => 'CREDIT_CARD',
-      'value'            => $amount,
-      'dueDate'          => date("Y-m-d H:i:s", strtotime("+1 day")),
-      'description'      => "Depósito de saldo com cartão de crédito",
-      'creditCard'       => [
-        'holderName'      => $user->cc_name,
-        'number'          => $user->cc_number,
-        'expiryMonth'     => $user->cc_expiry_month,
-        'expiryYear'      => $user->cc_expiry_year,
-        'ccv'             => $user->cc_ccv,
+      'customer'             => $user->external_finnancial_id,
+      'billingType'          => 'CREDIT_CARD',
+      'value'                => $amount,
+      'dueDate'              => now()->addDay()->format('Y-m-d'),
+      'description'          => 'Depósito de saldo com cartão de crédito',
+      'creditCard'           => [
+        'holderName'      => $validated['cc_name'],
+        'number'          => $validated['cc_number'],
+        'expiryMonth'     => $validated['cc_expiry_month'],
+        'expiryYear'      => $validated['cc_expiry_year'],
+        'ccv'             => $validated['cc_ccv'],
       ],
       'creditCardHolderInfo' => [
         'name'           => $user->name,
         'email'          => $user->email,
         'cpfCnpj'        => $user->document,
-        'phone'          => $data['phone'],
-        'postalCode'     => $data['postal_code'],
-        'addressNumber'     => $data['address_number'],
+        'phone'          => $validated['phone'],
+        'postalCode'     => $validated['postal_code'],
+        'addressNumber'  => $validated['address_number'],
       ],
     ];
+
 
     $cobranca = $asaas->Cobranca()->create($paymentData);
 
@@ -147,6 +161,18 @@ class DepositController extends Controller
     }
 
     $user->balance += $amount;
+    if (!$user->cc_name) {
+      $user->cc_name = $validated['cc_name'];
+    }
+    if (!$user->cc_number) {
+      $user->cc_number = substr($validated['cc_number'], -4); // Salve apenas os 4 últimos dígitos!
+    }
+    if (!$user->cc_expiry_month) {
+      $user->cc_expiry_month = $validated['cc_expiry_month'];
+    }
+    if (!$user->cc_expiry_year) {
+      $user->cc_expiry_year = $validated['cc_expiry_year'];
+    }
     $user->save();
 
     Transactions::create(

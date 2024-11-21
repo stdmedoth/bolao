@@ -37,6 +37,13 @@ const LibsCssFiles = GetFilesArray('resources/assets/vendor/libs/**/*.css');
 const FontsScssFiles = GetFilesArray('resources/assets/vendor/fonts/!(_)*.scss');
 
 export default defineConfig({
+  server: {
+    /*
+    hmr: {
+        host: 'bolaovip.carapicuiba.com.br',
+    },
+    */
+  },
   plugins: [
     laravel({
       input: [
@@ -54,5 +61,6 @@ export default defineConfig({
       refresh: true
     }),
     html()
-  ]
+  ],
+  base: '/',
 });

@@ -37,10 +37,11 @@ class User extends Authenticatable
     'cc_ccv',
 
     'pix_key',
+    'pix_key_type',
 
     'postal_code',
     'address_number',
-    
+
   ];
 
   /**

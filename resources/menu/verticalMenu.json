@@ -57,14 +57,6 @@
       "target": "_blank"
     },
     {
-      "url": "/usuarios/me",
-      "name": "Meu Cadastro",
-      "only_admin": false,
-      "icon": "menu-icon tf-icons bx bx-user",
-      "slug": "app-email",
-      "target": "_blank"
-    },
-    {
       "url": "/indique_ganhe",
       "name": "Indique e ganhe",
       "only_admin": false,
