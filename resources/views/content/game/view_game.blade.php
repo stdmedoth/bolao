@@ -89,24 +89,22 @@
             </div>
 
             <!-- Grade de seleção de números -->
-            <div class="card">
+            <div class="card" style="overflow: hidden;">
               <div class="card-body">
-                <div class="form-group">
-                  <label>Escolha suas dezenas (máximo de 11)</label>
-                  <div class="number-grid mb-3 row row-cols-4 gx-1 gy-1">
-                    @for ($i = 0; $i <= 99; $i++)
-                      <div class="col">
-                      <button type="button" class="btn btn-outline-primary w-100 number-button btn-sm" data-number="{{ $i }}">{{ $i }}</button>
-                  </div>
-                  @endfor
+                <label>Escolha suas dezenas (máximo de 11)</label>
+                <div class="number-grid mb-3 row row-cols-4 row-cols-sm-5 row-cols-md-6 row-cols-lg-7 gx-1 gy-1">
+                  @for ($i = 0; $i <= 99; $i++)
+                    <div class="col">
+                    <button type="button" class="btn btn-outline-primary w-100 number-button btn-sm" data-number="{{ $i }}">
+                      {{ str_pad($i, 2, '0', STR_PAD_LEFT) }}
+                    </button>
                 </div>
-                <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
-                <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
+                @endfor
               </div>
+              <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
+              <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
             </div>
         </div>
-
-
         <input type="hidden" name="user_id" value="{{auth()->user()->id}}">
         <input type="hidden" name="game_id" value=" {{$game->id}}">
 
@@ -121,6 +119,7 @@
     <p class="text-muted">O jogo já está encerrado.</p>
     @endif
   </div>
+
 
   <!-- Aba Resultados -->
   <div class="tab-pane fade" id="results" role="tabpanel" aria-labelledby="results-tab">

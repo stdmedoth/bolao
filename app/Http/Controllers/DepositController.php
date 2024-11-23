@@ -102,7 +102,7 @@ class DepositController extends Controller
       'postal_code'    => 'required|string',
       'address_number' => 'required|string',
     ]);
-
+    
     $data = $request->all();
 
     $user_id = Auth::user()->id;
@@ -144,7 +144,7 @@ class DepositController extends Controller
         'ccv'             => $validated['cc_ccv'],
       ],
       'creditCardHolderInfo' => [
-        'name'           => $user->name,
+        'name'           => $validated['cc_name'],
         'email'          => $user->email,
         'cpfCnpj'        => $user->document,
         'phone'          => $validated['phone'],

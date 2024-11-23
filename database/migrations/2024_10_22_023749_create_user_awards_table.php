@@ -24,7 +24,7 @@ return new class extends Migration
       $table->foreign('user_id')->references('id')->on('users');
       $table->foreign('game_award_id')->references('id')->on('game_awards');
 
-      $table->enum('status', ['PAID', 'PENDING', 'REVOKED',]);
+      $table->enum('status', ['PAID', 'PENDING', 'REVOKED',])->default('PENDING');
 
       $table->timestamps();
     });

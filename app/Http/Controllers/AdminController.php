@@ -250,21 +250,22 @@ class AdminController extends Controller
       $purchasesNumbers = [];
       foreach ($purchases as $purchase) {
         $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
-        //$purchaseNumbers = array_diff($purchaseNumbers, $addedNumbers); // Remover números já considerados
+        $purchaseNumbers = array_diff($purchaseNumbers, $addedNumbers); // Remover números já considerados
 
         $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
         $purchasesNumbers[] = $purchaseNumbers;
         // Adicionar os pontos para o usuário
         $userPoints[$purchase->user_id] = (isset($userPoints[$purchase->user_id]) ? $userPoints[$purchase->user_id] :  0) + count($matchedNumbers);
+        dump($matchedNumbers);
       }
-
-      $winners = [];
+      
+      
       // Verificar condições de prêmios e distribuir
       $awards = GameAward::where('game_id', $game->id)->get();
       foreach ($awards as $award) {
         foreach ($userPoints as $userId => $totalPoints) {
-          if (($award->condition_type === 'EXACT_POINT' && $totalPoints == $award->exact_point_value) ||
-            ($award->condition_type === 'WINNER' && $totalPoints >= $award->winner_point_value)
+          if ((($award->condition_type === 'EXACT_POINT') && ($totalPoints == $award->exact_point_value)) ||
+            (($award->condition_type === 'WINNER') && ($totalPoints >= $award->winner_point_value))
           ) {
             
             // Verificar se o prêmio já foi concedido
@@ -272,9 +273,8 @@ class AdminController extends Controller
               ->where('game_award_id', $award->id)
               ->where('user_id', $userId);
             if ($lastClosedHistory) {
-              $builder = $builder->where('created_at', '>=', optional($lastClosedHistory)->created_at);
+              $builder = $builder->where('created_at', '>=', $lastClosedHistory->created_at);
             }
-
             $awardExists = $builder->exists();
 
             if (!$awardExists) {
@@ -283,6 +283,7 @@ class AdminController extends Controller
                 'game_id' => $game->id,
                 'game_award_id' => $award->id,
                 'amount' => $award->amount,
+                'status' => 'PENDING'
               ]);
 
               // Atualizar indicação e ganhos de referência
@@ -292,6 +293,8 @@ class AdminController extends Controller
         }
       }
     }
+
+    
 
     return redirect(route('show-game', ['id' => $game->id]));
   }
