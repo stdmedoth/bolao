@@ -23,6 +23,7 @@
   {{ $errors->first('error') }}
 </div>
 @endif
+
 <!-- Basic Bootstrap Table -->
 <div class="card">
   <h5 class="card-header">Sacar</h5>
@@ -42,6 +43,10 @@
         <select class="form-control" name="payment_method" id="payment_method">
           <option value="pix">Pix</option>
         </select>
+        @error('payment_method')
+        <small class="text-danger">{{ $message }}</small>
+        @enderror
+
       </div>
 
       <div class="form-group">
@@ -52,8 +57,8 @@
       <small class="text-danger">{{ $message }}</small>
       @enderror
       <div class="form-group">
-        <label for="pix_type" class="form-label">Tipo de Pix</label>
-        <select class="form-control" name="pix_type" id="pix_type">
+        <label for="pix_key_type" class="form-label">Tipo de Pix</label>
+        <select class="form-control" name="pix_key_type" id="pix_key_type">
           <option value="CPF">CPF</option>
           <option value="CNPJ">CNPJ</option>
           <option value="EMAIL">E-mail</option>
@@ -61,7 +66,7 @@
           <option value="EVP">Chave Aleatória</option>
         </select>
       </div>
-      @error('pix_type')
+      @error('pix_key_type')
       <small class="text-danger">{{ $message }}</small>
       @enderror
 

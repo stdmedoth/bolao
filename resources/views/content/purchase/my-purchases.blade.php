@@ -26,7 +26,7 @@
           <th>Jogo</th>
           <th>Data da Compra</th>
           <th>Status</th>
-          <th>Ações</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -49,21 +49,11 @@
           <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
           <td>
             <!-- Mostrando o status da compra -->
-            <span class="badge bg-label-primary me-1">{{ $purchase->status }}</span>
+            <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>
           </td>
           <td>
-            <div class="dropdown">
-              <button type="button" class="btn p-0 dropdown-toggle hide-arrow"
-                data-bs-toggle="dropdown">
-                <i class="bx bx-dots-vertical-rounded"></i>
-              </button>
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="javascript:void(0);"><i
-                    class="bx bx-edit-alt me-1"></i> Editar </a>
-                <a class="dropdown-item" href="javascript:void(0);"> <i
-                    class="bx bx-trash me-1"></i> Excluir </a>
-              </div>
-            </div>
+            <a href="{{ route('purchase-pay', $purchase->id) }}" class="btn btn-success {{$purchase->status !== "PENDING" ? "disabled" : ""}}">Pagar</a>
+            <a href="{{ route('purchases.destroy', $purchase->id) }}" class="btn btn-danger {{$purchase->status == "PAID" ? "disabled" : ""}}">Deletar</a>
           </td>
         </tr>
         @endforeach

@@ -15,6 +15,7 @@
 @endsection
 
 @section('content')
+
 <div class="container">
     <h1>Meus Prêmios</h1>
 
@@ -22,28 +23,23 @@
         <thead>
             <tr>
                 <th>ID do Prêmio</th>
-                <th>ID da Compra</th>
                 <th>Valor</th>
                 <th>Status</th>
                 <th>Data de Criação</th>
-                <th>Ações</th>
             </tr>
         </thead>
+
         <tbody>
             @foreach($user_awards as $award)
                 <tr>
                     <td>{{ $award->id }}</td>
-                    <td>{{ $award->purchase_id }}</td>
                     <td>{{ $award->amount ? number_format($award->amount, 2, ',', '.') : 'N/A' }}</td>
                     <td>
-                        <span class="badge bg-label-{{ strtolower($award->status) }}">
-                            {{ $award->status }}
+                        <span class="badge bg-label-primary">
+                            {{ __($award->status) }}
                         </span>
                     </td>
                     <td>{{ \Carbon\Carbon::parse($award->created_at)->format('Y-m-d H:i') }}</td>
-                    <td>
-                        <a href="{{ route('edit-award-form', $award->id) }}" class="btn btn-sm btn-primary">Editar</a>
-                    </td>
                 </tr>
             @endforeach
         </tbody>

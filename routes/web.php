@@ -95,10 +95,15 @@ Route::middleware('auth:web')->group(function () {
 
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
+  Route::get('/purchase/pay/{id}', [PurchaseController::class, 'pay'])->name('purchase-pay');
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
   Route::get('/minhas_compras/{id}', [PurchaseController::class, 'show'])->name('minhas_compras-view');
+  Route::get('/minhas_compras/delete/{id}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+  
 
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
+  Route::get('/meus_premios/pay/{id}', [UserAwardController::class, 'pay'])->name('user_award-pay');
+  
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
   Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');

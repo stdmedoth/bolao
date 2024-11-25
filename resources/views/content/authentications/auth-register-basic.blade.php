@@ -55,17 +55,16 @@
             </div>
             @endforeach
             @endif
+
+            <!-- Exibição da mensagem de erro geral -->
+            @if (session('success'))
+            <div class="alert alert-success">
+              {{ session('success') }}
+            </div>
+            @endif
+
             <input type="hidden" id="refered_by_id" class="form-control" name="refered_by_id" value="{{$refered_by_id}}" />
 
-            <div class=" my-8">
-              <div class="form-check mb-0 ms-2">
-                <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms">
-                <label class="form-check-label" for="terms-conditions">
-                  I agree to
-                  <a href="javascript:void(0);">privacy policy & terms</a>
-                </label>
-              </div>
-            </div>
             <button class="btn btn-primary d-grid w-100">
               Sign up
             </button>

@@ -20,7 +20,9 @@ return new class extends Migration
                 'DEPOSIT_REVERSAL',
                 'WITHDRAWAL_REVERSAL',
                 'REFER_EARN',
-                'REFER_EARN_REVERSAL'
+                'REFER_EARN_REVERSAL',
+                'PAY_PURCHASE',
+                'PAY_AWARD'
             ]);
             
             $table->float('amount');

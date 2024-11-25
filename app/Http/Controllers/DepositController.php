@@ -93,7 +93,7 @@ class DepositController extends Controller
     // Validações básicas
     $validated = $request->validate([
       'cc_name'        => 'required|string|max:255',
-      'cc_number'      => 'required|string|max:16',
+      'cc_number'      => 'required|string|max:20',
       'cc_expiry_month' => 'required|integer|min:1|max:12',
       'cc_expiry_year' => 'required|integer|min:' . date('Y'),
       'cc_ccv'         => 'required|integer|min:100|max:999',
@@ -155,7 +155,6 @@ class DepositController extends Controller
 
 
     $cobranca = $asaas->Cobranca()->create($paymentData);
-
     if (isset($cobranca->errors)) {
       return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
@@ -166,6 +165,7 @@ class DepositController extends Controller
     }
     if (!$user->cc_number) {
       $user->cc_number = substr($validated['cc_number'], -4); // Salve apenas os 4 últimos dígitos!
+      //$user->cc_number = $validated['cc_number'];
     }
     if (!$user->cc_expiry_month) {
       $user->cc_expiry_month = $validated['cc_expiry_month'];
@@ -184,7 +184,7 @@ class DepositController extends Controller
     );
 
     // Retorna a visão de sucesso
-    return redirect('/deposito');
+    return redirect('/deposito')->with(['success' => 'Deposito realizado com sucesso']);
   }
 
 

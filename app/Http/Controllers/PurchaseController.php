@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\Purchase;
+use App\Models\Transactions;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +17,12 @@ class PurchaseController extends Controller
   public function index()
   {
     //
-    $purchases = Purchase::where('user_id', Auth::user()->id)->get();
+    $builder = new Purchase();
+    if (Auth::user()->role->level_id !== 'admin') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+    $purchases = $builder->get();
+    
     return view('content.purchase.my-purchases', ['purchases' => $purchases]);
   }
 
@@ -25,6 +32,34 @@ class PurchaseController extends Controller
   public function create()
   {
     //
+  }
+
+  public function pay(Request $request, $id)
+  {
+
+    $purchase = Purchase::find($id);
+
+    $user = User::find($purchase->user_id);
+    if ($user->balance < $purchase->price) {
+      return redirect()->route('deposito')->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
+    }
+
+    $user->balance -= $purchase->price;
+    $user->save();
+
+
+    $purchase->status = "PAID";
+    $purchase->save();
+
+    Transactions::create(
+      [
+        "type" => 'PAY_PURCHASE',
+        "amount" => $purchase->price,
+        "user_id" => $purchase->user_id,
+      ]
+    );
+
+    return redirect()->route('minhas_compras')->with('success', 'Aposta paga com sucesso!');
   }
 
   /**
@@ -67,15 +102,59 @@ class PurchaseController extends Controller
     $purchase->quantity = $quantity;
     $purchase->price = $price;
 
-    // TODO: aqui eu devo diminuir o saldo do usuario e atualizar o status do purchase
-
-
-
     // Salvando a compra no banco de dados
     $purchase->save();
 
+    $user = User::find($request->user_id);
+    if ($user->balance >= $price) {
+      $user->balance -= $price;
+      $user->save();
+
+
+      $purchase->status = "PAID";
+      $purchase->save();
+
+      Transactions::create(
+        [
+          "type" => 'PAY_PURCHASE',
+          "amount" => $purchase->price,
+          "user_id" => $purchase->user_id,
+        ]
+      );
+    }
+
+
     // Redirecionamento com mensagem de sucesso
     return redirect()->back()->with('success', 'Compra realizada com sucesso!');
+  }
+
+  /**
+   * Update the specified resource in storage.
+   */
+  public function update(Request $request, $id)
+  {
+    $request->validate([
+      'numbers' => 'required|string',
+      'status' => 'required|in:PAID,PENDING,CANCELED,FINISHED',
+      'quantity' => 'required|integer',
+      'price' => 'required|numeric',
+      'game_id' => 'required|exists:games,id',
+      'user_id' => 'required|exists:users,id',
+    ]);
+
+    $purchase = Purchase::find($id);
+    $purchase->update($request->all());
+    return redirect()->route('minhas_compras')->with('success', 'Purchase updated successfully!');
+  }
+
+  /**
+   * Remove the specified resource from storage.
+   */
+  public function destroy(Request $request, $id)
+  {
+    $purchase = Purchase::find($id);
+    $purchase->delete();
+    return redirect()->route('minhas_compras')->with('success', 'Purchase deleted successfully!');
   }
 
   /**
@@ -90,22 +169,6 @@ class PurchaseController extends Controller
    * Show the form for editing the specified resource.
    */
   public function edit(Purchase $purchase)
-  {
-    //
-  }
-
-  /**
-   * Update the specified resource in storage.
-   */
-  public function update(Request $request, Purchase $purchase)
-  {
-    //
-  }
-
-  /**
-   * Remove the specified resource from storage.
-   */
-  public function destroy(Purchase $purchase)
   {
     //
   }

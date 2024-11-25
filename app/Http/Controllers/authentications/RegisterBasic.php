@@ -48,7 +48,7 @@ class RegisterBasic extends Controller
 
       // Redireciona para a página de exibição do usuário criado
       return Redirect::back()
-        ->with('success', 'Usuário criado com sucesso! Aguarde confirmação do seu convidante');
+        ->with(['success'=> 'Usuário criado com sucesso! Aguarde confirmação do seu convidante']);
     } catch (\Exception $e) {
       // Retorna um erro em caso de falha na criação do usuário
       return Redirect::back()->withErrors(['error' => 'Falha ao criar usuário: ' . $e->getMessage()]);

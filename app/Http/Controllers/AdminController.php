@@ -247,16 +247,14 @@ class AdminController extends Controller
 
       // Agrupar pontos por usuário
       $userPoints = [];
-      $purchasesNumbers = [];
       foreach ($purchases as $purchase) {
         $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
         $purchaseNumbers = array_diff($purchaseNumbers, $addedNumbers); // Remover números já considerados
 
         $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
-        $purchasesNumbers[] = $purchaseNumbers;
+        
         // Adicionar os pontos para o usuário
         $userPoints[$purchase->user_id] = (isset($userPoints[$purchase->user_id]) ? $userPoints[$purchase->user_id] :  0) + count($matchedNumbers);
-        dump($matchedNumbers);
       }
       
       

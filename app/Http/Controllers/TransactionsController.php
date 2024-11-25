@@ -23,6 +23,8 @@ class TransactionsController extends Controller
             'WITHDRAWAL_REVERSAL' => 'Estorno de Saque',
             'REFER_EARN' => 'Bônus de Indicação',
             'REFER_EARN_REVERSAL' => 'Estorno de Bônus de Indicação',
+            'PAY_PURCHASE' => 'Pagamento de Compra',
+            'PAY_AWARD' => 'Pagamento de Prêmio'
         ];
 
         return view('content.transactions.transactions', compact('transactions', 'typeTranslations'));

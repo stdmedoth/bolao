@@ -238,6 +238,7 @@
             <th>Preço</th>
             <th>Status</th>
             <th>Data da Aposta</th>
+            <th>Ação</th>
           </tr>
         </thead>
         <tbody>
@@ -250,6 +251,11 @@
             <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
             <td><span class="badge bg-label-primary">{{ __($purchase->status) }}</span></td>
             <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
+            <td>
+              @if ($purchase->status == "PENDING")
+              <a href="{{route('purchase-pay', $purchase->id)}}" class="btn btn-success">Pagar</a>
+              @endif
+            </td>
           </tr>
           @endforeach
         </tbody>
@@ -271,6 +277,7 @@
           <th>Nome do Apostador</th>
           <th>Prêmio</th>
           <th>Vlr. Prêmio</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -280,10 +287,14 @@
           <td>{{ $winner->user->name }}</td>
           <td>{{ $winner->game_award->name }}</td>
           <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
+          <td><span class="badge bg-label-primary me-1">{{  __($winner->status) }}</span></td>
           <td>
-            <button class="btn btn-secondary btn-sm" data-toggle="collapse" data-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
+            <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
               Detalhes
             </button>
+            @if (auth()->user()->role->level_id == 'admin')
+            <a href="{{ route('user_award-pay', $winner->id) }}" class="btn btn-success {{$winner->status == "PAID" ? "disabled" : ""}}">Pagar</a>    
+            @endif
           </td>
         </tr>
         <tr class="collapse" id="details-{{ $index }}">

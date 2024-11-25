@@ -68,14 +68,16 @@ class GameController extends Controller
       if ($lastClosedHistory) {
         $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
       }
-      $purchases = $purchasesBuilder->get();
+      $_purchases = $purchasesBuilder->get();
 
       $user = User::find($user_award->user_id);
       $game_award = GameAward::find($user_award->game_award_id);
       $winners[] = (object)[
+        'id' => $user_award->id,
         'user' => $user,
+        'status' => $user_award->status,
         'game_award' => $game_award,
-        'purchases' => $purchases
+        'purchases' => $_purchases
       ];
     }
 

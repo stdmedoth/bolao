@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transactions;
 use App\Models\User;
 use App\Models\Withdrawal;
 use CodePhix\Asaas\Asaas;

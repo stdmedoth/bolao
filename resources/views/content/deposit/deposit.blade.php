@@ -16,6 +16,14 @@
 
 @section('content')
 
+
+<!-- Exibição da mensagem de erro geral -->
+@if (session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
 <!-- Exibição da mensagem de erro geral -->
 @if ($errors->has('error'))
 @foreach ($errors->all() as $error)
