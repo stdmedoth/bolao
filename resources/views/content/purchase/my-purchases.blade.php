@@ -25,6 +25,7 @@
         <tr>
           <th>Jogo</th>
           <th>Data da Compra</th>
+          <th>Números</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -47,6 +48,7 @@
           <!-- Usar timestamp do próprio produto? -->
 
           <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
+          <td>{{ $purchase->numbers }}</td>
           <td>
             <!-- Mostrando o status da compra -->
             <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>

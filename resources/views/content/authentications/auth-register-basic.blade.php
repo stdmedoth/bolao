@@ -55,7 +55,7 @@
 
               <div class="mb-6">
                 <label for="phone" class="form-label">Telefone</label>
-                <input type="text" class="form-control" id="phone" maxlength="11" name="phone" onkeyup="handlePhone(event)" placeholder="Insira seu telefone" autofocus>
+                <input type="text" class="form-control" id="phone" maxlength="15" name="phone" onkeyup="handlePhone(event)" placeholder="Insira seu telefone" autofocus>
               </div>
 
               <div class="mb-6">

@@ -75,7 +75,7 @@
     <!-- Phone -->
     <div class="form-group">
       <label for="phone">Telefone:</label>
-      <input type="text" maxlength="11" name="phone" onkeyup="handlePhone(event)" class="form-control" value="{{ old('phone') }}" required placeholder="Digite o telefone">
+      <input type="text" maxlength="15" name="phone" onkeyup="handlePhone(event)" class="form-control" value="{{ old('phone') }}" required placeholder="Digite o telefone">
       @error('phone')
       <small class="text-danger">{{ $message }}</small>
       @enderror
