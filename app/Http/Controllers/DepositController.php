@@ -191,8 +191,10 @@ class DepositController extends Controller
 
   public function webhook(Request $request)
   {
-    $data = $request->all();
-    switch ($data['event']) {
+    $body = $request->all();
+    $data = $body;
+
+    switch ( $data['event'] ) {
       case 'PAYMENT_RECEIVED':
         $customer_id = $data['payment']['customer'];
         $user = User::where('external_finnancial_id', $customer_id)->first();

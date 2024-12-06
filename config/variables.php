@@ -1,9 +1,9 @@
 <?php
 // Variables
 return [
-  "creatorName" => "ThemeSelection",
+  "creatorName" => "Bolao VIP",
   "creatorUrl" => "https://themeselection.com",
-  "templateName" => "Entre amigos",
+  "templateName" => "Bolão VIP",
   "templateSuffix" => "Bootstrap Dashboard FREE",
   "templateVersion" => "2.0.0",
   "templateFree" => true,
@@ -14,6 +14,9 @@ return [
   "productPage" => "https://themeselection.com/item/sneat-dashboard-free-laravel/",
   "productPagePro" => "https://themeselection.com/item/sneat-dashboard-pro-laravel/",
   "support" => "https://github.com/themeselection/sneat-html-laravel-admin-template-free/issues",
+  "supportNumber" => "19997655946",
+  "supportEmail" => "jovictor210@gmail.com",
+  
   "moreThemes" => "https://themeselection.com/",
   "documentation" => "https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation",
   "repository" => "https://github.com/themeselection/sneat-bootstrap-html-laravel-admin-template-free",

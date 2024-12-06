@@ -21,10 +21,13 @@
       <div class="d-flex align-items-start row">
         <div class="col-sm-7">
           <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Congratulations John! 🎉</h5>
-            <p class="mb-6">You have done 72% more sales today.<br>Check your new badge in your profile.</p>
+            <h5 class="card-title text-primary mb-3">Seja bem-vindo(a), {{auth()->user()->name}}! 🎉</h5>
+            <p class="mb-6">
+            Aqui, sua sorte é o destaque! Escolha suas dezenas, acompanhe os resultados e concorra a prêmios incríveis com base nas loterias PT, PTN e Federal. Quem acertar as 11 dezenas primeiro leva o grande prêmio, mas também há chances para quem chegar perto. Não se esqueça: mesmo quem tem menos sorte pode ser premiado! 🍀
+            Boa sorte e bons jogos! 🎯  
+            </p>
 
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Badges</a>
+            <a href="{{route('games')}}" class="btn btn-sm btn-outline-primary">Visualizar jogos</a>
           </div>
         </div>
         <div class="col-sm-5 text-center text-sm-left">
@@ -35,6 +38,7 @@
       </div>
     </div>
   </div>
+  <!--
   <div class="col-lg-4 col-md-4 order-1">
     <div class="row">
       <div class="col-lg-6 col-md-12 col-6 mb-6">
@@ -85,7 +89,9 @@
       </div>
     </div>
   </div>
+  -->
   <!-- Total Revenue -->
+   <!--
   <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
     <div class="card">
       <div class="row row-bordered g-0">
@@ -166,7 +172,9 @@
       </div>
     </div>
   </div>
+  -->
   <!--/ Total Revenue -->
+  <!--
   <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2">
     <div class="row">
       <div class="col-6 mb-6">
@@ -238,7 +246,9 @@
   </div>
 </div>
 <div class="row">
+-->
   <!-- Order Statistics -->
+   <!--
   <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-6">
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between">
@@ -326,9 +336,11 @@
       </div>
     </div>
   </div>
+-->
   <!--/ Order Statistics -->
 
   <!-- Expense Overview -->
+  <!--
   <div class="col-md-6 col-lg-4 order-1 mb-6">
     <div class="card h-100">
       <div class="card-header nav-align-top">
@@ -377,9 +389,11 @@
       </div>
     </div>
   </div>
+-->
   <!--/ Expense Overview -->
 
   <!-- Transactions -->
+   <!--
   <div class="col-md-6 col-lg-4 order-2 mb-6">
     <div class="card h-100">
       <div class="card-header d-flex align-items-center justify-content-between">
@@ -485,6 +499,7 @@
       </div>
     </div>
   </div>
+-->
   <!--/ Transactions -->
 </div>
 @endsection

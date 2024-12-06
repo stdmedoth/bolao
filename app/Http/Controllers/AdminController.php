@@ -19,7 +19,7 @@ class AdminController extends Controller
 
   public function editMeForm(Request $request)
   {
-    $user = Auth::user();
+    $user = User::find(Auth::user()->id);
 
     $roles = RoleUser::all();
 
@@ -57,7 +57,9 @@ class AdminController extends Controller
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
-      'password' => 'required|string|min:8',
+      'document' => 'required|string|max:255',
+      'phone' => 'required|string|max:255',
+      'password' => 'required|string|min:6',
       'role_user_id' => 'required|exists:role_users,id',
       'invited_by_id' => 'exists:users,id',
     ]);
@@ -83,7 +85,7 @@ class AdminController extends Controller
     $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
-      'role_user_id' => 'required|in:seller,gambler',
+      'role_user_id' => 'required|exists:role_users,id',
     ]);
 
     $user->name = $request->input('name');

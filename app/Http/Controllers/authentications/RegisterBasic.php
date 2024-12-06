@@ -23,6 +23,7 @@ class RegisterBasic extends Controller
       'name' => 'required|string|max:255',
       'document' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
+      'phone' => 'required|string|max:255',
       'password' => 'required|string|min:8',
     ]);
 
@@ -32,6 +33,7 @@ class RegisterBasic extends Controller
         'name' => $validatedData['name'],
         'email' => $validatedData['email'],
         'document' => $validatedData['document'],
+        'phone' => $validatedData['phone'],
         'password' => Hash::make($validatedData['password']),
         'role_user_id' => 3,
       ]);

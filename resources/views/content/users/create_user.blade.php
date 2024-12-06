@@ -47,10 +47,44 @@
       @enderror
     </div>
 
+    <!-- Documento -->
+    <div class="form-group">
+      <label for="document">Documento:</label>
+      <input type="text" id="document" maxlength="14" name="document" class="form-control" value="{{ old('document') }}" required placeholder="Digite o documento">
+      @error('document')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+    </div>
+
+    <script>
+      const handlePhone = (event) => {
+        let input = event.target
+        input.value = phoneMask(input.value)
+      }
+
+      const phoneMask = (value) => {
+        if (!value) return ""
+        value = value.replace(/\D/g, '')
+        value = value.replace(/(\d{2})(\d)/, "($1) $2")
+        value = value.replace(/(\d)(\d{4})$/, "$1-$2")
+        return value
+      }
+    </script>
+
+
+    <!-- Phone -->
+    <div class="form-group">
+      <label for="phone">Telefone:</label>
+      <input type="text" maxlength="11" name="phone" onkeyup="handlePhone(event)" class="form-control" value="{{ old('phone') }}" required placeholder="Digite o telefone">
+      @error('phone')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+    </div>
+
     <!-- Senha -->
     <div class="form-group">
-      <label for="password">Senha:</label>
-      <input type="password" name="password" class="form-control" required placeholder="Digite a senha">
+      <label for="password">Senha (mínimo 6 caracteres):</label>
+      <input type="password" minlength="6" name="password" class="form-control" required placeholder="Digite a senha">
       @error('password')
       <small class="text-danger">{{ $message }}</small>
       @enderror
@@ -89,4 +123,16 @@
     <button type="submit" class="btn btn-primary mt-3">Criar Usuário</button>
   </form>
 </div>
+
+
+<script>
+  document.getElementById('document').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+    if (value.length > 3) value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    if (value.length > 6) value = value.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+    if (value.length > 9) value = value.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    e.target.value = value;
+  });
+</script>
+
 @endsection

@@ -22,8 +22,8 @@ return new class extends Migration
       $table->id();
       $table->string('name');
       $table->string('document');
-      $table->string('email')->unique();
-      $table->string('phone')->unique();
+      $table->string('email');
+      $table->string('phone');
 
       $table->float('balance')->default(0);
 

@@ -234,7 +234,7 @@
             <th>Nome do Apostador</th>
             <th>Telefone</th>
             <th>Números</th>
-            <th>Quantidade</th>
+            <!-- <th>Quantidade</th> -->
             <th>Preço</th>
             <th>Status</th>
             <th>Data da Aposta</th>
@@ -247,7 +247,7 @@
             <td>{{ $purchase->gambler_name }}</td>
             <td>{{ $purchase->gambler_phone }}</td>
             <td>{{ $purchase->numbers }}</td>
-            <td>{{ $purchase->quantity }}</td>
+            <!-- <td>{{ $purchase->quantity }}</td> -->
             <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
             <td><span class="badge bg-label-primary">{{ __($purchase->status) }}</span></td>
             <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>

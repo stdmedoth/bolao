@@ -79,17 +79,22 @@ class PurchaseController extends Controller
       'user_id' => 'required|exists:users,id',
     ]);
 
+    $numbers = explode(' ', $request->numbers);
+    $numbers = array_map('intval',$numbers);
+    sort($numbers);
+    $numbers = implode(' ', $numbers);
+
     // Criação da compra
     $purchase = new Purchase();
     $purchase->gambler_name = $request->gambler_name;
     $purchase->gambler_phone = $request->gambler_phone;
-    $purchase->numbers = $request->numbers;
+    $purchase->numbers = $numbers;
     $purchase->quantity = $request->quantity;
     $purchase->status = "PENDING";
     $purchase->game_id = $request->game_id;
     $purchase->user_id = $request->user_id;
 
-    $array = explode(',', $request->numbers);
+    $array = explode(' ', $request->numbers);
 
 
     //$numbers = implode(" ", $array);

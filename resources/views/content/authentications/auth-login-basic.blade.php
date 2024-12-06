@@ -23,22 +23,43 @@
             </a>
           </div>
           <!-- /Logo -->
-          <h4 class="mb-1">Welcome to {{config('variables.templateName')}}! 👋</h4>
-          <p class="mb-6">Please sign-in to your account and start the adventure</p>
+          <h4 class="mb-1">Bem vindo à {{config('variables.templateName')}}! 👋</h4>
+          <p class="mb-6">Por favor, faça login na sua conta e comece a aventura</p>
 
           <form id="formAuthentication" class="mb-6" action="{{url('/auth/login-basic')}}" method="POST">
             <div class="mb-6">
-              <label for="email" class="form-label">Email or Username</label>
+              <label for="email" class="form-label">Email</label>
               <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" autofocus>
             </div>
             <div class="mb-6 form-password-toggle">
-              <label class="form-label" for="password">Password</label>
+              <label class="form-label" for="password">Senha</label>
+              <input type="hidden" name="_token" value="{{ csrf_token() }}" />
               <div class="input-group input-group-merge">
-                <input type="hidden" name="_token" value="{{ csrf_token() }}" />
-                <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password" />
-                <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                <input type="password" id="password" class="form-control" name="password" placeholder="••••••••••••" aria-describedby="password" />
+                <span id="hidepass" class="input-group-text cursor-pointer">
+                  <i class="bx bx-hide" id="icon"></i>
+                </span>
               </div>
             </div>
+
+            <script>
+              const passwordInput = document.getElementById('password');
+              const toggleButton = document.getElementById('hidepass');
+              const icon = document.getElementById('icon');
+
+              toggleButton.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                  passwordInput.type = 'text';
+                  icon.classList.remove('bx-hide');
+                  icon.classList.add('bx-show');
+                } else {
+                  passwordInput.type = 'password';
+                  icon.classList.remove('bx-show');
+                  icon.classList.add('bx-hide');
+                }
+              });
+            </script>
+
             @if(count($errors) > 0)
             @foreach( $errors->all() as $message )
             <div class="alert alert-danger display-hide">
@@ -48,14 +69,8 @@
             @endif
             <div class="mb-8">
               <div class="d-flex justify-content-between mt-8">
-                <div class="form-check mb-0 ms-2">
-                  <input class="form-check-input" type="checkbox" id="remember-me">
-                  <label class="form-check-label" for="remember-me">
-                    Remember Me
-                  </label>
-                </div>
                 <a href="{{url('auth/forgot-password-basic')}}">
-                  <span>Forgot Password?</span>
+                  <span>Esqueceu sua senha?</span>
                 </a>
               </div>
             </div>
@@ -65,9 +80,9 @@
           </form>
 
           <p class="text-center">
-            <span>New on our platform?</span>
+            <span>Novo na plataforma?</span>
             <a href="{{url('auth/register-basic')}}">
-              <span>Create an account</span>
+              <span>Criar uma conta</span>
             </a>
           </p>
         </div>

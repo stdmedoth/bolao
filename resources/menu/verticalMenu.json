@@ -1,6 +1,14 @@
 {
   "menu": [
     {
+      "url": "/",
+      "name": "Inicio",
+      "only_admin": false,
+      "icon": "menu-icon tf-icons bx bxs-dashboard",
+      "slug": "app-email",
+      "target": "_blank"
+    },
+    {
       "url": "/usuarios",
       "name": "Usuarios",
       "only_admin": true,

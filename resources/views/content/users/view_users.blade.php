@@ -26,6 +26,7 @@
             <div class="card-body">
                 <h5 class="card-title">{{ $usuario->name }}</h5>
                 <p class="card-text">{{ $usuario->email }}</p>
+                <p class="card-text">{{ $usuario->role->name }}</p>
                 <a href="/usuarios/edit/{{ $usuario->id }}" class="btn btn-warning">Editar</a>
                 <form action="/usuarios/delete/{{ $usuario->id }}" method="POST" style="display:inline;">
                     @csrf
