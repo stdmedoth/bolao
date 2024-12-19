@@ -29,7 +29,7 @@
           <form id="formAuthentication" class="mb-6" action="{{url('/auth/login-basic')}}" method="POST">
             <div class="mb-6">
               <label for="email" class="form-label">Email</label>
-              <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" autofocus>
+              <input type="text" class="form-control" id="email" name="email" placeholder="Insira seu email" autofocus>
             </div>
             <div class="mb-6 form-password-toggle">
               <label class="form-label" for="password">Senha</label>
@@ -75,7 +75,7 @@
               </div>
             </div>
             <div class="mb-6">
-              <button class="btn btn-primary d-grid w-100" type="submit">Login</button>
+              <button class="btn btn-primary d-grid w-100" type="submit">Entrar</button>
             </div>
           </form>
 

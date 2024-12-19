@@ -53,6 +53,10 @@ class DepositController extends Controller
       ];
 
       $client = $asaas->Cliente()->create($client_data);
+      if (isset($client->errors)) {
+        return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
+      }
+
       $user->update(['external_finnancial_id' => $client->id]);
       $user->external_finnancial_id = $client->id;
     }
@@ -191,9 +195,9 @@ class DepositController extends Controller
 
   public function webhook(Request $request)
   {
-    $body = $request->all();
-    $data = $body;
 
+    $data = json_decode($request->getContent(), true);
+    
     switch ( $data['event'] ) {
       case 'PAYMENT_RECEIVED':
         $customer_id = $data['payment']['customer'];

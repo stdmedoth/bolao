@@ -19,9 +19,9 @@
 
 <!-- Exibição da mensagem de erro geral -->
 @if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
+<div class="alert alert-success">
+  {{ session('success') }}
+</div>
 @endif
 
 <!-- Exibição da mensagem de erro geral -->
@@ -53,11 +53,70 @@
             @csrf
             <div class="form-group">
               <label for="amount" class="form-label">Valor do Depósito</label>
-              <input type="number" class="form-control" id="amount" name="amount" min="20" placeholder="Digite o valor" value="{{ isset($amount) ? $amount : '' }}" required>
-              @error('amount')
-              <small class="text-danger">{{ $message }}</small>
-              @enderror
+              <input type="text" class="form-control" id="amount" name="amount" placeholder="Digite o valor" required>
+              <small class="text-danger" id="error-message" style="display: none;">O valor deve ser no mínimo R$ 20,00.</small>
             </div>
+
+            <script>
+              const amountInput = document.getElementById('amount');
+              const errorMessage = document.getElementById('error-message');
+
+              function formatCurrency(value) {
+                if (!value) return '';
+                // Remove tudo que não é número ou ponto/vírgula
+                value = value.replace(/[^\d,.-]/g, '');
+
+                // Substitui vírgula por ponto para compatibilidade numérica
+                const numberValue = parseFloat(value.replace(',', '.'));
+                if (isNaN(numberValue)) return '';
+
+                // Formata para o padrão brasileiro (R$ 0,00)
+                return numberValue.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                  minimumFractionDigits: 2,
+                });
+              }
+
+              function getRawValue(value) {
+                return value.replace(/[^\d,.-]/g, '').replace(',', '.');
+              }
+
+              amountInput.addEventListener('input', (e) => {
+                // Captura a posição atual do cursor
+                const cursorPosition = e.target.selectionStart;
+
+                // Remove a formatação temporariamente
+                const rawValue = getRawValue(e.target.value);
+
+                // Atualiza o valor formatado
+                e.target.value = formatCurrency(rawValue);
+
+                // Restaura o cursor para a posição correta
+                const newCursorPosition = cursorPosition + (e.target.value.length - rawValue.length);
+                e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+
+                // Exibe mensagem de erro se o valor for menor que 20
+                if (parseFloat(rawValue) < 20) {
+                  errorMessage.style.display = 'block';
+                } else {
+                  errorMessage.style.display = 'none';
+                }
+              });
+
+              amountInput.addEventListener('blur', (e) => {
+                const rawValue = getRawValue(e.target.value);
+                if (!rawValue || parseFloat(rawValue) < 20) {
+                  e.target.value = ''; // Limpa o valor se for inválido
+                  errorMessage.style.display = 'block';
+                } else {
+                  e.target.value = formatCurrency(rawValue);
+                  errorMessage.style.display = 'none';
+                }
+              });
+            </script>
+
+
             <div class="form-group">
               <label for="payment_method" class="form-label">Forma de Pagamento</label>
               <select class="form-control" name="payment_method" id="payment_method">
@@ -191,6 +250,11 @@
     // Exibe uma mensagem de sucesso no console
     console.log("Texto copiado: " + text);
   }
+
+  document.querySelector('form').addEventListener('submit', (e) => {
+    const rawValue = amountInput.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    amountInput.value = rawValue; // Envia como float-friendly (e.g., "1234.56")
+  });
 </script>
 
 <style>

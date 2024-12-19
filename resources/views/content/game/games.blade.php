@@ -46,7 +46,7 @@
           <p class="card-text"><strong>Aberto em:</strong> {{ date('d/m/Y', strtotime($game->open_at)) }}</p>
           <p class="card-text"><strong>Fecha em:</strong> {{ date('d/m/Y', strtotime($game->close_at)) }}</p>
           <p class="card-text">
-            <span class="badge bg-label-primary">{{ $game->status }}</span>
+            <span class="badge bg-label-primary">{{ __($game->status) }}</span>
           </p>
           <p class="card-text"><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }} </p>
           @if($game->awards->isEmpty())
