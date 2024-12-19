@@ -61,56 +61,30 @@
               const amountInput = document.getElementById('amount');
               const errorMessage = document.getElementById('error-message');
 
-              function formatCurrency(value) {
-                if (!value) return '';
-                // Remove tudo que não é número ou ponto/vírgula
-                value = value.replace(/[^\d,.-]/g, '');
-
-                // Substitui vírgula por ponto para compatibilidade numérica
-                const numberValue = parseFloat(value.replace(',', '.'));
-                if (isNaN(numberValue)) return '';
-
-                // Formata para o padrão brasileiro (R$ 0,00)
-                return numberValue.toLocaleString('pt-BR', {
+              // Função para aplicar a máscara de Real
+              function formatToBRL(value) {
+                let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+                let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
-                  minimumFractionDigits: 2,
                 });
+                return formattedValue.replace('R$', '').trim();
               }
 
-              function getRawValue(value) {
-                return value.replace(/[^\d,.-]/g, '').replace(',', '.');
-              }
-
-              amountInput.addEventListener('input', (e) => {
-                // Captura a posição atual do cursor
-                const cursorPosition = e.target.selectionStart;
-
-                // Remove a formatação temporariamente
-                const rawValue = getRawValue(e.target.value);
-
-                // Atualiza o valor formatado
-                e.target.value = formatCurrency(rawValue);
-
-                // Restaura o cursor para a posição correta
-                const newCursorPosition = cursorPosition + (e.target.value.length - rawValue.length);
-                e.target.setSelectionRange(newCursorPosition, newCursorPosition);
-
-                // Exibe mensagem de erro se o valor for menor que 20
-                if (parseFloat(rawValue) < 20) {
-                  errorMessage.style.display = 'block';
-                } else {
-                  errorMessage.style.display = 'none';
-                }
+              // Evento de input para aplicar a máscara ao digitar
+              amountInput.addEventListener('input', () => {
+                let cursorPosition = amountInput.selectionStart;
+                let formattedValue = formatToBRL(amountInput.value);
+                amountInput.value = formattedValue;
+                amountInput.setSelectionRange(cursorPosition, cursorPosition);
               });
 
-              amountInput.addEventListener('blur', (e) => {
-                const rawValue = getRawValue(e.target.value);
-                if (!rawValue || parseFloat(rawValue) < 20) {
-                  e.target.value = ''; // Limpa o valor se for inválido
+              // Evento de blur para validar o valor
+              amountInput.addEventListener('blur', () => {
+                let numericValue = parseFloat(amountInput.value.replace('.', '').replace(',', '.')) || 0;
+                if (numericValue < 20) {
                   errorMessage.style.display = 'block';
                 } else {
-                  e.target.value = formatCurrency(rawValue);
                   errorMessage.style.display = 'none';
                 }
               });

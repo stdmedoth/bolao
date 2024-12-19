@@ -13,6 +13,8 @@ use App\Models\ReferEarn;
 use App\Models\UserAwards;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
 
 class AdminController extends Controller
 {
@@ -82,15 +84,21 @@ class AdminController extends Controller
   public function update(Request $request, $id)
   {
     $user = User::findOrFail($id);
-    $request->validate([
-      'name' => 'required|string|max:255',
-      'email' => 'required|email|max:255|unique:users,email,' . $user->id, // Ignore current user's email
-      'role_user_id' => 'required|exists:role_users,id',
+    $validatedData = $request->validate([
+      'name' => 'string|max:255',
+      'email' => [
+        'string',
+        'email',
+        'max:255',
+        Rule::unique('users')->ignore($user->id),
+      ],
+      'document' => 'string|max:255',
+      'phone' => 'string|max:255',
+      'role_user_id' => 'exists:role_users,id',
+      'invited_by_id' => 'exists:users,id',
     ]);
 
-    $user->name = $request->input('name');
-    $user->email = $request->input('email');
-    $user->role_user_id = $request->input('role_user_id');
+    $user->update($validatedData);
 
     // Update password only if a new one is provided
     if ($request->filled('password')) {
@@ -100,7 +108,7 @@ class AdminController extends Controller
 
     $user->save();
 
-    return redirect()->back()->with('success', 'Usuário atualizado com sucesso!');
+    return redirect(route('edit-user-form', ['id' => $user->id]))->with('success', 'Usuário atualizado com sucesso!');
   }
 
 
@@ -254,12 +262,12 @@ class AdminController extends Controller
         $purchaseNumbers = array_diff($purchaseNumbers, $addedNumbers); // Remover números já considerados
 
         $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
-        
+
         // Adicionar os pontos para o usuário
         $userPoints[$purchase->user_id] = (isset($userPoints[$purchase->user_id]) ? $userPoints[$purchase->user_id] :  0) + count($matchedNumbers);
       }
-      
-      
+
+
       // Verificar condições de prêmios e distribuir
       $awards = GameAward::where('game_id', $game->id)->get();
       foreach ($awards as $award) {
@@ -267,7 +275,7 @@ class AdminController extends Controller
           if ((($award->condition_type === 'EXACT_POINT') && ($totalPoints == $award->exact_point_value)) ||
             (($award->condition_type === 'WINNER') && ($totalPoints >= $award->winner_point_value))
           ) {
-            
+
             // Verificar se o prêmio já foi concedido
             $builder =  UserAwards::where('game_id', $game->id)
               ->where('game_award_id', $award->id)
@@ -294,7 +302,7 @@ class AdminController extends Controller
       }
     }
 
-    
+
 
     return redirect(route('show-game', ['id' => $game->id]));
   }

@@ -81,6 +81,9 @@ class DepositController extends Controller
     if (isset($cobranca->error)) {
       return redirect('/deposito');
     }
+    if (isset($cobranca->errors)) {
+      return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
+    }
 
     $Pix = $asaas->Pix()->create($cobranca->id);
     if ($Pix->success) {
@@ -196,15 +199,16 @@ class DepositController extends Controller
   public function webhook(Request $request)
   {
 
-    $data = json_decode($request->getContent(), true);
+    $data = urldecode($request->input('data'));
+    $data = json_decode($data);
     
-    switch ( $data['event'] ) {
+    switch ( $data->event ) {
       case 'PAYMENT_RECEIVED':
-        $customer_id = $data['payment']['customer'];
+        $customer_id = $data->payment->customer;
         $user = User::where('external_finnancial_id', $customer_id)->first();
         if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 400);
 
-        $user->balance += $data['payment']['value'];
+        $user->balance += $data->payment->value;
         $user->save();
 
         break;
