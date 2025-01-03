@@ -21,8 +21,8 @@ class PurchaseController extends Controller
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
+
     $purchases = $builder->get();
-    
     return view('content.purchase.my-purchases', ['purchases' => $purchases]);
   }
 
@@ -40,13 +40,17 @@ class PurchaseController extends Controller
     $purchase = Purchase::find($id);
 
     $user = User::find($purchase->user_id);
-    if ($user->balance < $purchase->price) {
-      return redirect()->route('deposito')->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
+
+    if (Auth::user()->role->level_id !== 'admin') {
+      if ($user->balance < $purchase->price) {
+        return redirect()->route('deposito')
+                    ->with('amount', $purchase->price)
+                    ->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
+      }
+
+      $user->balance -= $purchase->price;
+      $user->save();
     }
-
-    $user->balance -= $purchase->price;
-    $user->save();
-
 
     $purchase->status = "PAID";
     $purchase->save();
@@ -89,7 +93,9 @@ class PurchaseController extends Controller
     $purchase->gambler_name = $request->gambler_name;
     $purchase->gambler_phone = $request->gambler_phone;
     $purchase->numbers = $numbers;
-    $purchase->quantity = $request->quantity;
+    //$purchase->quantity = $request->quantity;
+    
+    $purchase->quantity = 1;
     $purchase->status = "PENDING";
     $purchase->game_id = $request->game_id;
     $purchase->user_id = $request->user_id;
@@ -100,7 +106,8 @@ class PurchaseController extends Controller
     //$numbers = implode(" ", $array);
     //$numbers = explode(' ', $numbers);
 
-    $quantity = count($array);
+    //$quantity = count($array);
+    $quantity = 1;
     $game = Game::find($request->game_id);
     $price = $game->price * $quantity;
 
@@ -130,7 +137,7 @@ class PurchaseController extends Controller
 
 
     // Redirecionamento com mensagem de sucesso
-    return redirect()->back()->with('success', 'Compra realizada com sucesso!');
+    return redirect()->back()->with(['success' => 'Compra realizada com sucesso!', 'tab' => 'tab-mybets']);
   }
 
   /**
@@ -149,7 +156,7 @@ class PurchaseController extends Controller
 
     $purchase = Purchase::find($id);
     $purchase->update($request->all());
-    return redirect()->route('minhas_compras')->with('success', 'Purchase updated successfully!');
+    return redirect()->route('minhas_compras')->with('success', 'Compra atualizada com sucesso!');
   }
 
   /**
@@ -159,7 +166,7 @@ class PurchaseController extends Controller
   {
     $purchase = Purchase::find($id);
     $purchase->delete();
-    return redirect()->route('minhas_compras')->with('success', 'Purchase deleted successfully!');
+    return redirect()->route('minhas_compras')->with('success', 'Compra deletada com sucesso!');
   }
 
   /**

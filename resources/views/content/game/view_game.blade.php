@@ -15,6 +15,10 @@
 @endsection
 
 @section('content')
+
+<?php
+  $tab = session('tab') ?? 'tab-details';
+?>
 <div class="container-fluid">
   <h1 class="my-4">Detalhes do Jogo</h1>
 
@@ -28,32 +32,32 @@
   <ul class="nav nav-tabs flex-wrap" id="gameTabs" role="tablist">
     <!-- Tabs existentes -->
     <li class="nav-item" role="presentation">
-      <a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">Detalhes</a>
+      <a class="nav-link {{($tab == 'tab-details') ? 'active' : ''}}" id="details-tab" data-bs-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="{{$tab == 'tab-details'}}">Detalhes</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="bet-form-tab" data-bs-toggle="tab" href="#bet-form" role="tab" aria-controls="bet-form" aria-selected="false">Apostar</a>
+      <a class="nav-link {{($tab == 'tab-bet') ? 'active' : ''}}" id="bet-form-tab" data-bs-toggle="tab" href="#bet-form" role="tab" aria-controls="bet-form" aria-selected="{{$tab == 'tab-bet'}}">Apostar</a>
     </li>
     <!-- Demais abas não alteradas -->
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="mybets-tab" data-bs-toggle="tab" href="#mybets" role="tab" aria-controls="mybets" aria-selected="false">Minhas apostas</a>
+      <a class="nav-link {{($tab == 'tab-mybets') ? 'active' : ''}}" id="mybets-tab" data-bs-toggle="tab" href="#mybets" role="tab" aria-controls="mybets" aria-selected="{{$tab == 'tab-mybets'}}">Minhas apostas</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="results-tab" data-bs-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="false">Resultados</a>
+      <a class="nav-link {{($tab == 'tab-results') ? 'active' : ''}}" id="results-tab" data-bs-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="{{$tab == 'tab-results'}}">Resultados</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="winners-tab" data-bs-toggle="tab" href="#winners" role="tab" aria-controls="winners" aria-selected="false">Ganhadores</a>
+      <a class="nav-link {{($tab == 'tab-winners') ? 'active' : ''}}" id="winners-tab" data-bs-toggle="tab" href="#winners" role="tab" aria-controls="winners" aria-selected="{{$tab == 'tab-winners'}}">Ganhadores</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="prizes-tab" data-bs-toggle="tab" href="#prizes" role="tab" aria-controls="prizes" aria-selected="false">Prêmios</a>
+      <a class="nav-link {{($tab == 'tab-prizes') ? 'active' : ''}}" id="prizes-tab" data-bs-toggle="tab" href="#prizes" role="tab" aria-controls="prizes" aria-selected="{{$tab == 'tab-prizes'}}">Prêmios</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="rules-tab" data-bs-toggle="tab" href="#rules" role="tab" aria-controls="rules" aria-selected="false">Regras</a>
+      <a class="nav-link {{($tab == 'tab-rules') ? 'active' : ''}}" id="rules-tab" data-bs-toggle="tab" href="#rules" role="tab" aria-controls="rules" aria-selected="{{$tab == 'tab-rules'}}">Regras</a>
     </li>
   </ul>
 
   <div class="tab-content mt-4" id="gameTabsContent">
     <!-- Aba Detalhes -->
-    <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+    <div class="tab-pane fade {{($tab == 'tab-details') ? 'show active' : ''}}" id="details" role="tabpanel" aria-labelledby="details-tab">
       <div class="card shadow-sm mb-4">
         @if (auth()->user()->role->level_id == 'admin')
         <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
@@ -72,7 +76,7 @@
     </div>
 
     <!-- Aba Formulário de Aposta com grade interativa -->
-    <div class="tab-pane fade" id="bet-form" role="tabpanel" aria-labelledby="bet-form-tab">
+    <div class="tab-pane fade {{($tab == 'tab-bet') ? 'show active' : ''}}" id="bet-form" role="tabpanel" aria-labelledby="bet-form-tab">
       @if($game->status == "OPENED")
       <div class="card shadow-sm mb-4">
         <div class="card-body">
@@ -122,7 +126,7 @@
 
 
   <!-- Aba Resultados -->
-  <div class="tab-pane fade" id="results" role="tabpanel" aria-labelledby="results-tab">
+  <div class="tab-pane fade {{($tab == 'tab-results') ? 'show active' : ''}}" id="results" role="tabpanel" aria-labelledby="results-tab">
     <h3 class="mb-4">Histórico de Resultados</h3>
 
     @if (auth()->user()->role->level_id == 'admin')
@@ -172,7 +176,7 @@
   </div>
 
 
-  <div class="tab-pane fade" id="prizes" role="tabpanel" aria-labelledby="prizes-tab">
+  <div class="tab-pane fade {{($tab == 'tab-prizes') ? 'show active' : ''}}" id="prizes" role="tabpanel" aria-labelledby="prizes-tab">
     <h3 class="mb-0">Prêmios Disponíveis</h3>
     <div class="card shadow-sm mb-4">
       <div class="card-body">
@@ -201,7 +205,7 @@
     </div>
   </div>
 
-  <div class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
+  <div class="tab-pane fade {{($tab == 'tab-rules') ? 'show active' : ''}}" id="rules" role="tabpanel" aria-labelledby="rules-tab">
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h3 class="card-title fw-bold text-center mb-3">Regulamento</h3>
@@ -223,7 +227,7 @@
   </div>
 
   <!-- Aba Meus jogos -->
-  <div class="tab-pane fade" id="mybets" role="tabpanel" aria-labelledby="mybets-tab">
+  <div class="tab-pane fade {{($tab == 'tab-mybets') ? 'show active' : ''}}" id="mybets" role="tabpanel" aria-labelledby="mybets-tab">
     @if($purchases->isEmpty())
     <p class="text-muted">Você ainda não realizou nenhuma aposta para este jogo.</p>
     @else
@@ -266,7 +270,7 @@
 </div>
 
 
-<div class="tab-pane fade" id="winners" role="tabpanel" aria-labelledby="winners-tab">
+<div class="tab-pane fade {{($tab == 'tab-winners') ? 'show active' : ''}}" id="winners" role="tabpanel" aria-labelledby="winners-tab">
   @if(!count($winners))
   <p class="text-muted">Não há ganhadores ainda.</p>
   @else
@@ -294,6 +298,9 @@
             </button>
             @if (auth()->user()->role->level_id == 'admin')
             <a href="{{ route('user_award-pay', $winner->id) }}" class="btn btn-success {{$winner->status == "PAID" ? "disabled" : ""}}">Pagar</a>    
+            @endif
+            @if (auth()->user()->role->level_id == 'admin' && ($winner->status == "PAID"))
+            <a href="{{ route('user_award-withdraw', $winner->id) }}" class="btn btn-info {{$winner->status !== "PAID" ? "disabled" : ""}}">Estornar</a>    
             @endif
           </td>
         </tr>

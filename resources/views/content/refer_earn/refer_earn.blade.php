@@ -144,7 +144,7 @@
         <th>Convidado Comprou?</th>
         <th>Pago?</th>
         <!--<th>Valor</th>-->
-        <th>Actions</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody>

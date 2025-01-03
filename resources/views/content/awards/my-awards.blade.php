@@ -17,7 +17,14 @@
 @section('content')
 
 <div class="container">
+    @if (auth()->user()->role->level_id !== 'admin')
+
     <h1>Meus Prêmios</h1>
+    @endif
+    @if (auth()->user()->role->level_id == 'admin')
+
+    <h1>Prêmios</h1>
+    @endif
 
     <table class="table table-bordered">
         <thead>
@@ -31,24 +38,24 @@
 
         <tbody>
             @foreach($user_awards as $award)
-                <tr>
-                    <td>{{ $award->id }}</td>
-                    <td>{{ $award->amount ? number_format($award->amount, 2, ',', '.') : 'N/A' }}</td>
-                    <td>
-                        <span class="badge bg-label-primary">
-                            {{ __($award->status) }}
-                        </span>
-                    </td>
-                    <td>{{ \Carbon\Carbon::parse($award->created_at)->format('Y-m-d H:i') }}</td>
-                </tr>
+            <tr>
+                <td>{{ $award->id }}</td>
+                <td>{{ $award->amount ? number_format($award->amount, 2, ',', '.') : 'N/A' }}</td>
+                <td>
+                    <span class="badge bg-label-primary">
+                        {{ __($award->status) }}
+                    </span>
+                </td>
+                <td>{{ \Carbon\Carbon::parse($award->created_at)->format('Y-m-d H:i') }}</td>
+            </tr>
             @endforeach
         </tbody>
     </table>
 
     @if($user_awards->isEmpty())
-        <div class="alert alert-info">
-            Você ainda não possui prêmios.
-        </div>
+    <div class="alert alert-info">
+        Você ainda não possui prêmios.
+    </div>
     @endif
 </div>
 @endsection

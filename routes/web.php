@@ -103,6 +103,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/meus_premios/pay/{id}', [UserAwardController::class, 'pay'])->name('user_award-pay');
+  Route::get('/meus_premios/withdraw/{id}', [UserAwardController::class, 'withdraw'])->name('user_award-withdraw');
   
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');

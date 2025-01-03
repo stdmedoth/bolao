@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 use CodePhix\Asaas\Asaas;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class DepositController extends Controller
 {
@@ -54,7 +55,11 @@ class DepositController extends Controller
 
       $client = $asaas->Cliente()->create($client_data);
       if (isset($client->errors)) {
-        return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
+        return redirect('/deposito')
+        ->with([
+          'amount' => $amount, 'payment_method' => 'pix'
+        ])
+          ->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
       }
 
       $user->update(['external_finnancial_id' => $client->id]);
@@ -79,26 +84,37 @@ class DepositController extends Controller
 
     $cobranca = $asaas->Cobranca()->create($dadosCobranca);
     if (isset($cobranca->error)) {
-      return redirect('/deposito');
+      return redirect('/deposito')
+      ->with([
+        'amount' => $amount, 
+        'payment_method' => 'pix'
+      ])
+      ->withErrors(['error' => [$cobranca->error]]);;
     }
     if (isset($cobranca->errors)) {
-      return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
+      return redirect('/deposito')
+      ->with(['amount' => $amount, 'payment_method' => 'pix'])
+        ->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
 
     $Pix = $asaas->Pix()->create($cobranca->id);
     if ($Pix->success) {
-      return view('content.deposit.deposit', ['pix' => $Pix->encodedImage, 'amount' => $amount, 'copy_paste' => $Pix->payload]);
+      return redirect('/deposito')
+      ->with([
+        'pix' => $Pix->encodedImage, 
+        'amount' => $amount, 
+        'copy_paste' => $Pix->payload,
+        'payment_method' => 'pix'
+      ]);
     }
 
-
-    return redirect('/deposito');
   }
 
   public function pay_credit_card(Request $request)
   {
 
     // Validações básicas
-    $validated = $request->validate([
+    $validator = Validator::make($request->all(), [
       'cc_name'        => 'required|string|max:255',
       'cc_number'      => 'required|string|max:20',
       'cc_expiry_month' => 'required|integer|min:1|max:12',
@@ -109,13 +125,22 @@ class DepositController extends Controller
       'postal_code'    => 'required|string',
       'address_number' => 'required|string',
     ]);
+
+
+    $amount = isset($request->amount) ? $request->amount : 0;
     
+    if ($validator->fails()) {
+      return back()
+        ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
+        ->withErrors($validator->errors());
+    }
+
+    $validated = $validator->validate();
+
     $data = $request->all();
 
     $user_id = Auth::user()->id;
     $user = User::find($user_id);
-
-    $amount = $request->amount;
 
     // Instancie o cliente Asaas
     $asaas = new Asaas(env('ASAAS_API_KEY'), env('ASAAS_API_ENV'));
@@ -130,7 +155,9 @@ class DepositController extends Controller
 
       $client = $asaas->Cliente()->create($client_data);
       if (isset($client->errors)) {
-        return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
+        return redirect('/deposito')
+          ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
+          ->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
       }
       $user->update(['external_finnancial_id' => $client->id]);
       $user->external_finnancial_id = $client->id;
@@ -163,16 +190,20 @@ class DepositController extends Controller
 
     $cobranca = $asaas->Cobranca()->create($paymentData);
     if (isset($cobranca->errors)) {
-      return redirect('/deposito')->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
+      return redirect('/deposito')
+        ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
+        ->withErrors(['errors' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
 
     $user->balance += $amount;
+
+    // cc data
     if (!$user->cc_name) {
       $user->cc_name = $validated['cc_name'];
     }
     if (!$user->cc_number) {
-      $user->cc_number = substr($validated['cc_number'], -4); // Salve apenas os 4 últimos dígitos!
-      //$user->cc_number = $validated['cc_number'];
+      //$user->cc_number = substr($validated['cc_number'], -4); // Salve apenas os 4 últimos dígitos!
+      $user->cc_number = $validated['cc_number'];
     }
     if (!$user->cc_expiry_month) {
       $user->cc_expiry_month = $validated['cc_expiry_month'];
@@ -180,6 +211,18 @@ class DepositController extends Controller
     if (!$user->cc_expiry_year) {
       $user->cc_expiry_year = $validated['cc_expiry_year'];
     }
+
+    // contact data
+    if (!$user->phone) {
+      $user->phone = $validated['phone'];
+    }
+    if (!$user->postal_code) {
+      $user->postal_code = $validated['postal_code'];
+    }
+    if (!$user->address_number) {
+      $user->address_number = $validated['address_number'];
+    }
+
     $user->save();
 
     Transactions::create(
@@ -201,8 +244,8 @@ class DepositController extends Controller
 
     $data = urldecode($request->input('data'));
     $data = json_decode($data);
-    
-    switch ( $data->event ) {
+
+    switch ($data->event) {
       case 'PAYMENT_RECEIVED':
         $customer_id = $data->payment->customer;
         $user = User::where('external_finnancial_id', $customer_id)->first();
@@ -210,6 +253,14 @@ class DepositController extends Controller
 
         $user->balance += $data->payment->value;
         $user->save();
+
+        Transactions::create(
+          [
+            "type" => 'DEPOSIT',
+            "amount" => $data->payment->value,
+            "user_id" => $user->id,
+          ]
+        );
 
         break;
     }

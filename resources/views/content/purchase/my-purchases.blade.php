@@ -18,16 +18,25 @@
 
 <!-- Tabela de Compras -->
 <div class="card">
-  <h5 class="card-header">Minhas Compras</h5>
+  @if (auth()->user()->role->level_id !== 'admin')
+    <h5 class="card-header">Minhas Compras</h5>
+  @endif
+  @if (auth()->user()->role->level_id == 'admin')
+    <h5 class="card-header">Compras realizadas</h5>
+  @endif
+  
   <div class="table-responsive text-nowrap">
     <table class="table">
       <thead>
         <tr>
           <th>Jogo</th>
+          @if (auth()->user()->role->level_id == 'admin')
+          <th>Apostador</th>  
+          @endif
           <th>Data da Compra</th>
           <th>Números</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -44,7 +53,10 @@
               <!-- Nome do jogo é o dia na semana em que se passa a aposta-->
             </a>
           </td>
-
+          @if (auth()->user()->role->level_id == 'admin')
+          <td>{{ $purchase->user->name }}</td>
+          
+          @endif
           <!-- Usar timestamp do próprio produto? -->
 
           <td>{{ $purchase->created_at->format('d/m/Y') }}</td>

@@ -14,7 +14,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -145,7 +145,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -276,7 +276,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -407,7 +407,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -538,7 +538,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -679,7 +679,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -810,7 +810,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -942,7 +942,7 @@
             <th>Client</th>
             <th>Users</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -1074,7 +1074,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -1205,7 +1205,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -1337,7 +1337,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -1469,7 +1469,7 @@
           <th>Client</th>
           <th>Users</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody class="table-border-bottom-0">
@@ -1761,7 +1761,7 @@
         <th>Client</th>
         <th>Users</th>
         <th>Status</th>
-        <th>Actions</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody class="table-border-bottom-0">

@@ -48,6 +48,31 @@ class UserAwardController extends Controller
     return redirect()->route('meus_premios')->with('success', 'Prêmio pago com sucesso!');
   }
 
+
+  public function withdraw(Request $request, $id)
+  {
+    $user_award = UserAwards::find($id);
+
+    $user = User::find($user_award->user_id);
+    
+    $user->balance -= $user_award->amount;
+    $user->save();
+
+
+    $user_award->status = "PENDING";
+    $user_award->save();
+
+    Transactions::create(
+      [
+        "type" => 'PAY_AWARD_WITHDRAWAL',
+        "amount" => $user_award->amount,
+        "user_id" => $user_award->user_id,
+      ]
+    );
+
+    return redirect()->route('meus_premios')->with('success', 'Prêmio pago com sucesso!');
+  }
+
   /**
    * Show the form for creating a new resource.
    */
