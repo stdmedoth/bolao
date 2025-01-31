@@ -16,10 +16,10 @@
 
 @section('content')
 
-<?php
+<div class="container">
+  <?php
   $tab = session('tab') ?? 'tab-details';
-?>
-<div class="container-fluid">
+  ?>
   <h1 class="my-4">Detalhes do Jogo</h1>
 
   <!-- Exibição da mensagem de erro geral -->
@@ -92,11 +92,39 @@
               <input type="text" class="form-control" id="gambler_phone" name="gambler_phone" placeholder="Digite seu telefone">
             </div>
 
+            <div class="form-group">
+              <label>Método de Seleção</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="selection_method" id="use_grid" value="grid" checked>
+                <label class="form-check-label" for="use_grid">Usar grade interativa</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="selection_method" id="use_text" value="text">
+                <label class="form-check-label" for="use_text">Inserir dezenas manualmente</label>
+              </div>
+            </div>
+
+            <!-- Campo de texto (inicialmente oculto) -->
+            <div class="form-group" id="text_input_container" style="display: none;">
+              <div id="text_input_container">
+                <div class="form-group">
+                  <label for="manual_numbers">Digite suas dezenas (máximo de 11 números, ex: 11 22 33 44):</label>
+                  <input type="text"
+                    class="form-control"
+                    id="manual_numbers"
+                    placeholder="Ex: 11 22 33 10 99"
+                    maxlength="32">
+                  <small id="error-message" class="text-danger" style="display: none;"></small>
+                </div>
+              </div>
+              <small class="form-text text-muted">Insira até 11 dezenas separadas por espaço.</small>
+            </div>
+
             <!-- Grade de seleção de números -->
-            <div class="card" style="overflow: hidden;">
+            <div class="card" id="grid_input_container">
               <div class="card-body">
                 <label>Escolha suas dezenas (máximo de 11)</label>
-                <div class="number-grid mb-3 row row-cols-4 row-cols-sm-5 row-cols-md-6 row-cols-lg-7 gx-1 gy-1">
+                <div class="number-grid mb-3 row row-cols-5 row-cols-sm-6 row-cols-md-7 row-cols-lg-10 gx-1 gy-1">
                   @for ($i = 0; $i <= 99; $i++)
                     <div class="col">
                     <button type="button" class="btn btn-outline-primary w-100 number-button btn-sm" data-number="{{ $i }}">
@@ -108,6 +136,7 @@
               <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
               <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
             </div>
+
         </div>
         <input type="hidden" name="user_id" value="{{auth()->user()->id}}">
         <input type="hidden" name="game_id" value=" {{$game->id}}">
@@ -158,9 +187,18 @@
           @foreach($histories as $history)
           <div class="col-md-4 mb-4">
             <div class="card shadow-lg h-100">
+              <div class="dropdown">
+                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                  <i class="bx bx-dots-vertical-rounded"></i>
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="/concursos/resultados/historico/edit/{{ $history->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+                  <a class="dropdown-item" href="/concursos/resultados/historico/remove/{{ $history->id }}"><i class="bx bx-x me-1"></i> Remover</a>
+                </div>
+              </div>
               <div class="card-body">
                 <h3 class="card-title">{{ $history->description }}</h3>
-                <h5 class="card-text">{{ $history->created_at->format('l, d/m/Y') }}</h5>
+                <h5 class="card-text">{{ ucfirst(\Carbon\Carbon::parse($history->created_at)->translatedFormat('l, d/m/Y')) }}</h5>
                 @foreach(explode(" ", $history->result_numbers) as $key => $result_number)
                 <h5 class="card-text">{{$key+1}}º: <strong>{{ $result_number }}</strong> => {{explode(" ", $history->numbers)[$key]}}</h5>
                 @endforeach
@@ -169,6 +207,10 @@
             </div>
           </div>
           @endforeach
+        </div>
+        <!-- Controles de paginação -->
+        <div class="d-flex justify-content-center mt-4">
+          {{ $histories->links('pagination::bootstrap-5') }}
         </div>
         @endif
       </div>
@@ -291,16 +333,16 @@
           <td>{{ $winner->user->name }}</td>
           <td>{{ $winner->game_award->name }}</td>
           <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
-          <td><span class="badge bg-label-primary me-1">{{  __($winner->status) }}</span></td>
+          <td><span class="badge bg-label-primary me-1">{{ __($winner->status) }}</span></td>
           <td>
             <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
               Detalhes
             </button>
             @if (auth()->user()->role->level_id == 'admin')
-            <a href="{{ route('user_award-pay', $winner->id) }}" class="btn btn-success {{$winner->status == "PAID" ? "disabled" : ""}}">Pagar</a>    
+            <a href="{{ route('user_award-pay', $winner->id) }}" class="btn btn-success {{$winner->status == "PAID" ? "disabled" : ""}}">Pagar</a>
             @endif
             @if (auth()->user()->role->level_id == 'admin' && ($winner->status == "PAID"))
-            <a href="{{ route('user_award-withdraw', $winner->id) }}" class="btn btn-info {{$winner->status !== "PAID" ? "disabled" : ""}}">Estornar</a>    
+            <a href="{{ route('user_award-withdraw', $winner->id) }}" class="btn btn-info {{$winner->status !== "PAID" ? "disabled" : ""}}">Estornar</a>
             @endif
           </td>
         </tr>
@@ -326,6 +368,10 @@
                 @endforeach
               </tbody>
             </table>
+            <!-- Controles de paginação -->
+        <div class="d-flex justify-content-center mt-4">
+          {{ $user_awards->links('pagination::bootstrap-5') }}
+        </div>
           </td>
         </tr>
         @endforeach
@@ -381,80 +427,116 @@
   });
 
 
-  const selectedNumbers = [];
-  const selectedResultNumbers = [];
-  const maxNumbers = 11;
+  document.addEventListener('DOMContentLoaded', function() {
+    const maxNumbers = 11;
+    const selectedNumbers = [];
+    const gridContainer = document.getElementById('grid_input_container');
+    const textContainer = document.getElementById('text_input_container');
+    const manualInput = document.getElementById('manual_numbers');
+    const errorMessage = document.getElementById('error-message');
+    const hiddenField = document.getElementById('numbers'); // Campo oculto para envio
 
-  document.querySelectorAll('.number-button').forEach(button => {
-    button.addEventListener('click', function() {
-      const number = this.getAttribute('data-number');
 
-      if (selectedNumbers.includes(number)) {
-
-        console.log(number)
-        selectedNumbers.splice(selectedNumbers.indexOf(number), 1);
-        this.classList.remove('active');
-      } else {
-        if (selectedNumbers.length < maxNumbers) {
-          selectedNumbers.push(number);
-          this.classList.add('active');
+    // Alternar entre grade e campo de texto
+    document.querySelectorAll('input[name="selection_method"]').forEach(input => {
+      input.addEventListener('change', function() {
+        if (this.id === 'use_grid') {
+          gridContainer.style.display = 'block';
+          textContainer.style.display = 'none';
+          manualInput.value = '';
         } else {
-          document.getElementById('error-message').textContent = 'Você só pode selecionar até 11 números.';
+          gridContainer.style.display = 'none';
+          textContainer.style.display = 'block';
+          selectedNumbers.length = 0;
+          document.getElementById('numbers').value = '';
+          document.querySelectorAll('.number-button').forEach(button => button.classList.remove('active'));
+        }
+      });
+    });
+
+
+
+    manualInput.addEventListener('input', function() {
+
+      // Remove todos os caracteres que não sejam números
+      let rawValue = this.value.replace(/[^0-9]/g, "");
+
+      // Divide os números em partes de dois dígitos
+      let parts = rawValue.match(/.{1,2}/g) || []; // Garante que não seja null
+
+      let uniqueParts = [...new Set(parts)];
+
+      // Limita o número máximo de partes permitidas
+      if (uniqueParts.length > maxNumbers) {
+        parts = parts.slice(0, maxNumbers);
+        errorMessage.textContent = `Você pode selecionar no máximo ${maxNumbers} números.`;
+        errorMessage.style.display = 'block';
+      } else {
+        errorMessage.style.display = 'none';
+      }
+
+      // Recria o valor formatado com espaços entre os pares
+      let displayValue = uniqueParts.join(" ");
+
+      // Atualiza o valor do campo de entrada e o campo oculto
+      this.value = displayValue;
+      hiddenField.value = displayValue;
+    });
+
+
+
+    // Validar o formulário antes de enviar
+    document.getElementById('bet_form').addEventListener('submit', function(e) {
+      const isGridSelected = document.getElementById('use_grid').checked;
+
+      if (isGridSelected && selectedNumbers.length !== maxNumbers) {
+        e.preventDefault();
+        document.getElementById('error-message').textContent = 'Você deve selecionar exatamente 11 números.';
+        document.getElementById('error-message').style.display = 'block';
+      } else if (!isGridSelected) {
+
+
+        const manualNumbers = manualInput.value.trim().split(/\s+/);
+
+        // Validar o formato e quantidade de números no campo de texto
+        if (manualNumbers.length !== maxNumbers) {
+          e.preventDefault();
+          document.getElementById('error-message').textContent = `Insira exatamente ${maxNumbers} dezenas válidas separadas por espaços.`;
           document.getElementById('error-message').style.display = 'block';
-          return;
+        } else {
+          document.getElementById('error-message').style.display = 'none';
         }
       }
+    });
 
-      document.getElementById('numbers').value = selectedNumbers.join(' ');
+    // Manipular a seleção na grade
+    document.querySelectorAll('.number-button').forEach(button => {
+      button.addEventListener('click', function() {
+        const number = this.getAttribute('data-number');
 
-      if (selectedNumbers.length <= maxNumbers) {
-        document.getElementById('error-message').style.display = 'none';
-      }
+        if (selectedNumbers.includes(number)) {
+          selectedNumbers.splice(selectedNumbers.indexOf(number), 1);
+          this.classList.remove('active');
+        } else {
+          if (selectedNumbers.length < maxNumbers) {
+            selectedNumbers.push(number);
+            this.classList.add('active');
+          } else {
+            document.getElementById('error-message').textContent = `Você só pode selecionar até ${maxNumbers} números.`;
+            document.getElementById('error-message').style.display = 'block';
+            return;
+          }
+        }
+
+        document.getElementById('numbers').value = selectedNumbers.join(' ');
+
+        if (selectedNumbers.length <= maxNumbers) {
+          document.getElementById('error-message').style.display = 'none';
+        }
+      });
     });
   });
 
-  document.querySelectorAll('.result_number-button').forEach(button => {
-    button.addEventListener('click', function() {
-      const number = this.getAttribute('data-number');
-
-      if (selectedResultNumbers.includes(number)) {
-        selectedResultNumbers.splice(selectedResultNumbers.indexOf(number), 1);
-        this.classList.remove('active');
-      } else {
-
-        /*
-        if (selectedResultNumbers.length < maxNumbers) {
-          selectedResultNumbers.push(number);
-          this.classList.add('active');
-        } else {
-          document.getElementById('error-message').textContent = 'Você só pode selecionar até 11 números.';
-          document.getElementById('error-message').style.display = 'block';
-          return;
-        }
-        */
-        selectedResultNumbers.push(number);
-        this.classList.add('active');
-      }
-
-      if (document.getElementById('result_numbers')) {
-        document.getElementById('result_numbers').value = selectedResultNumbers.join(' ');
-      }
-
-      /*
-      if (selectedResultNumbers.length <= maxNumbers) {
-        document.getElementById('error-message').style.display = 'none';
-      }
-      */
-    });
-  });
-
-  document.getElementById('bet-form').addEventListener('submit', function(e) {
-    if (selectedNumbers.length !== maxNumbers) {
-      e.preventDefault();
-      document.getElementById('error-message').textContent = 'Você deve selecionar exatamente 11 números.';
-      document.getElementById('error-message').style.display = 'block';
-    }
-  });
 
   if (document.getElementById('result_numbers')) {
     document.getElementById('result_form').addEventListener('submit', function(e) {
@@ -472,13 +554,18 @@
 <style>
   .number-grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    /* Ajusta as colunas automaticamente */
     gap: 5px;
   }
 
   .number-button {
     width: 100%;
     text-align: center;
+    padding: 15px;
+    /* Ajusta o tamanho do botão para ficar proporcional */
+    font-size: 16px;
+    /* Ajusta o tamanho da fonte para caber nos botões */
   }
 
   .number-button.active {

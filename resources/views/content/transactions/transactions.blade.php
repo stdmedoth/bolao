@@ -16,38 +16,40 @@
 
 @section('content')
 
-<div class="card shadow-lg p-3 mb-5 bg-white rounded">
-  <h5 class="card-header">Extrato</h5>
-  <div class="row mt-3">
-    <div class="col-12">
-      <div class="table-responsive">
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tipo</th>
-              <th>Valor</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($transactions as $transaction)
+<div class="container">
+  <h1 class="my-4">Extrato</h1>
+
+  <div class="card shadow-lg p-3 mb-5 bg-white rounded">
+    <div class="row mt-3">
+      <div class="col-12">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse($transactions as $transaction)
               <tr>
                 <td>{{ $transaction->id }}</td>
                 <td>{{ $typeTranslations[$transaction->type] ?? $transaction->type }}</td>
                 <td>R$ {{ number_format($transaction->amount, 2, ',', '.') }}</td>
                 <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
               </tr>
-            @empty
+              @empty
               <tr>
                 <td colspan="4" class="text-center">Nenhuma transação encontrada.</td>
               </tr>
-            @endforelse
-          </tbody>
-        </table>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
 @endsection

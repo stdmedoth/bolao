@@ -12,6 +12,7 @@ class Transactions extends Model
     protected $fillable = [
         "type",
         "amount",
+        'external_id',
         "user_id"
     ];
 }

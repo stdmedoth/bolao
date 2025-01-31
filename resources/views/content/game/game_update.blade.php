@@ -49,8 +49,8 @@
     <div class="form-group">
       <label for="status">Status:</label>
       <select class="form-control" name="status" required>
-        <option value="OPENED" {{ $game->status == 'OPENED' ? 'selected' : '' }}>OPENED</option>
-        <option value="CLOSED" {{ $game->status == 'CLOSED' ? 'selected' : '' }}>CLOSED</option>
+        <option value="OPENED" {{ $game->status == 'OPENED' ? 'selected' : '' }}>Aberto</option>
+        <option value="CLOSED" {{ $game->status == 'CLOSED' ? 'selected' : '' }}>Fechado</option>
       </select>
       @error('status')
       <small class="text-danger">{{ $message }}</small>

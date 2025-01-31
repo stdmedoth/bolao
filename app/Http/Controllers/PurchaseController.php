@@ -22,7 +22,15 @@ class PurchaseController extends Controller
       $builder = $builder->where('user_id', Auth::user()->id);
     }
 
-    $purchases = $builder->get();
+    if (Auth::user()->role->level_id == 'seller') {
+      // se for vendedor, filtrar compras de usuarios desse vendedor
+      $builder->orWhere(function ($q)  {
+        $q->whereHas('user', fn($q2) => $q2->where('invited_by_id', Auth::user()->id));
+      });
+    }
+
+    $purchases = $builder->orderBy('created_at', 'desc');
+    $purchases = $builder->paginate(5);
     return view('content.purchase.my-purchases', ['purchases' => $purchases]);
   }
 
@@ -41,7 +49,7 @@ class PurchaseController extends Controller
 
     $user = User::find($purchase->user_id);
 
-    if (Auth::user()->role->level_id !== 'admin') {
+    if (!in_array(Auth::user()->role->level_id, ['admin' , 'seller'])) {
       if ($user->balance < $purchase->price) {
         return redirect()->route('deposito')
                     ->with('amount', $purchase->price)

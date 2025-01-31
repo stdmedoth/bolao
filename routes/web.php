@@ -92,6 +92,10 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
   Route::post('/concursos/add_game_history/{id}', [AdminController::class, 'addGameHistory'])->name('add-game-history');
+  
+  Route::get('/concursos/resultados/historico/edit/{game_history_id}', [AdminController::class, 'editGameHistory'])->name('edit-game-history-form');
+  Route::put('/concursos/resultados/historico/{game_history_id}', [AdminController::class, 'updateGameHistory'])->name('edit-game-history');
+  Route::get('/concursos/resultados/historico/remove/{id}', [AdminController::class, 'removeGameHistory'])->name('remove-game-history');
 
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');

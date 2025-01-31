@@ -56,9 +56,10 @@ class DepositController extends Controller
       $client = $asaas->Cliente()->create($client_data);
       if (isset($client->errors)) {
         return redirect('/deposito')
-        ->with([
-          'amount' => $amount, 'payment_method' => 'pix'
-        ])
+          ->with([
+            'amount' => $amount,
+            'payment_method' => 'pix'
+          ])
           ->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
       }
 
@@ -85,29 +86,28 @@ class DepositController extends Controller
     $cobranca = $asaas->Cobranca()->create($dadosCobranca);
     if (isset($cobranca->error)) {
       return redirect('/deposito')
-      ->with([
-        'amount' => $amount, 
-        'payment_method' => 'pix'
-      ])
-      ->withErrors(['error' => [$cobranca->error]]);;
+        ->with([
+          'amount' => $amount,
+          'payment_method' => 'pix'
+        ])
+        ->withErrors(['error' => [$cobranca->error]]);;
     }
     if (isset($cobranca->errors)) {
       return redirect('/deposito')
-      ->with(['amount' => $amount, 'payment_method' => 'pix'])
+        ->with(['amount' => $amount, 'payment_method' => 'pix'])
         ->withErrors(['error' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
 
     $Pix = $asaas->Pix()->create($cobranca->id);
     if ($Pix->success) {
       return redirect('/deposito')
-      ->with([
-        'pix' => $Pix->encodedImage, 
-        'amount' => $amount, 
-        'copy_paste' => $Pix->payload,
-        'payment_method' => 'pix'
-      ]);
+        ->with([
+          'pix' => $Pix->encodedImage,
+          'amount' => $amount,
+          'copy_paste' => $Pix->payload,
+          'payment_method' => 'pix'
+        ]);
     }
-
   }
 
   public function pay_credit_card(Request $request)
@@ -128,7 +128,7 @@ class DepositController extends Controller
 
 
     $amount = isset($request->amount) ? $request->amount : 0;
-    
+
     if ($validator->fails()) {
       return back()
         ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
@@ -241,28 +241,35 @@ class DepositController extends Controller
 
   public function webhook(Request $request)
   {
-
-    $data = urldecode($request->input('data'));
-    $data = json_decode($data);
-
-    switch ($data->event) {
+    switch ($request->event) {
       case 'PAYMENT_RECEIVED':
-        $customer_id = $data->payment->customer;
-        $user = User::where('external_finnancial_id', $customer_id)->first();
-        if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 400);
 
-        $user->balance += $data->payment->value;
+        $customer_id = $request->payment['customer'];
+        $external_id = $request->payment['id'];
+        $user = User::where('external_finnancial_id', $customer_id)->first();
+        if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 200);
+        
+        $exists = Transactions::where('external_id', $external_id)
+                              ->where('user_id', $user->id)->exists();
+        if($exists){
+          return response()->json(['message' => 'Pagamento já realizado'], 200); 
+        }
+
+        $user->balance += $request->payment['value'];
         $user->save();
 
         Transactions::create(
           [
             "type" => 'DEPOSIT',
-            "amount" => $data->payment->value,
+            "amount" => $request->payment['value'],
+            'external_id' => $external_id,
             "user_id" => $user->id,
           ]
         );
 
         break;
+      default:
+        return response()->json(['message' => 'Evento não encontrado'], 200);
     }
     return response()->json(['message' => 'OK'], 200);
   }

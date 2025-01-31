@@ -14,8 +14,8 @@ $containerFooter = !empty($containerNav) ? $containerNav : 'container-fluid';
         <!-- <a href="{{ config('variables.moreThemes') ? config('variables.moreThemes') : '#' }}" target="_blank" class="footer-link me-4">More Themes</a> -->
         <!-- <a href="{{ config('variables.documentation') ? config('variables.documentation').'/laravel-introduction.html' : '#' }}" target="_blank" class="footer-link me-4">Documentation</a> -->
         <!-- <a href="{{ config('variables.support') ? config('variables.supportNumber') : '#' }}" target="_blank" class="footer-link d-none d-sm-inline-block">Contato</a> -->
-        <p class="footer-link me-4">19 997655946</p>
-        <p class="footer-link me-4">jovictor210@gmail.com</p>
+        <p class="footer-link me-4">WhatsApp: (11) 9 9999-9999</p>
+        <p class="footer-link me-4">E-mail: suporte@bolaovip.online</p>
       </div>
     </div>
   </div>

@@ -101,6 +101,23 @@
     </div>
     @endif
 
+    <!-- Convidado por -->
+    @if (auth()->user()->role->level_id == 'admin')
+    <div class="form-group">
+      <label for="invited_by_id">Convidado por:</label>
+      <select class="form-control" name="invited_by_id">
+        <option value="" disabled selected>Selecione o vendedor que convidou</option>
+        @foreach ($sellers as $seller)
+        <option value="{{ $seller->id }}" {{ old('invited_by_id') == $seller->id ? 'selected' : '' }}>{{ $seller->name }}</option>
+        @endforeach
+      </select>
+      @error('invited_by_id')
+      <small class="text-danger">{{ $message }}</small>
+      @enderror
+    </div>
+    @endif
+    
+
     <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
   </form>
 </div>

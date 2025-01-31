@@ -90,6 +90,7 @@
       @enderror
     </div>
 
+    @if (auth()->user()->role->level_id == 'admin')
     <!-- Tipo de Usuário -->
     <div class="form-group">
       <label for="role_user_id">Tipo de Usuário:</label>
@@ -103,9 +104,14 @@
       <small class="text-danger">{{ $message }}</small>
       @enderror
     </div>
-
+    @endif
+    @if (auth()->user()->role->level_id == 'seller')
+    <input type="hidden" name="role_user_id" value="{{$gambler_role->id}}">
+    @endif
+    
 
     <!-- Convidado por -->
+    @if (auth()->user()->role->level_id == 'admin')
     <div class="form-group">
       <label for="invited_by_id">Convidado por:</label>
       <select class="form-control" name="invited_by_id">
@@ -118,6 +124,12 @@
       <small class="text-danger">{{ $message }}</small>
       @enderror
     </div>
+    @endif
+    @if (auth()->user()->role->level_id == 'seller')
+    <input type="hidden" name="invited_by_id" value="{{auth()->user()->id}}">
+    @endif
+
+
 
     <!-- Botão de Submissão -->
     <button type="submit" class="btn btn-primary mt-3">Criar Usuário</button>

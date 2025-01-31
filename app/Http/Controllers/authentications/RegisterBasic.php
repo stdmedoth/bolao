@@ -13,6 +13,7 @@ class RegisterBasic extends Controller
 {
   public function index()
   {
+
     return view('content.authentications.auth-register-basic');
   }
 
@@ -25,6 +26,7 @@ class RegisterBasic extends Controller
       'email' => 'required|string|email|max:255|unique:users',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:8',
+      'refered_by_id' => 'exists:users,id'
     ]);
 
     try {
@@ -35,6 +37,7 @@ class RegisterBasic extends Controller
         'document' => $validatedData['document'],
         'phone' => $validatedData['phone'],
         'password' => Hash::make($validatedData['password']),
+        'invited_by_id' => $request->input('refered_by_id'),
         'role_user_id' => 3,
       ]);
 

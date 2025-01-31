@@ -48,8 +48,8 @@ class GameController extends Controller
     //
     $game = Game::find($id);
     $purchases = Purchase::where('user_id', Auth::user()->id)->where('game_id', $id)->get();
-    $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->get();
-    $user_awards = UserAwards::where('game_id', $id)->get();
+    $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->paginate(20);
+    $user_awards = UserAwards::where('game_id', $id)->paginate(20);
 
     $winners = [];
     $lastClosedHistory = GameHistory::where('game_id', $game->id)
@@ -86,6 +86,7 @@ class GameController extends Controller
       'purchases' => $purchases,
       'histories' => $histories,
       'winners' => $winners,
+      'user_awards' => $user_awards
     ]);
   }
 

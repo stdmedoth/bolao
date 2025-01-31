@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
       'email' => 'admin@email.com',
       'document' => '90517131420',
       'phone' => '(83) 98425-4622',
-      'password' => Hash::make('your-password-here'),
+      'password' => Hash::make('12345678'),
       'role_user_id' => 1
     ]);
   }

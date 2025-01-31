@@ -3,7 +3,7 @@
     {
       "url": "/",
       "name": "Inicio",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bxs-dashboard",
       "slug": "app-email",
       "target": "_blank"
@@ -11,7 +11,7 @@
     {
       "url": "/usuarios",
       "name": "Usuarios",
-      "only_admin": true,
+      "user_roles_level": ["admin", "seller"],
       "icon": "menu-icon tf-icons bx bxs-user-detail",
       "slug": "app-email",
       "target": "_blank"
@@ -19,7 +19,7 @@
     {
       "url": "/concursos",
       "name": "Concursos",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -27,7 +27,7 @@
     {
       "url": "/minhas_compras",
       "name": "Compras",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -35,7 +35,7 @@
     {
       "url": "/meus_premios",
       "name": "Prêmios",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-medal",
       "slug": "app-email",
       "target": "_blank"
@@ -43,7 +43,7 @@
     {
       "url": "/deposito",
       "name": "Depositar",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-money",
       "slug": "app-email",
       "target": "_blank"
@@ -51,7 +51,7 @@
     {
       "url": "/saque",
       "name": "Sacar",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-dollar",
       "slug": "app-email",
       "target": "_blank"
@@ -59,7 +59,7 @@
     {
       "url": "/extrato",
       "name": "Extrato",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-list-ul",
       "slug": "app-email",
       "target": "_blank"
@@ -67,7 +67,7 @@
     {
       "url": "/indique_ganhe",
       "name": "Indique e ganhe",
-      "only_admin": false,
+      "user_roles_level": ["seller", "admin", "gambler"],
       "icon": "menu-icon tf-icons bx bx-wallet",
       "slug": "app-email",
       "target": "_blank"

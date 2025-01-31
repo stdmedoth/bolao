@@ -33,8 +33,10 @@ class AdminController extends Controller
     $user = User::findOrFail($id);
 
     $roles = RoleUser::all();
+    $sellers = User::where('role_user_id', 2)->get();
 
-    return view('content.users.user_update', compact('user', 'roles'));
+
+    return view('content.users.user_update', compact('user', 'roles', 'sellers'));
   }
 
   public function delete($id)
@@ -49,7 +51,9 @@ class AdminController extends Controller
   {
     $user = User::findOrFail($id);
     $roles = RoleUser::get(); // Para preencher as opções de papel
-    return view('usuarios.edit', compact('user', 'roles'));
+    $sellers = User::where('role_user_id', 2)->get();
+
+    return view('usuarios.edit', compact('user', 'roles', 'sellers'));
   }
 
   // Cria um usuário (vendedor ou apostador)
@@ -113,11 +117,29 @@ class AdminController extends Controller
 
 
 
-  public function index()
+  public function index(Request $request)
   {
-    $users = User::get();
+    $builder = User::orderBy('created_at', 'desc');
+    if (Auth::user()->role->level_id !== 'admin') {
+      $builder = $builder->where('invited_by_id', Auth::user()->id);
+    }
 
-    return view('content.users.users', ['users' => $users]);
+    if ($request->has('search') && $request->search != '') {
+      $builder->where(function ($q) use ($request) {
+        $q->where('name', 'like', '%' . $request->search . '%')
+          ->orWhere('email', 'like', '%' . $request->search . '%');
+      });
+    }
+
+    // Filtro de role_user_id
+    if ($request->has('role_user_id') && $request->role_user_id != '') {
+      $builder->where('role_user_id', $request->role_user_id);
+    }
+
+    $users = $builder->paginate(5);
+    $roles = RoleUser::all(); // Obtém todas as roles para o select
+
+    return view('content.users.users', ['users' => $users, 'roles' => $roles]);
   }
 
   public function show()
@@ -128,8 +150,13 @@ class AdminController extends Controller
   public function create_user_form()
   {
     $roles = RoleUser::get();
+    $gambler_role = RoleUser::where('level_id', 'gambler')->first();
     $sellers = User::where('role_user_id', 2)->get();
-    return view('content.users.create_user', ['roles' => $roles, 'sellers' => $sellers]);
+    return view('content.users.create_user', [
+      'roles' => $roles,
+      'sellers' => $sellers,
+      'gambler_role' => $gambler_role
+    ]);
   }
 
   public function create_game_form()
@@ -326,6 +353,147 @@ class AdminController extends Controller
     $this->handleAwards($game->id, $userPoints, $awards, $lastClosedHistory);
 
     return redirect(route('show-game', ['id' => $game->id]));
+  }
+
+
+
+  public function editGameHistory(Request $request, $game_history_id)
+  {
+    if(Auth::user()->role->level_id !== 'admin'){
+      redirect('/auth/logout');
+    }
+
+    $gameHistory = GameHistory::find($game_history_id);
+
+
+    return view('content.game.history.edit_game_history', compact('gameHistory'));
+  } 
+
+  public function updateGameHistory(Request $request, $game_history_id)
+  {
+    $game_history = GameHistory::find($game_history_id);
+
+    $user_awards = UserAwards::where('game_id', $game_history->game_id)
+                  ->where('created_at','>=',$game_history->created_at);
+
+    // Validação dos dados de entrada
+    $validatedData = $request->validate([
+      "description" => "string",
+      "result_numbers" => "string",
+    ]);
+    $game_id = $game_history->game_id;
+
+    if(!isset($request->result_numbers)){
+      $game_history->update($validatedData);
+      return redirect(route('show-game', ['id' => $game_id]));
+    }
+
+    $user_awards->delete();
+  
+    $resultNumbers = explode(" ", $request->result_numbers);
+    
+    // Extrair os últimos dois dígitos de cada número
+    $numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
+    
+    
+    $validatedData['result_numbers'] = implode(" ", $resultNumbers);
+    $validatedData['numbers'] = implode(" ", $numbers);
+    $game_history->update($validatedData);
+
+    // Recalcular 
+
+    // Última vez que o concurso foi aberto
+    $lastClosedHistory = GameHistory::where('game_id', $game_id)
+      ->where('type', 'OPENED')
+      ->orderBy('created_at', 'DESC')
+      ->first();
+
+
+    // Pegar todos os números válidos desde a última abertura
+    $gameHistoriesBuilder = GameHistory::where('game_id', $game_id)
+      ->where('type', 'ADDING_NUMBER');
+    if ($lastClosedHistory) {
+      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $gameHistories = $gameHistoriesBuilder->get();
+
+    // Reunir todos os números adicionados desde a última abertura
+    $allAddedNumbers = $gameHistories->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+
+    // Obter todas as compras relacionadas ao jogo desde o último concurso aberto
+    $purchasesBuilder = Purchase::where('game_id', $game_id)
+      ->whereIn('status', ['PAID']);
+    if ($lastClosedHistory) {
+      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $purchases = $purchasesBuilder->get();
+
+    // Calcular pontos por usuário usando TODOS os números acumulados
+    $userPoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
+    //dd($userPoints);
+
+    // Verificar condições de prêmios e distribuir
+    $awards = GameAward::where('game_id', $game_id)->get();
+    $this->handleAwards($game_id, $userPoints, $awards, $lastClosedHistory);
+    
+    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
+  }
+
+  public function removeGameHistory(Request $request, $game_history_id)
+  {
+    $game_history = GameHistory::find($game_history_id);
+
+    $user_awards = UserAwards::where('game_id', $game_history->game_id)
+                  ->where('created_at','>=',$game_history->created_at);
+
+
+    $game_id = $game_history->game_id;
+    $game_history->delete();
+    $user_awards->delete();
+
+
+    // Recalcular 
+
+    // Última vez que o concurso foi aberto
+    $lastClosedHistory = GameHistory::where('game_id', $game_id)
+      ->where('type', 'OPENED')
+      ->orderBy('created_at', 'DESC')
+      ->first();
+
+
+    // Pegar todos os números válidos desde a última abertura
+    $gameHistoriesBuilder = GameHistory::where('game_id', $game_id)
+      ->where('type', 'ADDING_NUMBER');
+    if ($lastClosedHistory) {
+      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $gameHistories = $gameHistoriesBuilder->get();
+
+    // Reunir todos os números adicionados desde a última abertura
+    $allAddedNumbers = $gameHistories->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+
+    // Obter todas as compras relacionadas ao jogo desde o último concurso aberto
+    $purchasesBuilder = Purchase::where('game_id', $game_id)
+      ->whereIn('status', ['PAID']);
+    if ($lastClosedHistory) {
+      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $purchases = $purchasesBuilder->get();
+
+    // Calcular pontos por usuário usando TODOS os números acumulados
+    $userPoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
+    //dd($userPoints);
+
+    // Verificar condições de prêmios e distribuir
+    $awards = GameAward::where('game_id', $game_id)->get();
+    $this->handleAwards($game_id, $userPoints, $awards, $lastClosedHistory);
+    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }
 
 

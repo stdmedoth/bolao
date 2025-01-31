@@ -16,12 +16,12 @@
 
 @section('content')
 <div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
+  <div class="col-12 mb-6 order-0">
     <div class="card">
       <div class="d-flex align-items-start row">
         <div class="col-sm-7">
           <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Seja bem-vindo(a), {{auth()->user()->name}}! 🎉</h5>
+            <h1 class="card-title mb-3">Seja bem-vindo(a), <br>{{auth()->user()->name}}! 🎉</h1>
             <p class="mb-6">
             Aqui, sua sorte é o destaque! Escolha suas dezenas, acompanhe os resultados e concorra a prêmios incríveis com base nas loterias PT, PTN e Federal. Quem acertar as 11 dezenas primeiro leva o grande prêmio, mas também há chances para quem chegar perto. Não se esqueça: mesmo quem tem menos sorte pode ser premiado! 🍀
             Boa sorte e bons jogos! 🎯  

@@ -29,7 +29,7 @@ class ReferEarnController extends Controller
       ->sum('amount');
 
     $referEarns = ReferEarn::where('refer_user_id', Auth::user()->id)
-                    ->get();
+                    ->paginate(5);
 
     // Traduções para os status
     $statusTranslations = [
@@ -53,7 +53,7 @@ class ReferEarnController extends Controller
     ];
 
     if (Auth::user()->role->level_id == 'admin') {
-      $referEarns = ReferEarn::with(['referUser', 'invitedUser'])->get();
+      $referEarns = ReferEarn::with(['referUser', 'invitedUser'])->paginate(5);
       $data['referEarns'] = $referEarns;
     }
 

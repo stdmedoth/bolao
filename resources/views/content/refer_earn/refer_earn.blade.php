@@ -91,6 +91,9 @@
   <div class="row mt-3">
     <div class="col-12">
       <div class="table-responsive">
+        @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
         <table class="table table-striped">
           <thead>
             <tr>
@@ -101,18 +104,31 @@
               <th>Bônus Pago?</th>
               <th>Valor do Bônus</th>
               <th>Data</th>
+              @if (auth()->user()->role->level_id == 'admin')
+              <th>Ações</th>
+              @endif
             </tr>
           </thead>
           <tbody>
             @forelse($referEarns as $referEarn)
             <tr>
               <td>{{ $referEarn->id }}</td>
-              <td>{{ $referEarn->referUser->name }}</td>
-              <td>{{ $referEarn->invitedUser->name }}</td>
+              <td>{{ isset($referEarn->referUser) ? $referEarn->referUser->name : 'N/A' }}</td>
+              <td>{{ isset($referEarn->invitedUser) ? $referEarn->invitedUser->name : "N/A" }}</td>
               <td>{{ $statusTranslations['invited_user_bought'][$referEarn->invited_user_bought] ?? 'Indefinido' }}</td>
               <td>{{ $statusTranslations['earn_paid'][$referEarn->earn_paid] ?? 'Indefinido' }}</td>
               <td>{{ $referEarn->amount ? 'R$ ' . number_format($referEarn->amount, 2, ',', '.') : 'N/A' }}</td>
               <td>{{ $referEarn->created_at }}</td>
+              <td>
+                @if (auth()->user()->role->level_id == 'admin')
+                @if( $referEarn->earn_paid )
+                <a href="{{ route('refer_earns_payback', $referEarn->id) }}" class="btn btn-warning">Estornar</a>
+                @endif
+                @if( !$referEarn->earn_paid )
+                <a href="{{ route('refer_earns_pay', $referEarn->id) }}" class="btn btn-success">Pagar</a>
+                @endif
+              </td>
+              @endif
             </tr>
             @empty
             <tr>
@@ -121,58 +137,14 @@
             @endforelse
           </tbody>
         </table>
+        <!-- Controles de paginação -->
+        <div class="d-flex justify-content-center mt-4">
+          {{ $referEarns->links('pagination::bootstrap-5') }}
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-
-@if (auth()->user()->role->level_id == 'admin')
-<div class="container">
-  <h1>Convites</h1>
-
-  @if (session('success'))
-  <div class="alert alert-success">{{ session('success') }}</div>
-  @endif
-
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Vendedor</th>
-        <th>Convidado</th>
-        <th>Convidado Comprou?</th>
-        <th>Pago?</th>
-        <!--<th>Valor</th>-->
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse ($referEarns as $earn)
-      <tr>
-        <td>{{ $earn->id }}</td>
-        <td>{{ $earn->referUser->name ?? 'N/A' }}</td>
-        <td>{{ $earn->invitedUser->name ?? 'N/A' }}</td>
-        <td>{{ $earn->invited_user_bought ? 'Sim' : 'Não' }}</td>
-        <td>{{ $earn->earn_paid ? 'Sim' : 'Não' }}</td>
-        <!--<td>{{ $earn->amount }}</td>-->
-        <td>
-          @if( $earn->earn_paid )
-          <a href="{{ route('refer_earns_payback', $earn->id) }}" class="btn btn-warning">Estornar</a>
-          @endif
-          @if( !$earn->earn_paid )
-          <a href="{{ route('refer_earns_pay', $earn->id) }}" class="btn btn-success">Pagar</a>
-          @endif
-        </td>
-      </tr>
-      @empty
-      <tr>
-        <td colspan="7" class="text-center">Nenhum registro encontrado.</td>
-      </tr>
-      @endforelse
-    </tbody>
-  </table>
-</div>
-@endif
 
 @endsection
