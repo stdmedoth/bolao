@@ -53,6 +53,16 @@
             <p class="card-text"><strong>Fecha em:</strong> {{ date('d/m/Y', strtotime($game->close_at)) }}</p>
             <p class="card-text"><strong>Tempo Restante:</strong> <span id="countdown-{{$game->id}}"></span></p>
             <p class="card-text"><strong>Preço:</strong> R$ {{ number_format($game->price, 2, ',', '.') }} </p>
+            @if(!$game->awards->isEmpty())
+            @foreach($game->awards as $award)
+            @if($award->condition_type === 'WINNER')
+            <p class="card-text"><strong>Prêmio {{$award->name}}:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} </p>
+            @endif
+            @endforeach
+            @else
+            <span class="badge bg-label-warning">Cadastrando prêmios</span>
+            @endif
+
             <p class="card-text">
               @switch($game->status)
               @case('OPENED')
@@ -65,14 +75,7 @@
               <span class="badge bg-label-secondary">{{ __($game->status) }}</span>
               @break
               @endswitch
-
             </p>
-
-            @if(!$game->awards->isEmpty())
-            @foreach($game->awards as $award)
-            <strong>Prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }} <br>
-            @endforeach
-            @endif
           </div>
 
           <div class="card-footer">

@@ -359,7 +359,7 @@ class AdminController extends Controller
 
   public function editGameHistory(Request $request, $game_history_id)
   {
-    if(Auth::user()->role->level_id !== 'admin'){
+    if (Auth::user()->role->level_id !== 'admin') {
       redirect('/auth/logout');
     }
 
@@ -367,14 +367,14 @@ class AdminController extends Controller
 
 
     return view('content.game.history.edit_game_history', compact('gameHistory'));
-  } 
+  }
 
   public function updateGameHistory(Request $request, $game_history_id)
   {
     $game_history = GameHistory::find($game_history_id);
 
     $user_awards = UserAwards::where('game_id', $game_history->game_id)
-                  ->where('created_at','>=',$game_history->created_at);
+      ->where('created_at', '>=', $game_history->created_at);
 
     // Validação dos dados de entrada
     $validatedData = $request->validate([
@@ -383,24 +383,24 @@ class AdminController extends Controller
     ]);
     $game_id = $game_history->game_id;
 
-    if(!isset($request->result_numbers)){
+    if (!isset($request->result_numbers)) {
       $game_history->update($validatedData);
       return redirect(route('show-game', ['id' => $game_id]));
     }
 
     $user_awards->delete();
-  
+
     $resultNumbers = explode(" ", $request->result_numbers);
-    
+
     // Extrair os últimos dois dígitos de cada número
     $numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
-    
-    
+
+
     $validatedData['result_numbers'] = implode(" ", $resultNumbers);
     $validatedData['numbers'] = implode(" ", $numbers);
     $game_history->update($validatedData);
 
-    // Recalcular 
+    // Recalcular
 
     // Última vez que o concurso foi aberto
     $lastClosedHistory = GameHistory::where('game_id', $game_id)
@@ -438,7 +438,7 @@ class AdminController extends Controller
     // Verificar condições de prêmios e distribuir
     $awards = GameAward::where('game_id', $game_id)->get();
     $this->handleAwards($game_id, $userPoints, $awards, $lastClosedHistory);
-    
+
     return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }
 
@@ -447,7 +447,7 @@ class AdminController extends Controller
     $game_history = GameHistory::find($game_history_id);
 
     $user_awards = UserAwards::where('game_id', $game_history->game_id)
-                  ->where('created_at','>=',$game_history->created_at);
+      ->where('created_at', '>=', $game_history->created_at);
 
 
     $game_id = $game_history->game_id;
@@ -455,7 +455,7 @@ class AdminController extends Controller
     $user_awards->delete();
 
 
-    // Recalcular 
+    // Recalcular
 
     // Última vez que o concurso foi aberto
     $lastClosedHistory = GameHistory::where('game_id', $game_id)

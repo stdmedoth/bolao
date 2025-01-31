@@ -45,6 +45,7 @@ use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
+use App\Http\Controllers\GameAwardController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReferEarnController;
@@ -92,10 +93,18 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
   Route::get('/concursos/{id}', [GameController::class, 'show'])->name('show-game');
   Route::post('/concursos/add_game_history/{id}', [AdminController::class, 'addGameHistory'])->name('add-game-history');
-  
+
   Route::get('/concursos/resultados/historico/edit/{game_history_id}', [AdminController::class, 'editGameHistory'])->name('edit-game-history-form');
   Route::put('/concursos/resultados/historico/{game_history_id}', [AdminController::class, 'updateGameHistory'])->name('edit-game-history');
   Route::get('/concursos/resultados/historico/remove/{id}', [AdminController::class, 'removeGameHistory'])->name('remove-game-history');
+
+  Route::get('/concursos/premios/add/{game_id}', [GameAwardController::class, 'create'])->name('create-game-award-form');
+  Route::put('/concursos/premios/add/{game_award_id}', [GameAwardController::class, 'store'])->name('store-game-award');
+  Route::get('/concursos/premios/edit/{game_award_id}', [GameAwardController::class, 'edit'])->name('edit-game-award-form');
+  Route::put('/concursos/premios/{game_award_id}', [GameAwardController::class, 'update'])->name('edit-game-award');
+  Route::get('/concursos/premios/remove/{id}', [GameAwardController::class, 'destroy'])->name('remove-game-award');
+
+
 
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
@@ -103,12 +112,12 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
   Route::get('/minhas_compras/{id}', [PurchaseController::class, 'show'])->name('minhas_compras-view');
   Route::get('/minhas_compras/delete/{id}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
-  
+
 
   Route::get('/meus_premios', [UserAwardController::class, 'index'])->name('meus_premios');
   Route::get('/meus_premios/pay/{id}', [UserAwardController::class, 'pay'])->name('user_award-pay');
   Route::get('/meus_premios/withdraw/{id}', [UserAwardController::class, 'withdraw'])->name('user_award-withdraw');
-  
+
   Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
   Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');
