@@ -14,7 +14,7 @@ class PurchaseController extends Controller
   /**
    * Display a listing of the resource.
    */
-  public function index()
+  public function index(Request $request)
   {
     //
     $builder = new Purchase();
@@ -24,9 +24,21 @@ class PurchaseController extends Controller
 
     if (Auth::user()->role->level_id == 'seller') {
       // se for vendedor, filtrar compras de usuarios desse vendedor
-      $builder->orWhere(function ($q)  {
+      $builder->orWhere(function ($q) {
         $q->whereHas('user', fn($q2) => $q2->where('invited_by_id', Auth::user()->id));
       });
+    }
+
+    if ($request->has('search') && $request->search != '') {
+      $builder->where(function ($q) use ($request) {
+        $q->whereHas('game', function ($gameq) use ($request) {
+          $gameq->where('name', 'like', '%' . $request->search . '%');
+        })->orWhere('numbers', 'like', '%' . $request->search . '%');
+      });
+    }
+
+    if ($request->has('status') && $request->status != '') {
+      $builder->where('status', $request->status);
     }
 
     $purchases = $builder->orderBy('created_at', 'desc');
@@ -49,11 +61,11 @@ class PurchaseController extends Controller
 
     $user = User::find($purchase->user_id);
 
-    if (!in_array(Auth::user()->role->level_id, ['admin' , 'seller'])) {
+    if (!in_array(Auth::user()->role->level_id, ['admin', 'seller'])) {
       if ($user->balance < $purchase->price) {
         return redirect()->route('deposito')
-                    ->with('amount', $purchase->price)
-                    ->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
+          ->with('amount', $purchase->price)
+          ->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
       }
 
       $user->balance -= $purchase->price;
@@ -92,7 +104,7 @@ class PurchaseController extends Controller
     ]);
 
     $numbers = explode(' ', $request->numbers);
-    $numbers = array_map('intval',$numbers);
+    $numbers = array_map('intval', $numbers);
     sort($numbers);
     $numbers = implode(' ', $numbers);
 
@@ -102,7 +114,7 @@ class PurchaseController extends Controller
     $purchase->gambler_phone = $request->gambler_phone;
     $purchase->numbers = $numbers;
     //$purchase->quantity = $request->quantity;
-    
+
     $purchase->quantity = 1;
     $purchase->status = "PENDING";
     $purchase->game_id = $request->game_id;

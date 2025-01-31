@@ -49,8 +49,9 @@
     <div class="form-group">
       <label for="status">Status:</label>
       <select class="form-control" name="status" required>
-        <option value="OPENED" {{ $game->status == 'OPENED' ? 'selected' : '' }}>Aberto</option>
-        <option value="CLOSED" {{ $game->status == 'CLOSED' ? 'selected' : '' }}>Fechado</option>
+        @foreach (['OPENED', 'CLOSED', 'FINISHED'] as $status)
+        <option value="{{ $status }}" {{ (request('status') == $status) ? 'selected' : '' }}>{{ __($status) }}</option>
+        @endforeach
       </select>
       @error('status')
       <small class="text-danger">{{ $message }}</small>
@@ -94,9 +95,9 @@
         <button type="button" class="btn btn-danger remove-award">Remover Prêmio</button>
         <button type="button" class="btn btn-secondary" id="add-award">Adicionar Prêmio</button>
         <br><br>
-      </div>  
+      </div>
       @endforeach
-    </div>  
+    </div>
     @endif
 
     <button type="submit" class="btn btn-primary">Atualizar Jogo</button>

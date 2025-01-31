@@ -27,6 +27,35 @@
   <div class="card">
 
     <div class="table-responsive text-nowrap">
+
+      <!-- Formulário de Pesquisa e Filtro -->
+      <form action="{{ url('/minhas_compras') }}" method="GET" class="mb-4">
+        <div class="row">
+          <div class="col-md-6">
+            <!-- Campo de pesquisa -->
+            <div class="input-group">
+              <input type="text" name="search" class="form-control" placeholder="Pesquisar por nome do concurso, numeros..." value="{{ request('search') }}">
+              <button class="btn btn-primary" type="submit">Filtrar</button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <!-- Select de filtro por role -->
+            <select name="status" class="form-select">
+              <option value="">Todos os status</option>
+              @foreach (['PAID', 'PENDING', 'CANCELED', 'FINISHED'] as $status)
+              <option value="{{ $status }}" {{ (request('status') == $status) ? 'selected' : '' }}>{{ __($status) }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-secondary w-100" type="submit">Aplicar Filtros</button>
+          </div>
+        </div>
+      </form>
+
+
       <table class="table">
         <thead>
           <tr>

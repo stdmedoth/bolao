@@ -110,6 +110,7 @@
                 <div class="form-group">
                   <label for="manual_numbers">Digite suas dezenas (máximo de 11 números, ex: 11 22 33 44):</label>
                   <input type="text"
+                    inputmode="numeric"
                     class="form-control"
                     id="manual_numbers"
                     placeholder="Ex: 11 22 33 10 99"
@@ -369,9 +370,9 @@
               </tbody>
             </table>
             <!-- Controles de paginação -->
-        <div class="d-flex justify-content-center mt-4">
-          {{ $user_awards->links('pagination::bootstrap-5') }}
-        </div>
+            <div class="d-flex justify-content-center mt-4">
+              {{ $user_awards->links('pagination::bootstrap-5') }}
+            </div>
           </td>
         </tr>
         @endforeach
@@ -554,17 +555,17 @@
 <style>
   .number-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
     /* Ajusta as colunas automaticamente */
-    gap: 5px;
+    gap: 4px;
   }
 
   .number-button {
     width: 100%;
     text-align: center;
-    padding: 15px;
+    padding: 10px;
     /* Ajusta o tamanho do botão para ficar proporcional */
-    font-size: 16px;
+    font-size: 12px;
     /* Ajusta o tamanho da fonte para caber nos botões */
   }
 
