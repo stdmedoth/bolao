@@ -29,7 +29,7 @@ class ReferEarnController extends Controller
       ->sum('amount');
 
     $referEarns = ReferEarn::where('refer_user_id', Auth::user()->id)
-                    ->paginate(5);
+      ->paginate(5);
 
     // Traduções para os status
     $statusTranslations = [

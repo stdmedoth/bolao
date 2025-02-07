@@ -31,15 +31,25 @@
       <!-- Formulário de Pesquisa e Filtro -->
       <form action="{{ url('/minhas_compras') }}" method="GET" class="mb-4">
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <!-- Campo de pesquisa -->
             <div class="input-group">
               <input type="text" name="search" class="form-control" placeholder="Pesquisar por nome do concurso, numeros..." value="{{ request('search') }}">
-              <button class="btn btn-primary" type="submit">Filtrar</button>
+              <button class="btn btn-primary" type="submit">Buscar</button>
             </div>
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <!-- Select de filtro por role -->
+            <select name="game_id" class="form-select">
+              <option value="">Todos Concursos</option>
+              @foreach ($games as $game)
+              <option value="{{ $game->id }}" {{ (request('game_id') == $game->id) ? 'selected' : '' }}>{{ $game->name }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="col-md-3">
             <!-- Select de filtro por role -->
             <select name="status" class="form-select">
               <option value="">Todos os status</option>
@@ -60,10 +70,11 @@
         <thead>
           <tr>
             <th>Jogo</th>
-            @if (in_array(Auth::user()->role->level_id, ['admin' , 'seller']))
             <th>Apostador</th>
+            @if (in_array(Auth::user()->role->level_id, ['admin' , 'seller']))
+            <th>Usuário</th>
             @endif
-            <th>Data da Compra</th>
+            <th>Compra em</th>
             <th>Números</th>
             <th>Status</th>
             <th>Ações</th>
@@ -83,6 +94,10 @@
                 <!-- Nome do jogo é o dia na semana em que se passa a aposta-->
               </a>
             </td>
+            <td>
+              <span class="badge bg-label-primary me-1">{{ __($purchase->gambler_name) }}</span>
+            </td>
+
             @if (in_array(auth()->user()->role->level_id, ['admin' , 'seller']))
             <td>{{ $purchase->user->name }}</td>
 
@@ -92,7 +107,6 @@
             <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
             <td>{{ $purchase->numbers }}</td>
             <td>
-              <!-- Mostrando o status da compra -->
               <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>
             </td>
             <td>

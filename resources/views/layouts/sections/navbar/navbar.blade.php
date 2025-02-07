@@ -46,9 +46,13 @@ $navbarDetached = ($navbarDetached ?? '');
 
           <!-- Place this tag where you want the button to render. -->
           <li class="nav-item lh-1 me-4">
+            <a href="{{route('saque')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Saldo">
+              <i class="bx bx-money"></i>
+              <span>Disponível para Sacar: R$ {{number_format(auth()->user()->balance, 2, ',', '.')}}</span>
+            </a>
             <a href="{{route('deposito')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Saldo">
               <i class="bx bx-money"></i>
-              <span>Saldo: R$ {{number_format(auth()->user()->balance, 2, ',', '.')}}</span>
+              <span>Disponível para Jogar: R$ {{number_format(auth()->user()->game_credit, 2, ',', '.')}}</span>
             </a>
 
           </li>

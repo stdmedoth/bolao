@@ -27,6 +27,10 @@ class User extends Authenticatable
     'document',
     'external_finnancial_id',
     'password',
+
+    'balance',
+    'game_credit',
+
     'role_user_id',
     'invited_by_id',
 

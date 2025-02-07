@@ -352,7 +352,7 @@ class AdminController extends Controller
     $awards = GameAward::where('game_id', $game->id)->get();
     $this->handleAwards($game->id, $userPoints, $awards, $lastClosedHistory);
 
-    return redirect(route('show-game', ['id' => $game->id]));
+    return redirect(route('show-game', ['id' => $game->id]))->with(['tab' => 'tab-results']);
   }
 
 
@@ -393,7 +393,8 @@ class AdminController extends Controller
     $resultNumbers = explode(" ", $request->result_numbers);
 
     // Extrair os últimos dois dígitos de cada número
-    $numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
+    //$numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
+    $numbers = array_map(fn($num) => intval($num), $resultNumbers);
 
 
     $validatedData['result_numbers'] = implode(" ", $resultNumbers);

@@ -25,6 +25,7 @@ return new class extends Migration
       $table->string('email');
       $table->string('phone');
 
+      $table->float('game_credit')->default(0);
       $table->float('balance')->default(0);
 
       $table->string('cc_name')->nullable();

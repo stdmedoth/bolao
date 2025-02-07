@@ -195,7 +195,7 @@ class DepositController extends Controller
         ->withErrors(['errors' => array_map(fn($e) => $e->description, $cobranca->errors)]);
     }
 
-    $user->balance += $amount;
+    $user->game_credit += $amount;
 
     // cc data
     if (!$user->cc_name) {
@@ -248,14 +248,14 @@ class DepositController extends Controller
         $external_id = $request->payment['id'];
         $user = User::where('external_finnancial_id', $customer_id)->first();
         if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 200);
-        
+
         $exists = Transactions::where('external_id', $external_id)
-                              ->where('user_id', $user->id)->exists();
-        if($exists){
-          return response()->json(['message' => 'Pagamento já realizado'], 200); 
+          ->where('user_id', $user->id)->exists();
+        if ($exists) {
+          return response()->json(['message' => 'Pagamento já realizado'], 200);
         }
 
-        $user->balance += $request->payment['value'];
+        $user->game_credit += $request->payment['value'];
         $user->save();
 
         Transactions::create(

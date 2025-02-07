@@ -18,6 +18,8 @@ class PurchaseController extends Controller
   {
     //
     $builder = new Purchase();
+    $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
+
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
@@ -37,13 +39,17 @@ class PurchaseController extends Controller
       });
     }
 
+    if ($request->has('game_id') && $request->game_id != '') {
+      $builder->where('game_id', $request->game_id);
+    }
+
     if ($request->has('status') && $request->status != '') {
       $builder->where('status', $request->status);
     }
 
     $purchases = $builder->orderBy('created_at', 'desc');
     $purchases = $builder->paginate(5);
-    return view('content.purchase.my-purchases', ['purchases' => $purchases]);
+    return view('content.purchase.my-purchases', ['purchases' => $purchases, 'games' => $games]);
   }
 
   /**
@@ -61,14 +67,14 @@ class PurchaseController extends Controller
 
     $user = User::find($purchase->user_id);
 
-    if (!in_array(Auth::user()->role->level_id, ['admin', 'seller'])) {
-      if ($user->balance < $purchase->price) {
+    if (!in_array(Auth::user()->role->level_id, ['admin'])) {
+      if ($user->game_credit < $purchase->price) {
         return redirect()->route('deposito')
           ->with('amount', $purchase->price)
-          ->withErrors(['error' => "Sua conta não tem saldo suficiente para realizar a operação, faça um depósito"]);
+          ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
 
-      $user->balance -= $purchase->price;
+      $user->game_credit -= $purchase->price;
       $user->save();
     }
 
@@ -138,8 +144,8 @@ class PurchaseController extends Controller
     $purchase->save();
 
     $user = User::find($request->user_id);
-    if ($user->balance >= $price) {
-      $user->balance -= $price;
+    if ($user->game_credit >= $price) {
+      $user->game_credit -= $price;
       $user->save();
 
 

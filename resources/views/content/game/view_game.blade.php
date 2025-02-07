@@ -188,6 +188,7 @@
           @foreach($histories as $history)
           <div class="col-md-4 mb-4">
             <div class="card shadow-lg h-100">
+              @if (auth()->user()->role->level_id == 'admin')
               <div class="dropdown">
                 <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
                   <i class="bx bx-dots-vertical-rounded"></i>
@@ -197,12 +198,11 @@
                   <a class="dropdown-item" href="/concursos/resultados/historico/remove/{{ $history->id }}"><i class="bx bx-x me-1"></i> Remover</a>
                 </div>
               </div>
+              @endif
               <div class="card-body">
                 <h3 class="card-title">{{ $history->description }}</h3>
                 <h5 class="card-text">{{ ucfirst(\Carbon\Carbon::parse($history->created_at)->translatedFormat('l, d/m/Y')) }}</h5>
-                @foreach(explode(" ", $history->result_numbers) as $key => $result_number)
-                <h5 class="card-text">{{$key+1}}º: <strong>{{ $result_number }}</strong> => {{explode(" ", $history->numbers)[$key]}}</h5>
-                @endforeach
+                <h5 class="card-text"><strong>{{ $history->result_numbers }}</strong></h5>
                 <p class="card-text"><small class="text-muted">Cadastrado: {{ $history->created_at->format('d/m/Y H:i') }}</small></p>
               </div>
             </div>
@@ -221,7 +221,10 @@
 
   <div class="tab-pane fade {{($tab == 'tab-prizes') ? 'show active' : ''}}" id="prizes" role="tabpanel" aria-labelledby="prizes-tab">
     <h3 class="mb-0">Prêmios Disponíveis</h3>
+
+    @if (auth()->user()->role->level_id == 'admin')
     <a href="{{route('create-game-award-form', $game->id)}}" class="btn btn-primary">Criar novo prêmio</a>
+    @endif
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         @if($game->awards->isEmpty())
@@ -403,7 +406,7 @@
   if (document.getElementById('result_numbers')) {
     document.getElementById('result_numbers').addEventListener('input', function(e) {
       let input = e.target.value.replace(/[^\d]/g, ''); // Remove caracteres não numéricos
-      let formatted = input.match(/.{1,4}/g) || []; // Divide em pares de dígitos
+      let formatted = input.match(/.{1,2}/g) || []; // Divide em pares de dígitos
 
       // Formata para grupos de 5 dezenas, separados por espaços
       let output = [];
