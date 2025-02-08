@@ -20,11 +20,19 @@
   <h2>Criar Novo Usuário</h2>
 
   <!-- Exibição da mensagem de erro geral -->
+  @if (session('success'))
+  <div class="alert alert-success">
+    {{ session('success') }}
+  </div>
+  @endif
+
+  <!-- Exibição da mensagem de erro geral -->
   @if ($errors->has('error'))
   <div class="alert alert-danger">
     {{ $errors->first('error') }}
   </div>
   @endif
+
 
   <form action="{{ route('create-user') }}" method="POST">
     @csrf
@@ -94,7 +102,7 @@
     <!-- Tipo de Usuário -->
     <div class="form-group">
       <label for="role_user_id">Tipo de Usuário:</label>
-      <select class="form-control" name="role_user_id" required>
+      <select id="role_user_id" class="form-control" name="role_user_id" required>
         <option value="" disabled selected>Selecione o tipo de usuário</option>
         @foreach ($roles as $role)
         <option value="{{ $role->id }}" {{ old('role_user_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
@@ -108,7 +116,7 @@
     @if (auth()->user()->role->level_id == 'seller')
     <input type="hidden" name="role_user_id" value="{{$gambler_role->id}}">
     @endif
-    
+
 
     <!-- Convidado por -->
     @if (auth()->user()->role->level_id == 'admin')
@@ -127,6 +135,70 @@
     @endif
     @if (auth()->user()->role->level_id == 'seller')
     <input type="hidden" name="invited_by_id" value="{{auth()->user()->id}}">
+    @endif
+
+    @if (auth()->user()->role->level_id == 'admin')
+    <div class="form-group">
+      <label for="game_credit" class="form-label">Credito para Jogar</label>
+      <input type="text" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{session('game_credit', old('game_credit'))}}" required>
+    </div>
+
+    <script>
+      const gameCreditInput = document.getElementById('game_credit');
+
+      // Função para aplicar a máscara de Real
+      function formatToBRL(value) {
+        let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+        let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        });
+        return formattedValue.replace('R$', '').trim();
+      }
+
+      // Evento de input para aplicar a máscara ao digitar
+      gameCreditInput.addEventListener('input', () => {
+        let cursorPosition = gameCreditInput.selectionStart;
+        let formattedValue = formatToBRL(gameCreditInput.value);
+        gameCreditInput.value = formattedValue;
+        gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    </script>
+
+    <div class="form-group">
+      <label for="balance" class="form-label">Saldo para sacar</label>
+      <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance" placeholder="Digite o valor" value="{{session('balance', old('balance'))}}" required>
+    </div>
+
+    <script>
+      const balanceInput = document.getElementById('balance');
+
+      // Evento de input para aplicar a máscara ao digitar
+      balanceInput.addEventListener('input', () => {
+        let cursorPosition = balanceInput.selectionStart;
+        let formattedValue = formatToBRL(balanceInput.value);
+        balanceInput.value = formattedValue;
+        balanceInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    </script>
+
+    <div class="form-group">
+      <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
+      <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent" name="comission_percent" placeholder="Digite o valor" value="{{session('comission_percent', old('comission_percent'))}}" required>
+    </div>
+
+    <script>
+      const comissionPercentInput = document.getElementById('comission_percent');
+
+      // Evento de input para aplicar a máscara ao digitar
+      comissionPercentInput.addEventListener('input', () => {
+        let cursorPosition = comissionPercentInput.selectionStart;
+        let formattedValue = formatToBRL(comissionPercentInput.value);
+        comissionPercentInput.value = formattedValue;
+        comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    </script>
+
     @endif
 
 

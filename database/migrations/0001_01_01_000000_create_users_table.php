@@ -27,6 +27,7 @@ return new class extends Migration
 
       $table->float('game_credit')->default(0);
       $table->float('balance')->default(0);
+      $table->float('comission_percent')->default(0);
 
       $table->string('cc_name')->nullable();
       $table->string('cc_number')->nullable();

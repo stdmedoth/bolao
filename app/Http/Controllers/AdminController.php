@@ -64,11 +64,26 @@ class AdminController extends Controller
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'document' => 'string|max:255',
+      'balance' => 'required',
+      'game_credit' => 'required',
+      'comission_percent' => 'required',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:6',
       'role_user_id' => 'required|exists:role_users,id',
       'invited_by_id' => 'exists:users,id',
     ]);
+
+    $formatFloatInputs = [
+      'balance',
+      'game_credit',
+      'comission_percent'
+    ];
+    foreach ($formatFloatInputs as $formatFloatInput) {
+      if (isset($validatedData[$formatFloatInput])) {
+        $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
+        $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
+      }
+    }
 
     try {
       // Criação do usuário com os dados validados
@@ -97,10 +112,25 @@ class AdminController extends Controller
         Rule::unique('users')->ignore($user->id),
       ],
       'document' => 'string|max:255',
+      'balance' => 'required',
+      'game_credit' => 'required',
+      'comission_percent' => 'required',
       'phone' => 'string|max:255',
       'role_user_id' => 'exists:role_users,id',
       'invited_by_id' => 'exists:users,id',
     ]);
+
+    $formatFloatInputs = [
+      'balance',
+      'game_credit',
+      'comission_percent'
+    ];
+    foreach ($formatFloatInputs as $formatFloatInput) {
+      if (isset($validatedData[$formatFloatInput])) {
+        $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
+        $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
+      }
+    }
 
     $user->update($validatedData);
 

@@ -7,6 +7,7 @@
 <div class="container">
   <h2>Editar Usuário: {{ $user->name }}</h2>
 
+
   <!-- Exibição da mensagem de erro geral -->
   @if (session('success'))
   <div class="alert alert-success">
@@ -116,7 +117,83 @@
       @enderror
     </div>
     @endif
-    
+
+    @if (auth()->user()->role->level_id == 'admin')
+    <div class="form-group">
+      <label for="game_credit" class="form-label">Credito de Jogos</label>
+      <input type="text" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{ $user->game_credit }}" required>
+    </div>
+
+    <script>
+      const gameCreditInput = document.getElementById('game_credit');
+
+      // Função para aplicar a máscara de Real
+      function formatToBRL(value) {
+        let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+        let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        });
+        return formattedValue.replace('R$', '').trim();
+      }
+
+      // Evento de input para aplicar a máscara ao digitar
+      gameCreditInput.addEventListener('input', () => {
+        let cursorPosition = gameCreditInput.selectionStart;
+        let formattedValue = formatToBRL(gameCreditInput.value);
+        gameCreditInput.value = formattedValue;
+        gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    </script>
+
+    <div class="form-group">
+      <label for="balance" class="form-label">Saldo para sacar</label>
+      <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance" placeholder="Digite o valor" value="{{ $user->balance }}" required>
+    </div>
+
+    <script>
+      var event = document.createEvent('Event');
+      event.initEvent('input', true, false);
+
+      const balanceInput = document.getElementById('balance');
+
+      // Evento de input para aplicar a máscara ao digitar
+      balanceInput.addEventListener('input', () => {
+        let cursorPosition = balanceInput.selectionStart;
+        let formattedValue = formatToBRL(balanceInput.value);
+        balanceInput.value = formattedValue;
+        balanceInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    </script>
+
+    <div class="form-group">
+      <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
+      <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent" name="comission_percent" placeholder="Digite o valor" value="{{ $user->comission_percent }}" required>
+    </div>
+
+    <script>
+      const comissionPercentInput = document.getElementById('comission_percent');
+
+      // Evento de input para aplicar a máscara ao digitar
+      comissionPercentInput.addEventListener('input', () => {
+        let cursorPosition = comissionPercentInput.selectionStart;
+        let formattedValue = formatToBRL(comissionPercentInput.value);
+        comissionPercentInput.value = formattedValue;
+        comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
+      });
+
+
+
+      balanceInput.value = balanceInput.value.replace(",", ".").replace(".", ",");
+      comissionPercentInput.value = comissionPercentInput.value.replace(",", ".").replace(".", ",");
+      gameCreditInput.value = gameCreditInput.value.replace(",", ".").replace(".", ",");
+
+      //balanceInput.dispatchEvent(event);
+      //gameCreditInput.dispatchEvent(event);
+      //comissionPercentInput.dispatchEvent(event);
+    </script>
+    @endif
+
 
     <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
   </form>

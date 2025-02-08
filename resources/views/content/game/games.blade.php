@@ -29,6 +29,10 @@
     <h5 class="card-header">Jogos</h5>
     <div class="row mt-3">
       <!-- Iterando sobre os jogos para exibir como cards -->
+      @if(!count($games))
+      <p class="text-muted">Não há concursos disponíveis.</p>
+      @endif
+
       @foreach ($games as $game)
       <div class="col-md-4 mb-4">
         <div class="card h-100">
