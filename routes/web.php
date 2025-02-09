@@ -84,6 +84,7 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/usuarios/edit/{id}', [AdminController::class, 'editUserForm'])->name('edit-user-form');
   Route::get('/usuarios/me', [AdminController::class, 'editMeForm'])->name('edit-user-me-form');
   Route::put('/usuarios/{id}', [AdminController::class, 'update'])->name('user-update');
+  Route::get('/usuarios/user_limit_credit_restart/{id}', [AdminController::class, 'user_limit_credit_restart'])->name('user_limit_credit_restart');
 
 
   Route::get('/concursos/edit/{id}', [GameController::class, 'editGameForm'])->name('edit-game-form');

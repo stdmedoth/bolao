@@ -138,32 +138,74 @@
     @endif
 
     @if (auth()->user()->role->level_id == 'admin')
-    <div class="form-group">
-      <label for="game_credit" class="form-label">Credito para Jogar</label>
-      <input type="text" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{session('game_credit', old('game_credit'))}}" required>
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <label for="game_credit" class="form-label">Credito Atual (para Jogar) </label>
+          <input type="text" edited="false" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{session('', old('game_credit'))}}" required>
+        </div>
+
+        <script>
+          const editedCredit = false;
+          const gameCreditInput = document.getElementById('game_credit');
+
+          // Função para aplicar a máscara de Real
+          function formatToBRL(value) {
+            let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+            let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            });
+            return formattedValue.replace('R$', '').trim();
+          }
+
+          // Evento de input para aplicar a máscara ao digitar
+          gameCreditInput.addEventListener('input', () => {
+            let cursorPosition = gameCreditInput.selectionStart;
+            let formattedValue = formatToBRL(gameCreditInput.value);
+            gameCreditInput.value = formattedValue;
+            gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+            gameCreditInput.setAttribute('edited', 'true');
+          });
+        </script>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="game_credit_limit" class="form-label">Limite Inicial de Credito (para Jogar)</label>
+          <input type="text" class="form-control" id="game_credit_limit" inputmode="numeric" name="game_credit_limit" placeholder="Digite o valor" value="{{session('game_credit_limit', old('game_credit_limit'))}}">
+        </div>
+
+        <script>
+          const gameCreditLimitInput = document.getElementById('game_credit_limit');
+
+          // Função para aplicar a máscara de Real
+          function formatToBRL(value) {
+            let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+            let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            });
+            return formattedValue.replace('R$', '').trim();
+          }
+
+          // Evento de input para aplicar a máscara ao digitar
+          gameCreditLimitInput.addEventListener('input', () => {
+            let cursorPosition = gameCreditLimitInput.selectionStart;
+            let formattedValue = formatToBRL(gameCreditLimitInput.value);
+            gameCreditLimitInput.value = formattedValue;
+            gameCreditLimitInput.setSelectionRange(cursorPosition, cursorPosition);
+
+            const editedCredit = gameCreditInput.getAttribute('edited');
+            console.log(editedCredit);
+            if (editedCredit == 'false') {
+              gameCreditInput.value = formattedValue;
+              gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+            }
+          });
+        </script>
+      </div>
+
     </div>
-
-    <script>
-      const gameCreditInput = document.getElementById('game_credit');
-
-      // Função para aplicar a máscara de Real
-      function formatToBRL(value) {
-        let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
-        let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        });
-        return formattedValue.replace('R$', '').trim();
-      }
-
-      // Evento de input para aplicar a máscara ao digitar
-      gameCreditInput.addEventListener('input', () => {
-        let cursorPosition = gameCreditInput.selectionStart;
-        let formattedValue = formatToBRL(gameCreditInput.value);
-        gameCreditInput.value = formattedValue;
-        gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
-      });
-    </script>
 
     <div class="form-group">
       <label for="balance" class="form-label">Saldo para sacar</label>

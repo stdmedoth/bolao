@@ -10,6 +10,7 @@ use App\Models\GameAward;
 use App\Models\GameHistory;
 use App\Models\Purchase;
 use App\Models\ReferEarn;
+use App\Models\Transactions;
 use App\Models\UserAwards;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -66,6 +67,7 @@ class AdminController extends Controller
       'document' => 'string|max:255',
       'balance' => 'required',
       'game_credit' => 'required',
+      //'game_credit_limit' => 'required',
       'comission_percent' => 'required',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:6',
@@ -76,6 +78,7 @@ class AdminController extends Controller
     $formatFloatInputs = [
       'balance',
       'game_credit',
+      'game_credit_limit',
       'comission_percent'
     ];
     foreach ($formatFloatInputs as $formatFloatInput) {
@@ -84,6 +87,8 @@ class AdminController extends Controller
         $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
       }
     }
+
+    $validatedData['game_credit_limit'] = $validatedData['game_credit'];
 
     try {
       // Criação do usuário com os dados validados
@@ -114,6 +119,7 @@ class AdminController extends Controller
       'document' => 'string|max:255',
       'balance' => 'required',
       'game_credit' => 'required',
+      'game_credit_limit' => 'string',
       'comission_percent' => 'required',
       'phone' => 'string|max:255',
       'role_user_id' => 'exists:role_users,id',
@@ -123,6 +129,7 @@ class AdminController extends Controller
     $formatFloatInputs = [
       'balance',
       'game_credit',
+      'game_credit_limit',
       'comission_percent'
     ];
     foreach ($formatFloatInputs as $formatFloatInput) {
@@ -539,5 +546,26 @@ class AdminController extends Controller
       $referEarn->invited_user_bought = true;
       $referEarn->save();
     }
+  }
+
+
+  public function user_limit_credit_restart(Request $request, $user_id)
+  {
+    if (Auth::user()->role->level_id !== 'admin') {
+      redirect('/auth/logout');
+    }
+    $user = User::find($user_id);
+
+    Transactions::create(
+      [
+        "type" => 'PAY_PURCHASE',
+        "amount" => $user->game_credit_limit - $user->game_credit,
+        "user_id" => $user->id,
+      ]
+    );
+
+    $user->game_credit = $user->game_credit_limit;
+    $user->save();
+    return redirect(route('edit-user-form', ['id' => $user->id]))->with('success', 'Usuário atualizado com sucesso!');
   }
 }

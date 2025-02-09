@@ -31,6 +31,7 @@ class User extends Authenticatable
     'balance',
     'game_credit',
     'comission_percent',
+    'game_credit_limit',
 
     'role_user_id',
     'invited_by_id',

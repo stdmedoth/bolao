@@ -119,83 +119,129 @@
     @endif
 
     @if (auth()->user()->role->level_id == 'admin')
-    <div class="form-group">
-      <label for="game_credit" class="form-label">Credito de Jogos</label>
-      <input type="text" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{ $user->game_credit }}" required>
-    </div>
+    <div class="row">
 
-    <script>
-      const gameCreditInput = document.getElementById('game_credit');
+      <div class="col">
+        <div class="form-group">
+          <label for="game_credit" class="form-label">Limite atual de Credito (para Jogar)</label>
+          <input type="text" class="form-control" id="game_credit" inputmode="numeric" name="game_credit" placeholder="Digite o valor" value="{{number_format($user->game_credit, 2, ',', '.')}}" required>
+        </div>
+      </div>
 
-      // Função para aplicar a máscara de Real
-      function formatToBRL(value) {
-        let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
-        let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
+      <script>
+        const gameCreditInput = document.getElementById('game_credit');
+
+        // Função para aplicar a máscara de Real
+        function formatToBRL(value) {
+          let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+          let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          });
+          return formattedValue.replace('R$', '').trim();
+        }
+
+        // Evento de input para aplicar a máscara ao digitar
+        gameCreditInput.addEventListener('input', () => {
+          let cursorPosition = gameCreditInput.selectionStart;
+          let formattedValue = formatToBRL(gameCreditInput.value);
+          gameCreditInput.value = formattedValue;
+          gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
         });
-        return formattedValue.replace('R$', '').trim();
-      }
+      </script>
 
-      // Evento de input para aplicar a máscara ao digitar
-      gameCreditInput.addEventListener('input', () => {
-        let cursorPosition = gameCreditInput.selectionStart;
-        let formattedValue = formatToBRL(gameCreditInput.value);
-        gameCreditInput.value = formattedValue;
-        gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
-      });
-    </script>
+      <div class="col">
+        <div class="form-group">
+          <label for="game_credit_limit" class="form-label">Limite Inicial de Credito (para Jogar)</label>
+          <i id="edit_limit" class="bx bx-edit-alt me-1"></i>
+          <input type="text" class="form-control" disabled id="game_credit_limit" inputmode="numeric" name="game_credit_limit" placeholder="Digite o valor" value="{{number_format($user->game_credit_limit, 2, ',', '.')}}" required>
+        </div>
 
-    <div class="form-group">
-      <label for="balance" class="form-label">Saldo para sacar</label>
-      <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance" placeholder="Digite o valor" value="{{ $user->balance }}" required>
-    </div>
+        <script>
+          const gameCreditLimitInput = document.getElementById('game_credit_limit');
+          const editLimitElement = document.getElementById('edit_limit');
 
-    <script>
-      var event = document.createEvent('Event');
-      event.initEvent('input', true, false);
+          // Função para aplicar a máscara de Real
+          function formatToBRL(value) {
+            let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+            let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            });
+            return formattedValue.replace('R$', '').trim();
+          }
 
-      const balanceInput = document.getElementById('balance');
+          editLimitElement.addEventListener('click', () => {
+            gameCreditLimitInput.removeAttribute('disabled');
+          });
 
-      // Evento de input para aplicar a máscara ao digitar
-      balanceInput.addEventListener('input', () => {
-        let cursorPosition = balanceInput.selectionStart;
-        let formattedValue = formatToBRL(balanceInput.value);
-        balanceInput.value = formattedValue;
-        balanceInput.setSelectionRange(cursorPosition, cursorPosition);
-      });
-    </script>
+          // Evento de input para aplicar a máscara ao digitar
+          gameCreditLimitInput.addEventListener('input', () => {
+            let cursorPosition = gameCreditLimitInput.selectionStart;
+            let formattedValue = formatToBRL(gameCreditLimitInput.value);
+            gameCreditLimitInput.value = formattedValue;
+            gameCreditLimitInput.setSelectionRange(cursorPosition, cursorPosition);
+          });
+        </script>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="limit_restart_button" class="form-label">Vendedor pagou o crédito?</label>
+          <a href="{{route('user_limit_credit_restart', $user->id) }}" name="limit_restart_button" class="btn btn-success form-control">Reiniciar Limite</a>
+        </div>
 
-    <div class="form-group">
-      <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
-      <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent" name="comission_percent" placeholder="Digite o valor" value="{{ $user->comission_percent }}" required>
-    </div>
+      </div>
 
-    <script>
-      const comissionPercentInput = document.getElementById('comission_percent');
+      <div class="form-group">
+        <label for="balance" class="form-label">Saldo para sacar</label>
+        <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance" placeholder="Digite o valor" value="{{number_format($user->balance, 2, ',', '.')}}" required>
+      </div>
 
-      // Evento de input para aplicar a máscara ao digitar
-      comissionPercentInput.addEventListener('input', () => {
-        let cursorPosition = comissionPercentInput.selectionStart;
-        let formattedValue = formatToBRL(comissionPercentInput.value);
-        comissionPercentInput.value = formattedValue;
-        comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
-      });
+      <script>
+        var event = document.createEvent('Event');
+        event.initEvent('input', true, false);
+
+        const balanceInput = document.getElementById('balance');
+
+        // Evento de input para aplicar a máscara ao digitar
+        balanceInput.addEventListener('input', () => {
+          let cursorPosition = balanceInput.selectionStart;
+          let formattedValue = formatToBRL(balanceInput.value);
+          balanceInput.value = formattedValue;
+          balanceInput.setSelectionRange(cursorPosition, cursorPosition);
+        });
+      </script>
+
+      <div class="form-group">
+        <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
+        <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent" name="comission_percent" placeholder="Digite o valor" value="{{number_format($user->comission_percent, 2, ',', '.')}}" required>
+      </div>
+
+      <script>
+        const comissionPercentInput = document.getElementById('comission_percent');
+
+        // Evento de input para aplicar a máscara ao digitar
+        comissionPercentInput.addEventListener('input', () => {
+          let cursorPosition = comissionPercentInput.selectionStart;
+          let formattedValue = formatToBRL(comissionPercentInput.value);
+          comissionPercentInput.value = formattedValue;
+          comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
+        });
 
 
 
-      balanceInput.value = balanceInput.value.replace(",", ".").replace(".", ",");
-      comissionPercentInput.value = comissionPercentInput.value.replace(",", ".").replace(".", ",");
-      gameCreditInput.value = gameCreditInput.value.replace(",", ".").replace(".", ",");
+        balanceInput.value = balanceInput.value.replace(",", ".").replace(".", ",");
+        comissionPercentInput.value = comissionPercentInput.value.replace(",", ".").replace(".", ",");
+        gameCreditInput.value = gameCreditInput.value.replace(",", ".").replace(".", ",");
 
-      //balanceInput.dispatchEvent(event);
-      //gameCreditInput.dispatchEvent(event);
-      //comissionPercentInput.dispatchEvent(event);
-    </script>
-    @endif
+        //balanceInput.dispatchEvent(event);
+        //gameCreditInput.dispatchEvent(event);
+        //comissionPercentInput.dispatchEvent(event);
+      </script>
+      @endif
 
 
-    <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
+      <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
   </form>
 </div>
 

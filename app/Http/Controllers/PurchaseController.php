@@ -67,12 +67,21 @@ class PurchaseController extends Controller
 
     $user = User::find($purchase->user_id);
 
-    if (!in_array(Auth::user()->role->level_id, ['admin'])) {
+    $role_level_id = Auth::user()->role->level_id;
+
+    if (!in_array($role_level_id, ['admin'])) {
+
+      if ($role_level_id == 'seller') {
+        $purchase->price = $purchase->price - $purchase->price * $user->comission_percent;
+      }
+
       if ($user->game_credit < $purchase->price) {
         return redirect()->route('deposito')
           ->with('amount', $purchase->price)
           ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
+
+
 
       $user->game_credit -= $purchase->price;
       $user->save();
@@ -133,6 +142,17 @@ class PurchaseController extends Controller
     //$numbers = explode(' ', $numbers);
 
     //$quantity = count($array);
+
+    $user = User::find($request->user_id);
+
+    $role_level_id = Auth::user()->role->level_id;
+
+    // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
+    if ($role_level_id == 'seller') {
+      $price = $purchase->price - $purchase->price * $user->comission_percent;
+    }
+
+
     $quantity = 1;
     $game = Game::find($request->game_id);
     $price = $game->price * $quantity;
@@ -143,7 +163,6 @@ class PurchaseController extends Controller
     // Salvando a compra no banco de dados
     $purchase->save();
 
-    $user = User::find($request->user_id);
     if ($user->game_credit >= $price) {
       $user->game_credit -= $price;
       $user->save();
@@ -159,6 +178,12 @@ class PurchaseController extends Controller
           "user_id" => $purchase->user_id,
         ]
       );
+
+      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
+      if ($role_level_id == 'gambler') {
+        $invited_by = User::find($user->invited_by_id);
+        $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+      }
     }
 
 

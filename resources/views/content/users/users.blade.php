@@ -80,7 +80,7 @@
           <form action="/usuarios/delete/{{ $user->id }}" method="POST" style="display:inline;">
             @csrf
             @method('DELETE')
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este usuário?');">Excluir</button>
+            <button type="submit" class="btn btn-danger" {{ ($user->id === auth()->user()->id) ? "disabled" : "" }} onclick="return confirm('Tem certeza que deseja excluir este usuário?');">Excluir</button>
           </form>
         </td>
       </tr>

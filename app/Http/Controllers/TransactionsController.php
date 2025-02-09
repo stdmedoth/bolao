@@ -13,7 +13,11 @@ class TransactionsController extends Controller
    */
   public function index()
   {
-    $transactions = Transactions::where('user_id', Auth::user()->id)->get();
+    $builder = new Transactions();
+    if (Auth::user()->role->level_id !== 'admin') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+    $transactions = $builder->paginate(20);
 
     // Mapeamento de tipos para traduções
     $typeTranslations = [
