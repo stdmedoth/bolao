@@ -15,6 +15,7 @@ use App\Models\UserAwards;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 
 class AdminController extends Controller
@@ -162,7 +163,7 @@ class AdminController extends Controller
     }
 
     if ($request->has('search') && $request->search != '') {
-      $builder->where(function ($q) use ($request) {
+      $builder = $builder->where(function ($q) use ($request) {
         $q->where('name', 'like', '%' . $request->search . '%')
           ->orWhere('email', 'like', '%' . $request->search . '%');
       });
@@ -170,7 +171,7 @@ class AdminController extends Controller
 
     // Filtro de role_user_id
     if ($request->has('role_user_id') && $request->role_user_id != '') {
-      $builder->where('role_user_id', $request->role_user_id);
+      $builder = $builder->where('role_user_id', $request->role_user_id);
     }
 
     $users = $builder->paginate(5);
@@ -216,9 +217,17 @@ class AdminController extends Controller
       'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
+    $game_id = NULL;
+    $exists = NULL;
+    do {
+      $game_id = rand(10000, 99999);
+      $exists = Game::where('game_id', $game_id)->exists();
+    } while ($exists);
+
     // Criar o jogo
     $game = Game::create([
       'name' => $request->name,
+      'game_id' => $game_id,
       'price' => $request->price,
       'open_at' => $request->open_at,
       'close_at' => $request->close_at,
@@ -261,6 +270,8 @@ class AdminController extends Controller
 
     return redirect(route('show-game', ['id' => $game->id]));
   }
+
+  /*
   private function calculateUserPoints($purchases, $uniqueNumbers)
   {
     $userPoints = [];
@@ -271,6 +282,23 @@ class AdminController extends Controller
       $userPoints[$purchase->user_id] = ($userPoints[$purchase->user_id] ?? 0) + count($matchedNumbers);
     }
     return $userPoints;
+  }
+  */
+
+  private function calculateUserPoints($purchases, $uniqueNumbers)
+  {
+    $usersPoints = [];
+    foreach ($purchases as $purchase) {
+      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+
+      if (isset($userPoints[$purchase->user_id])) {
+        $usersPoints[$purchase->user_id] = (count($matchedNumbers) > $userPoints[$purchase->user_id]) ?  count($matchedNumbers) : $usersPoints[$purchase->user_id];
+      } else {
+        $usersPoints[$purchase->user_id] = count($matchedNumbers);
+      }
+    }
+    return $usersPoints;
   }
 
   protected function handleAwards($gameId, $userPoints, $awards, $lastClosedHistory)

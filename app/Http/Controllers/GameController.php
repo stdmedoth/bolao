@@ -11,16 +11,26 @@ use App\Models\UserAwards;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+
 
 class GameController extends Controller
 {
   /**
    * Display a listing of the resource.
    */
-  public function index()
+  public function index(Request $request)
   {
     //
-    $games = Game::where('active', 1)->get();
+    $builder = Game::where('active', 1);
+    if ($request->has('search') && $request->search != '') {
+      $builder = $builder->where(function ($q) use ($request) {
+        $q->where('name', $request->search)->orWhere('game_id', 'like', '%' . $request->search . '%');
+      });
+    }
+
+    $games = $builder->orderBy('close_at', 'DESC')->paginate(5);
     return view('content.game.games', ['games' => $games]);
   }
 
@@ -57,6 +67,20 @@ class GameController extends Controller
       ->orderBy('created_at', 'DESC')
       ->first();
 
+    // Pegar todos os números válidos desde a última abertura
+    $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER');
+    if ($lastClosedHistory) {
+      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $gameHistories = $gameHistoriesBuilder->get();
+
+    // Reunir todos os números adicionados desde a última abertura
+    $allAddedNumbers = $gameHistories->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+    $uniqueNumbers = array_unique($allAddedNumbers);
 
     foreach ($user_awards as $user_award) {
 
@@ -70,6 +94,8 @@ class GameController extends Controller
       }
       $_purchases = $purchasesBuilder->get();
 
+      $userPoints = $this->calculateUserPoints($_purchases, $uniqueNumbers);
+
       $user = User::find($user_award->user_id);
       $game_award = GameAward::find($user_award->game_award_id);
       $winners[] = (object)[
@@ -77,7 +103,9 @@ class GameController extends Controller
         'user' => $user,
         'status' => $user_award->status,
         'game_award' => $game_award,
-        'purchases' => $_purchases
+        'purchases' => $_purchases,
+        'userPoints' => $userPoints,
+        'result_numbers' => $allAddedNumbers
       ];
     }
 
@@ -113,7 +141,7 @@ class GameController extends Controller
       'price' => 'required|numeric|min:0',
       'open_at' => 'required|date',
       'close_at' => 'required|date|after_or_equal:open_at',
-      'status' => 'required|in:OPENED,CLOSED',
+      'status' => 'required|in:OPENED,CLOSED,FINISHED',
       'awards' => 'array',
       'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT',
       'awards.*.minimum_point_value' => 'nullable|integer',
@@ -144,6 +172,75 @@ class GameController extends Controller
     app(GameAwardController::class)->updateAwards($request, $game);
 
     return redirect(route("show-game", $game->id))->with('success', 'Jogo e prêmios atualizados com sucesso!');
+  }
+
+
+  public function generatePdf(Request $request, $id)
+  {
+    $game = Game::findOrFail($id);
+    $purchasesBuilder = Purchase::where('game_id', $id);
+
+    $lastClosedHistory = GameHistory::where('game_id', $game->id)
+      ->where('type', 'OPENED')
+      ->orderBy('created_at', 'DESC')
+      ->first();
+
+    $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER');
+
+    if ($lastClosedHistory) {
+      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+
+    $gameHistories = $gameHistoriesBuilder->get();
+    $purchases = $purchasesBuilder->get();
+
+    $allAddedNumbers = $gameHistories->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+    $uniqueNumbers = array_unique($allAddedNumbers);
+
+    $purchases_data = [];
+    foreach ($purchases as $purchase) {
+      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+
+      $seller = 'Banca Central';
+
+      if ($purchase->user->role->level_id == 'seller') {
+        $seller = $purchase->user->name;
+      } elseif ($purchase->user->role->level_id == 'gambler' && $purchase->user->invited_by_id) {
+        if ($purchase->user->invited_by->role->level_id == 'seller') {
+          $seller = $purchase->user->invited_by->name;
+        }
+      }
+
+      $purchases_data[] = [
+        'id' => $purchase->id,
+        'gambler_name' => $purchase->gambler_name,
+        'seller' => $seller,
+        'points' => count($matchedNumbers),
+        'numbers' => $purchase->numbers,
+      ];
+    }
+
+    $awards = GameAward::where('game_id', $id)->get();
+
+    // Gerar o PDF com a view
+    $pdf = Pdf::loadView('pdf.game_report', compact(
+      'game',
+      'lastClosedHistory',
+      'gameHistories',
+      'purchases_data',
+      'uniqueNumbers',
+      'awards',
+      'purchases'
+    ))->setPaper('a4', 'portrait');
+
+
+    return $pdf->download("relatorio_jogo_{$id}.pdf");
   }
 
 

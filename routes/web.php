@@ -89,6 +89,8 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/concursos/edit/{id}', [GameController::class, 'editGameForm'])->name('edit-game-form');
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
+  Route::get('/concursos/generate_pdf/{id}', [GameController::class, 'generatePdf'])->name('game-pdf');
+
 
 
   Route::get('/concursos', [GameController::class, 'index'])->name('games');
@@ -110,6 +112,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
   Route::get('/purchase/pay/{id}', [PurchaseController::class, 'pay'])->name('purchase-pay');
+  Route::get('/purchase/withdraw/{id}', [PurchaseController::class, 'withdraw'])->name('purchase-withdraw');
   Route::get('/minhas_compras', [PurchaseController::class, 'index'])->name('minhas_compras');
   Route::get('/minhas_compras/{id}', [PurchaseController::class, 'show'])->name('minhas_compras-view');
   Route::get('/minhas_compras/delete/{id}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');

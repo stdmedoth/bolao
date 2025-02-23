@@ -17,6 +17,7 @@ class TransactionsController extends Controller
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
+    $builder = $builder->orderBy('created_at', 'DESC');
     $transactions = $builder->paginate(20);
 
     // Mapeamento de tipos para traduções
@@ -28,6 +29,7 @@ class TransactionsController extends Controller
       'REFER_EARN' => 'Bônus de Indicação',
       'REFER_EARN_REVERSAL' => 'Estorno de Bônus de Indicação',
       'PAY_PURCHASE' => 'Pagamento de Compra',
+      'PAY_PURCHASE_WITHDRAWAL' => 'Estorno de Pagamento de Compra',
       'PAY_AWARD' => 'Pagamento de Prêmio'
     ];
 

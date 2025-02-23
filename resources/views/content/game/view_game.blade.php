@@ -115,7 +115,7 @@
                     id="manual_numbers"
                     placeholder="Ex: 11 22 33 10 99"
                     maxlength="32">
-                  <small id="error-message" class="text-danger" style="display: none;"></small>
+                  <small id="error-message1" class="text-danger" style="display: none;"></small>
                 </div>
               </div>
               <small class="form-text text-muted">Insira até 11 dezenas separadas por espaço.</small>
@@ -135,7 +135,7 @@
                 @endfor
               </div>
               <small class="form-text text-muted">Selecione até 11 números. Clique novamente em um número para desmarcá-lo.</small>
-              <div id="error-message" class="text-danger mt-2" style="display: none;"></div>
+              <div id="error-message2" class="text-danger mt-2" style="display: none;"></div>
             </div>
 
         </div>
@@ -342,6 +342,7 @@
           <th>Nome do Apostador</th>
           <th>Prêmio</th>
           <th>Vlr. Prêmio</th>
+          <th>Pontuação</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
@@ -352,6 +353,7 @@
           <td>{{ $winner->user->name }}</td>
           <td>{{ $winner->game_award->name }}</td>
           <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
+          <td>R$ {{ $winner->userPoints }}</td>
           <td><span class="badge bg-label-primary me-1">{{ __($winner->status) }}</span></td>
           <td>
             <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
@@ -483,7 +485,13 @@
       // Divide os números em partes de dois dígitos
       let parts = rawValue.match(/.{1,2}/g) || []; // Garante que não seja null
 
+      // Verifica se há duplicatas
       let uniqueParts = [...new Set(parts)];
+      let duplicated = parts.length !== uniqueParts.length;
+      if (duplicated) {
+        errorMessage.textContent = `As dezenas não devem ser repetidas.`;
+        errorMessage.style.display = 'block';
+      }
 
       // Limita o número máximo de partes permitidas
       if (uniqueParts.length > maxNumbers) {

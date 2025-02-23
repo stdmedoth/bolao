@@ -48,6 +48,7 @@
               </button>
               <div class="dropdown-menu">
                 <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+                <a class="dropdown-item" href="/concursos/generate_pdf/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Gerar PDF</a>
               </div>
             </div>
             @endif
@@ -136,6 +137,10 @@
       </script>
 
       @endforeach
+    </div>
+    <!-- Controles de paginação -->
+    <div class="d-flex justify-content-center mt-4">
+      {{ $games->links('pagination::bootstrap-5') }}
     </div>
 
   </div>

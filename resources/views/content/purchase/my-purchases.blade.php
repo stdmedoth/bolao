@@ -72,7 +72,11 @@
             <th>Jogo</th>
             <th>Apostador</th>
             @if (in_array(Auth::user()->role->level_id, ['admin' , 'seller']))
+            <!-- Usuario de quem Comprou -->
             <th>Usuário</th>
+            @endif
+            @if (in_array(Auth::user()->role->level_id, ['admin' , 'seller']))
+            <th>Vendedor</th>
             @endif
             <th>Compra em</th>
             <th>Números</th>
@@ -90,7 +94,7 @@
               <a href='/concursos/{{$purchase->game->id}}'>
                 <!-- Mostrando o nome do jogo relacionado -->
                 <i class="bx bxl-game bx-md text-info me-4"></i>
-                <span>{{ $purchase->game->name }}</span>
+                <span>{{ $purchase->game ? $purchase->game->name : '-' }}</span>
                 <!-- Nome do jogo é o dia na semana em que se passa a aposta-->
               </a>
             </td>
@@ -99,9 +103,27 @@
             </td>
 
             @if (in_array(auth()->user()->role->level_id, ['admin' , 'seller']))
+            <!-- Usuario de quem Comprou -->
             <td>{{ $purchase->user->name }}</td>
 
+            <!-- Quem é o Vendedor -->
+
+            <!-- Se foi o vendedor que comprou, então ele é o proprio vendedor -->
+            @if (in_array($purchase->user->role->level_id, ['seller']))
+            <td>{{ $purchase->user->name }}</td>
+
+            <!-- Se foi o admin que comprou, então a banca central é o vendedor -->
+            @elseif (in_array($purchase->user->role->level_id, ['admin']))
+            <td>Banca Central</td>
+
+            <!-- Se foi o apostador que comprou, então verifica se foi um vendedor que indicou -->
+            @elseif ($purchase->user->invited_by)
+            <td>{{ in_array($purchase->user->invited_by->role->level_id, ['gambler']) ? 'Banca Central'  : $purchase->user->invited_by->name  }}</td>
             @endif
+
+            @endif
+
+
             <!-- Usar timestamp do próprio produto? -->
 
             <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
@@ -111,7 +133,8 @@
             </td>
             <td>
               <a href="{{ route('purchase-pay', $purchase->id) }}" class="btn btn-success {{$purchase->status !== "PENDING" ? "disabled" : ""}}">Pagar</a>
-              <a href="{{ route('purchases.destroy', $purchase->id) }}" class="btn btn-danger {{($purchase->status == "PAID") && (auth()->user()->role->level_id !== 'admin') ? "disabled" : ""}}">Deletar</a>
+              <a href="{{ route('purchase-withdraw', $purchase->id) }}" class="btn btn-warning {{$purchase->status !== "PAID" ? "disabled" : ""}}">Estornar</a>
+              <a href="{{ route('purchases.destroy', $purchase->id) }}" class="btn btn-danger {{ (($purchase->status == "PAID") || ($purchase->game->status == "CLOSED") ) ? "disabled" : ""}}">Deletar</a>
             </td>
           </tr>
           @endforeach

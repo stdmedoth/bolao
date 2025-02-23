@@ -12,6 +12,7 @@ class Game extends Model
 
   protected $fillable = [
     'name',
+    'game_id',
     'price',
     'open_at',
     'close_at',

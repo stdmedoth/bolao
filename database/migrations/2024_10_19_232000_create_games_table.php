@@ -14,6 +14,8 @@ return new class extends Migration
     Schema::create('games', function (Blueprint $table) {
       $table->id();
 
+      $table->string('game_id');
+
       $table->string('name');
 
       $table->float('price', 8, 2);

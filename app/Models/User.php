@@ -12,7 +12,8 @@ class User extends Authenticatable
   use HasFactory, Notifiable;
 
   protected $with = [
-    'role'
+    'role',
+    'invited_by'
   ];
 
   /**
@@ -81,5 +82,10 @@ class User extends Authenticatable
   public function role()
   {
     return $this->belongsTo(RoleUser::class, 'role_user_id', 'id');
+  }
+
+  public function invited_by()
+  {
+    return $this->belongsTo(User::class, 'invited_by_id', 'id');
   }
 }

@@ -26,13 +26,13 @@ class PurchaseController extends Controller
 
     if (Auth::user()->role->level_id == 'seller') {
       // se for vendedor, filtrar compras de usuarios desse vendedor
-      $builder->orWhere(function ($q) {
+      $builder = $builder->orWhere(function ($q) {
         $q->whereHas('user', fn($q2) => $q2->where('invited_by_id', Auth::user()->id));
       });
     }
 
     if ($request->has('search') && $request->search != '') {
-      $builder->where(function ($q) use ($request) {
+      $builder = $builder->where(function ($q) use ($request) {
         $q->whereHas('game', function ($gameq) use ($request) {
           $gameq->where('name', 'like', '%' . $request->search . '%');
         })->orWhere('numbers', 'like', '%' . $request->search . '%');
@@ -40,14 +40,14 @@ class PurchaseController extends Controller
     }
 
     if ($request->has('game_id') && $request->game_id != '') {
-      $builder->where('game_id', $request->game_id);
+      $builder = $builder->where('game_id', $request->game_id);
     }
 
     if ($request->has('status') && $request->status != '') {
-      $builder->where('status', $request->status);
+      $builder = $builder->where('status', $request->status);
     }
 
-    $purchases = $builder->orderBy('created_at', 'desc');
+    $builder = $builder->orderBy('created_at', 'desc');
     $purchases = $builder->paginate(5);
     return view('content.purchase.my-purchases', ['purchases' => $purchases, 'games' => $games]);
   }
@@ -71,10 +71,6 @@ class PurchaseController extends Controller
 
     if (!in_array($role_level_id, ['admin'])) {
 
-      if ($role_level_id == 'seller') {
-        $purchase->price = $purchase->price - $purchase->price * $user->comission_percent;
-      }
-
       if ($user->game_credit < $purchase->price) {
         return redirect()->route('deposito')
           ->with('amount', $purchase->price)
@@ -82,9 +78,16 @@ class PurchaseController extends Controller
       }
 
 
-
       $user->game_credit -= $purchase->price;
       $user->save();
+
+      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+      if ($role_level_id == 'gambler') {
+        if ($user->invited_by_id) {
+          $invited_by = User::find($user->invited_by_id);
+          $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+        }
+      }
     }
 
     $purchase->status = "PAID";
@@ -100,6 +103,50 @@ class PurchaseController extends Controller
 
     return redirect()->route('minhas_compras')->with('success', 'Aposta paga com sucesso!');
   }
+
+
+
+
+  public function withdraw(Request $request, $id)
+  {
+
+    $purchase = Purchase::find($id);
+
+    $user = User::find($purchase->user_id);
+
+    $role_level_id = Auth::user()->role->level_id;
+
+    if (!in_array($role_level_id, ['admin'])) {
+
+      $user->game_credit += $purchase->price;
+      $user->save();
+
+      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+      if ($role_level_id == 'gambler') {
+        if ($user->invited_by_id) {
+          $invited_by = User::find($user->invited_by_id);
+          if ($invited_by->role->level_id == 'seller') {
+            $invited_by->balance = $invited_by->balance - $purchase->price * $invited_by->comission_percent;
+          }
+        }
+      }
+    }
+
+    $purchase->status = "PENDING";
+    $purchase->save();
+
+    Transactions::create(
+      [
+        "type" => 'PAY_PURCHASE_WITHDRAWAL',
+        "amount" => $purchase->price,
+        "user_id" => $purchase->user_id,
+      ]
+    );
+
+    return redirect()->route('minhas_compras')->with('success', 'Aposta estornada com sucesso!');
+  }
+
+
 
   /**
    * Store a newly created resource in storage.
@@ -163,28 +210,34 @@ class PurchaseController extends Controller
     // Salvando a compra no banco de dados
     $purchase->save();
 
-    if ($user->game_credit >= $price) {
+    if (!in_array($role_level_id, ['admin'])) {
+      if ($user->game_credit < $price) {
+        return redirect()->back()->with(['success' => 'Compra realizada com sucesso! Aguardando pagamento...', 'tab' => 'tab-mybets']);
+      }
+
       $user->game_credit -= $price;
       $user->save();
 
-
-      $purchase->status = "PAID";
-      $purchase->save();
-
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE',
-          "amount" => $purchase->price,
-          "user_id" => $purchase->user_id,
-        ]
-      );
-
       // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
       if ($role_level_id == 'gambler') {
-        $invited_by = User::find($user->invited_by_id);
-        $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+        if ($user->invited_by_id) {
+          $invited_by = User::find($user->invited_by_id);
+          $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+        }
       }
     }
+
+    $purchase->status = "PAID";
+    $purchase->save();
+
+    Transactions::create(
+      [
+        "type" => 'PAY_PURCHASE',
+        "amount" => $purchase->price,
+        "user_id" => $purchase->user_id,
+      ]
+    );
+
 
 
     // Redirecionamento com mensagem de sucesso
