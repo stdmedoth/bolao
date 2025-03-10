@@ -140,7 +140,7 @@
     </div>
     <!-- Controles de paginação -->
     <div class="d-flex justify-content-center mt-4">
-      {{ $games->links('pagination::bootstrap-5') }}
+      {{ $games->appends(request()->all())->links('pagination::bootstrap-5') }}
     </div>
 
   </div>

@@ -110,6 +110,7 @@ Route::middleware('auth:web')->group(function () {
 
 
 
+  Route::post('/purchase/repeat', [PurchaseController::class, 'repeat'])->name('purchase-repeat');
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
   Route::get('/purchase/pay/{id}', [PurchaseController::class, 'pay'])->name('purchase-pay');
   Route::get('/purchase/withdraw/{id}', [PurchaseController::class, 'withdraw'])->name('purchase-withdraw');

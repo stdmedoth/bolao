@@ -49,6 +49,7 @@ class PurchaseController extends Controller
 
     $builder = $builder->orderBy('created_at', 'desc');
     $purchases = $builder->paginate(5);
+
     return view('content.purchase.my-purchases', ['purchases' => $purchases, 'games' => $games]);
   }
 
@@ -70,6 +71,10 @@ class PurchaseController extends Controller
     $role_level_id = Auth::user()->role->level_id;
 
     if (!in_array($role_level_id, ['admin'])) {
+
+      if ($role_level_id == 'seller' && ($purchase->user_id !== Auth::user()->id)) {
+        $user = User::find(Auth::user()->id);
+      }
 
       if ($user->game_credit < $purchase->price) {
         return redirect()->route('deposito')
@@ -101,7 +106,7 @@ class PurchaseController extends Controller
       ]
     );
 
-    return redirect()->route('minhas_compras')->with('success', 'Aposta paga com sucesso!');
+    return redirect()->route('minhas_compras', request()->query())->with('success', 'Aposta paga com sucesso!');
   }
 
 
@@ -109,7 +114,6 @@ class PurchaseController extends Controller
 
   public function withdraw(Request $request, $id)
   {
-
     $purchase = Purchase::find($id);
 
     $user = User::find($purchase->user_id);
@@ -117,6 +121,10 @@ class PurchaseController extends Controller
     $role_level_id = Auth::user()->role->level_id;
 
     if (!in_array($role_level_id, ['admin'])) {
+
+      if ($role_level_id == 'seller' && ($purchase->user_id !== Auth::user()->id)) {
+        $user = User::find(Auth::user()->id);
+      }
 
       $user->game_credit += $purchase->price;
       $user->save();
@@ -143,7 +151,7 @@ class PurchaseController extends Controller
       ]
     );
 
-    return redirect()->route('minhas_compras')->with('success', 'Aposta estornada com sucesso!');
+    return redirect()->route('minhas_compras', request()->query())->with('success', 'Aposta estornada com sucesso!');
   }
 
 
@@ -167,7 +175,7 @@ class PurchaseController extends Controller
 
     $numbers = explode(' ', $request->numbers);
     $numbers = array_map('intval', $numbers);
-    sort($numbers);
+    //sort($numbers); // Não deve ficar ordenado
     $numbers = implode(' ', $numbers);
 
     // Criação da compra
@@ -244,6 +252,78 @@ class PurchaseController extends Controller
     return redirect()->back()->with(['success' => 'Compra realizada com sucesso!', 'tab' => 'tab-mybets']);
   }
 
+
+  /**
+   * Store a newly created resource in storage.
+   */
+  public function repeat(Request $request)
+  {
+    // Validação dos dados recebidos
+    $request->validate([
+      'repeat_game_id' => 'required|exists:games,id',
+      'repeat_game_purchase_id' => 'required|exists:purchases,id',
+    ]);
+
+    $old_purchase = Purchase::find($request->repeat_game_purchase_id);
+
+    // Criação da compra
+    $newPurchase = $old_purchase->replicate();
+    $newPurchase->status = "PENDING";
+    $newPurchase->game_id = $request->repeat_game_id;
+
+    $user = User::find(Auth::user()->id);
+    $role_level_id = $user->role->level_id;
+
+    // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
+    if ($role_level_id == 'seller') {
+      $price = $newPurchase->price - $newPurchase->price * $user->comission_percent;
+    }
+
+
+    $quantity = 1;
+    $game = Game::find($request->repeat_game_id);
+    $price = $game->price * $quantity;
+
+    $newPurchase->quantity = $quantity;
+    $newPurchase->price = $price;
+
+    // Salvando a compra no banco de dados
+    $newPurchase->save();
+
+    if (!in_array($role_level_id, ['admin'])) {
+      if ($user->game_credit < $price) {
+        return redirect()->back()->with(['success' => 'Compra realizada com sucesso! Aguardando pagamento...', 'tab' => 'tab-mybets']);
+      }
+
+      $user->game_credit -= $price;
+      $user->save();
+
+      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
+      if ($role_level_id == 'gambler') {
+        if ($user->invited_by_id) {
+          $invited_by = User::find($user->invited_by_id);
+          $invited_by->balance = $invited_by->balance + $newPurchase->price * $invited_by->comission_percent;
+        }
+      }
+    }
+
+    $newPurchase->status = "PAID";
+    $newPurchase->save();
+
+    Transactions::create(
+      [
+        "type" => 'PAY_PURCHASE',
+        "amount" => $newPurchase->price,
+        "user_id" => $newPurchase->user_id,
+      ]
+    );
+
+
+
+    // Redirecionamento com mensagem de sucesso
+    return redirect()->back()->with(['success' => 'Compra realizada com sucesso!', 'tab' => 'tab-mybets']);
+  }
+
   /**
    * Update the specified resource in storage.
    */
@@ -270,7 +350,7 @@ class PurchaseController extends Controller
   {
     $purchase = Purchase::find($id);
     $purchase->delete();
-    return redirect()->route('minhas_compras')->with('success', 'Compra deletada com sucesso!');
+    return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
   }
 
   /**

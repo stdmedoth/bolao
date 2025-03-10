@@ -92,20 +92,34 @@
               <input type="text" class="form-control" id="gambler_phone" name="gambler_phone" placeholder="Digite seu telefone">
             </div>
 
+            @if (auth()->user()->role->level_id == 'admin')
+            <div class="form-group">
+              <label for="user_id">Local do jogo</label>
+              <select class="form-control" name="user_id">
+                <option value="{{auth()->user()->id}}" {{ old('user_id') == auth()->user()->id ? 'selected' : '' }}>Banca Central</option>
+                @foreach ($sellers as $seller)
+                <option value="{{ $seller->id }}" {{ old('user_id') == $seller->id ? 'selected' : '' }}>{{ $seller->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            @else
+            <input type="hidden" name="user_id" value="{{auth()->user()->id}}">
+            @endif
+
             <div class="form-group">
               <label>Método de Seleção</label>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="selection_method" id="use_grid" value="grid" checked>
-                <label class="form-check-label" for="use_grid">Usar grade interativa</label>
+                <input class="form-check-input" type="radio" name="selection_method" id="use_text" value="text" checked>
+                <label class="form-check-label" for="use_text">Inserir dezenas manualmente</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="selection_method" id="use_text" value="text">
-                <label class="form-check-label" for="use_text">Inserir dezenas manualmente</label>
+                <input class="form-check-input" type="radio" name="selection_method" id="use_grid" value="grid">
+                <label class="form-check-label" for="use_grid">Usar grade interativa</label>
               </div>
             </div>
 
             <!-- Campo de texto (inicialmente oculto) -->
-            <div class="form-group" id="text_input_container" style="display: none;">
+            <div class="form-group" id="text_input_container">
               <div id="text_input_container">
                 <div class="form-group">
                   <label for="manual_numbers">Digite suas dezenas (máximo de 11 números, ex: 11 22 33 44):</label>
@@ -122,7 +136,7 @@
             </div>
 
             <!-- Grade de seleção de números -->
-            <div class="card" id="grid_input_container">
+            <div class="card" id="grid_input_container" style="display: none;">
               <div class="card-body">
                 <label>Escolha suas dezenas (máximo de 11)</label>
                 <div class="number-grid mb-3 row row-cols-5 row-cols-sm-6 row-cols-md-7 row-cols-lg-10 gx-1 gy-1">
@@ -202,7 +216,7 @@
               <div class="card-body">
                 <h3 class="card-title">{{ $history->description }}</h3>
                 <h5 class="card-text">{{ ucfirst(\Carbon\Carbon::parse($history->created_at)->translatedFormat('l, d/m/Y')) }}</h5>
-                <h5 class="card-text"><strong>{{ $history->result_numbers }}</strong></h5>
+                <h5 class="card-text"><strong>{{ collect(explode(' ', $history->result_numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</strong></h5>
                 <p class="card-text"><small class="text-muted">Cadastrado: {{ $history->created_at->format('d/m/Y H:i') }}</small></p>
               </div>
             </div>
@@ -311,7 +325,7 @@
           <tr>
             <td>{{ $purchase->gambler_name }}</td>
             <td>{{ $purchase->gambler_phone }}</td>
-            <td>{{ $purchase->numbers }}</td>
+            <td>{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
             <!-- <td>{{ $purchase->quantity }}</td> -->
             <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
             <td><span class="badge bg-label-primary">{{ __($purchase->status) }}</span></td>
@@ -381,7 +395,7 @@
               <tbody>
                 @foreach ($winner->purchases as $purchase)
                 <tr>
-                  <td>{{ $purchase->numbers }}</td>
+                  <td>{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
                   <td>{{ $purchase->quantity }}</td>
                   <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
                   <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>

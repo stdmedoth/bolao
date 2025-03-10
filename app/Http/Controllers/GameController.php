@@ -60,6 +60,7 @@ class GameController extends Controller
     $purchases = Purchase::where('user_id', Auth::user()->id)->where('game_id', $id)->get();
     $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->paginate(20);
     $user_awards = UserAwards::where('game_id', $id)->paginate(20);
+    $sellers = User::where('role_user_id', 2)->get();
 
     $winners = [];
     $lastClosedHistory = GameHistory::where('game_id', $game->id)
@@ -114,7 +115,8 @@ class GameController extends Controller
       'purchases' => $purchases,
       'histories' => $histories,
       'winners' => $winners,
-      'user_awards' => $user_awards
+      'user_awards' => $user_awards,
+      'sellers' => $sellers
     ]);
   }
 
@@ -238,7 +240,6 @@ class GameController extends Controller
       'awards',
       'purchases'
     ))->setPaper('a4', 'portrait');
-
 
     return $pdf->download("relatorio_jogo_{$id}.pdf");
   }

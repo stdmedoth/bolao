@@ -29,6 +29,9 @@
                 <th>ID</th>
                 <th>Tipo</th>
                 <th>Valor</th>
+                @if (in_array(auth()->user()->role->level_id, ['admin' , 'seller']))
+                <th>Usuário</th>
+                @endif
                 <th>Data</th>
               </tr>
             </thead>
@@ -38,6 +41,11 @@
                 <td>{{ $transaction->id }}</td>
                 <td>{{ $typeTranslations[$transaction->type] ?? $transaction->type }}</td>
                 <td>R$ {{ number_format($transaction->amount, 2, ',', '.') }}</td>
+
+                @if (in_array(auth()->user()->role->level_id, ['admin' , 'seller']))
+                <td>{{ $transaction->user->name }}</td>
+                @endif
+
                 <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
               </tr>
               @empty

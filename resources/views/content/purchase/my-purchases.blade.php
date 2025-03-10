@@ -23,6 +23,44 @@
   <h1 class="my-4">Compras realizadas</h1>
   @endif
 
+  <div class="modal" tabindex="-1" id="modal_repeat_game">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="{{ url('/purchase/repeat') }}" method="POST" class="mb-4">
+          @csrf
+          @method('POST')
+
+          <div class="modal-header">
+            <h5 class="modal-title">Repetir jogo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="repeat_game_id">Jogo para repetir</label>
+                <select name="repeat_game_id" class="form-select">
+                  @foreach ($games as $game)
+                  <option value="{{ $game->id }}" {{ (request('game_id') == $game->id) ? 'selected' : '' }}>{{ $game->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="repeat_game_numbers">Números para repetir</label>
+                <input id="repeat_game_numbers_id" name="repeat_game_numbers" type="text" disabled class="form-control" value="">
+              </div>
+              <input id="repeat_game_purchase_id" name="repeat_game_purchase_id" type="hidden" class="form-control" value="">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button id="repeat_game_repeat_button_id" type="submit" class="btn btn-primary">Repetir</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Tabela de Compras -->
   <div class="card">
 
@@ -127,14 +165,32 @@
             <!-- Usar timestamp do próprio produto? -->
 
             <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
-            <td>{{ $purchase->numbers }}</td>
+            <td> {{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
             <td>
               <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>
             </td>
             <td>
-              <a href="{{ route('purchase-pay', $purchase->id) }}" class="btn btn-success {{$purchase->status !== "PENDING" ? "disabled" : ""}}">Pagar</a>
-              <a href="{{ route('purchase-withdraw', $purchase->id) }}" class="btn btn-warning {{$purchase->status !== "PAID" ? "disabled" : ""}}">Estornar</a>
-              <a href="{{ route('purchases.destroy', $purchase->id) }}" class="btn btn-danger {{ (($purchase->status == "PAID") || ($purchase->game->status == "CLOSED") ) ? "disabled" : ""}}">Deletar</a>
+              <a href="{{ route('purchase-pay', array_merge([$purchase->id], request()->query())) }}"
+                class="btn btn-success {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status !== 'PENDING') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
+                Pagar
+              </a>
+
+              <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                class="btn btn-warning {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status !== 'PAID') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
+                Estornar
+              </a>
+
+              <a href="{{ route('purchases.destroy', array_merge([$purchase->id], request()->query())) }}"
+                class="btn btn-danger {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status == 'PAID') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
+                Deletar
+              </a>
+
+              <a href="#"
+                data-purchase_id="{{$purchase->id}}"
+                data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                class="btn btn-secondary repeat_game_button">
+                Repetir
+              </a>
             </td>
           </tr>
           @endforeach
@@ -142,10 +198,39 @@
       </table>
       <!-- Controles de paginação -->
       <div class="d-flex justify-content-center mt-4">
-        {{ $purchases->links('pagination::bootstrap-5') }}
+        {{ $purchases->appends(request()->all())->links('pagination::bootstrap-5') }}
       </div>
 
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+
+    repeat_game_buttons = document.getElementsByClassName('repeat_game_button');
+    repeat_game_repeat_button_id = document.getElementsByClassName('repeat_game_repeat_button_id');
+
+    for (var i = 0; i < repeat_game_buttons.length; i++) {
+      (function(index) {
+        repeat_game_buttons[index].addEventListener("click", function(e) {
+          var myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game'), {
+            focus: true
+          });
+
+          numbers = e.target.getAttribute('data-numbers');
+          repeat_game_numbers_id = document.getElementById('repeat_game_numbers_id')
+          repeat_game_numbers_id.value = numbers;
+
+          purchase_id = e.target.getAttribute('data-purchase_id');
+          repeat_game_purchase_id = document.getElementById('repeat_game_purchase_id')
+          repeat_game_purchase_id.value = purchase_id;
+
+          myModal.show();
+
+        });
+      })(i);
+    }
+  });
+</script>
 @endsection

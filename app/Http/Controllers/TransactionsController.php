@@ -17,6 +17,7 @@ class TransactionsController extends Controller
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
+
     $builder = $builder->orderBy('created_at', 'DESC');
     $transactions = $builder->paginate(20);
 

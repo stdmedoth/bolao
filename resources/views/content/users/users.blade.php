@@ -94,7 +94,7 @@
 
   <!-- Controles de paginação -->
   <div class="d-flex justify-content-center mt-4">
-    {{ $users->links('pagination::bootstrap-5') }}
+    {{ $users->appends(request()->all())->links('pagination::bootstrap-5') }}
   </div>
 </div>
 @endsection
