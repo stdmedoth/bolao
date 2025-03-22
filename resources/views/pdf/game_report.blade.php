@@ -9,6 +9,7 @@
     body {
       font-family: Arial, sans-serif;
       font-size: 14px;
+      background-color: blue;
       margin: 0;
       padding: 0;
     }
@@ -17,7 +18,7 @@
       width: 100%;
       max-width: 2140px;
       margin: 0 auto;
-      padding: 15px;
+      padding: 2px;
     }
 
     .table {
@@ -28,7 +29,7 @@
 
     .table th,
     .table td {
-      border: 2px solid #ddd;
+      border: 2px solid #dddddd;
       padding: 10px;
       text-align: center;
     }
@@ -36,7 +37,7 @@
     .table th {
       background-color: blue;
       /* Corrigido: removi as aspas simples */
-      color: #fff;
+      color: #ffffff;
       /* Alterado para branco para melhor contraste */
       font-weight: bold;
     }
@@ -57,7 +58,7 @@
     }
 
     .title-div {
-      border: 1px solidrgb(241, 25, 25);
+      border: 1px solid #D80000;
       background-color: #dddddd;
       border-radius: 1px;
     }
@@ -108,22 +109,22 @@
 
 <body>
 
-  <div class="container blue">
-    <table class="table">
+  <div class="container">
+    <table class=" table">
       <tr>
-        <td>
-          <div class="text-center">
+        <td style="border: 3px solid transparent;">
+          <div class=" text-center">
             <img src="{{ asset('assets/img/logos/logo.png') }}" style="width: 100px;">
           </div>
         </td>
         <td>
           <table class="table">
-            <tr class="title-div">
+            <tr style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
               <td colspan="2">
-                <h1>Bolão entre Amigos VIP</h1>
+                <h1 style="font-size: 50px;font-weight: bold;">Bolão entre Amigos VIP</h1>
               </td>
             </tr>
-            <tr class="title-div">
+            <tr style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
               <td>
                 <h3>{{ $game->name }}</h3>
               </td>
@@ -197,8 +198,7 @@
     </table>
 
     <!-- Prêmios -->
-    <h3>Prêmios</h3>
-    <table class="table">
+    <table class="table" style="background-color: #dddddd;">
       @foreach($awards->chunk(4) as $chunk)
       <tr>
         @foreach($chunk as $index => $award)
@@ -207,7 +207,7 @@
         $colorClass = 'bg-color-' . (($index % 8) + 1);
         @endphp
         <td>
-          <div class="card p-3 {{ $colorClass }}">
+          <div class="card p-3 {{ $colorClass }}" style="border: 5px solid #000000; border-radius: 10px;">
             <h4>{{ $award->name }}</h4>
             <p><strong>Prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }}</p>
           </div>
@@ -218,8 +218,6 @@
     </table>
 
     <div class="page-break"></div>
-
-    <h3>Compras</h3>
     <table class="table">
       <tr>
         <th>ID</th>
