@@ -239,7 +239,8 @@ class GameController extends Controller
       'uniqueNumbers',
       'awards',
       'purchases'
-    ))->setPaper('a4', 'portrait');
+      //))->setPaper('a4', 'portrait');
+    ))->setPaper('a2', 'landscape');
 
     return $pdf->download("relatorio_jogo_{$id}.pdf");
   }
