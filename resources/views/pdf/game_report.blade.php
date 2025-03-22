@@ -46,7 +46,7 @@
     }
 
     .card {
-      border: 1px solid #ddd;
+      border: 1px solid #dddddd;
       padding: 2px;
       margin: 3px;
       text-align: center;
@@ -57,8 +57,8 @@
     }
 
     .title-div {
-      border: 1px solid #ffcccc;
-      background-color: #ddd;
+      border: 1px solidrgb(241, 25, 25);
+      background-color: #dddddd;
       border-radius: 1px;
     }
 
@@ -148,7 +148,7 @@
               <th>Data</th>
             </tr>
             @foreach($gameHistories as $index => $history)
-            <tr style="background-color: {{ $index % 2 == 0 ? '#ffffff' : '#add8e6' }};">
+            <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
               <td>{{ $history->description }}</td>
               <td>{{ $history->numbers }}</td>
               <td>{{ $history->created_at }}</td>
@@ -163,7 +163,7 @@
               <th colspan="4">Classificação</th>
             </tr>
             @foreach($purchases_data as $index => $purchase)
-            <tr style="background-color: {{ $index % 2 == 0 ? '#ffffff' : '#add8e6' }};">
+            <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
               <td>{{ $purchase['gambler_name'] }}</td>
               <td>{{ $purchase['seller'] }}</td>
               <td>{{ $purchase['points'] }}</td>
@@ -180,7 +180,10 @@
               @if($i % 10==0) <!-- Abre uma nova linha a cada 10 números -->
               <tr>
                 @endif
-                <td class="{{ in_array($i, $uniqueNumbers) ? 'text-danger font-weight-bold' : '' }}">
+                <td
+                  class="{{ in_array($i, $uniqueNumbers) ? 'text-danger font-weight-bold' : '' }}"
+                  <?php echo 'style="background-color:' . (in_array($i, $uniqueNumbers) ? '#D80000' : '#686868') . '; color:' . (in_array($i, $uniqueNumbers) ? '#FFFFFF' : '#000000') . ';"'; ?>>
+
                   {{ $i }}
                 </td>
                 @if(($i + 1) % 10 == 0) <!-- Fecha a linha a cada 10 números -->
@@ -206,8 +209,7 @@
         <td>
           <div class="card p-3 {{ $colorClass }}">
             <h4>{{ $award->name }}</h4>
-            <p><strong>Tipo:</strong> {{ $award->condition_type }}</p>
-            <p><strong>Valor:</strong> {{ $award->amount }}</p>
+            <p><strong>Prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }}</p>
           </div>
         </td>
         @endforeach
@@ -227,10 +229,20 @@
         <th>Números</th>
       </tr>
       @foreach($purchases as $index => $purchase)
-      <tr style="background-color: {{ $index % 2 == 0 ? '#ffffff' : '#add8e6' }};">
+      <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
         <td>{{ $purchase->id }}</td>
         <td>{{ $purchase->gambler_name }}</td>
+        @if (in_array($purchase->user->role->level_id, ['seller']))
         <td>{{ $purchase->user->name }}</td>
+
+        <!-- Se foi o admin que comprou, então a banca central é o vendedor -->
+        @elseif (in_array($purchase->user->role->level_id, ['admin']))
+        <td>Banca Central</td>
+
+        <!-- Se foi o apostador que comprou, então verifica se foi um vendedor que indicou -->
+        @elseif ($purchase->user->invited_by)
+        <td>{{ in_array($purchase->user->invited_by->role->level_id, ['gambler']) ? 'Banca Central'  : $purchase->user->invited_by->name  }}</td>
+        @endif
         <td>{{ count(array_intersect(explode(' ', $purchase->numbers), $uniqueNumbers)) }}</td>
         <td>{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
       </tr>

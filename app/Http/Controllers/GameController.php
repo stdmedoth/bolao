@@ -229,7 +229,6 @@ class GameController extends Controller
     }
 
     $awards = GameAward::where('game_id', $id)->get();
-
     // Gerar o PDF com a view
     $pdf = Pdf::loadView('pdf.game_report', compact(
       'game',
