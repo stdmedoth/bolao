@@ -26,6 +26,7 @@ return new class extends Migration
 
       $table->unsignedBigInteger('game_id');
       $table->unsignedBigInteger('user_id');
+      $table->unsignedBigInteger('paid_by_user_id');
 
 
       $table->foreign('game_id')->references('id')->on('games');

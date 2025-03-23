@@ -114,22 +114,29 @@
       <tr>
         <td style="border: 3px solid transparent;">
           <div class=" text-center">
-            <img src="{{ asset('assets/img/logos/logo.png') }}" style="width: 100px;">
+            <img src="{{ asset('assets/img/logos/logo.png') }}" style="width: 200px;">
           </div>
         </td>
         <td>
           <table class="table">
-            <tr style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
+            <tr>
               <td colspan="2">
-                <h1 style="font-size: 50px;font-weight: bold;">Bolão entre Amigos VIP</h1>
+                <div style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
+                  <h1 style="font-size: 50px;font-weight: bold;">Bolão entre Amigos VIP</h1>
+                </div>
               </td>
             </tr>
-            <tr style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
+            <tr>
               <td>
-                <h3>{{ $game->name }}</h3>
+                <div style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
+                  <h3>{{ $game->name }}</h3>
+                </div>
               </td>
               <td>
-                <p><strong>Início do jogo:</strong> {{ $lastClosedHistory->created_at }}</p>
+                <div style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
+                  <p><strong>Início do jogo:</strong> {{ $lastClosedHistory->created_at }}</p>
+
+                </div>
               </td>
             </tr>
           </table>
@@ -151,7 +158,7 @@
             @foreach($gameHistories as $index => $history)
             <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
               <td>{{ $history->description }}</td>
-              <td>{{ $history->numbers }}</td>
+              <td>{{ collect(explode(' ', $history->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
               <td>{{ $history->created_at }}</td>
             </tr>
             @endforeach
@@ -164,11 +171,11 @@
               <th colspan="4">Classificação</th>
             </tr>
             @foreach($purchases_data as $index => $purchase)
-            <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
+            <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#fdcec9') . ';"'; ?>>
               <td>{{ $purchase['gambler_name'] }}</td>
               <td>{{ $purchase['seller'] }}</td>
               <td>{{ $purchase['points'] }}</td>
-              <td>{{ $purchase['numbers'] }}</td>
+              <td>{{ collect(explode(' ', $purchase['numbers']))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
             </tr>
             @endforeach
           </table>
@@ -185,7 +192,7 @@
                   class="{{ in_array($i, $uniqueNumbers) ? 'text-danger font-weight-bold' : '' }}"
                   <?php echo 'style="background-color:' . (in_array($i, $uniqueNumbers) ? '#D80000' : '#686868') . '; color:' . (in_array($i, $uniqueNumbers) ? '#FFFFFF' : '#000000') . ';"'; ?>>
 
-                  {{ $i }}
+                  {{ str_pad($i, 2, '0', STR_PAD_LEFT) }}
                 </td>
                 @if(($i + 1) % 10 == 0) <!-- Fecha a linha a cada 10 números -->
               </tr>
@@ -199,7 +206,7 @@
 
     <!-- Prêmios -->
     <table class="table" style="background-color: #dddddd;">
-      @foreach($awards->chunk(4) as $chunk)
+      @foreach($awards->chunk(3) as $chunk)
       <tr>
         @foreach($chunk as $index => $award)
         @php
@@ -207,7 +214,7 @@
         $colorClass = 'bg-color-' . (($index % 8) + 1);
         @endphp
         <td>
-          <div class="card p-3 {{ $colorClass }}" style="border: 5px solid #000000; border-radius: 10px;">
+          <div class="card p-3 {{ $colorClass }}" style="border: 5px solid #000000; border-radius: 15px;">
             <h4>{{ $award->name }}</h4>
             <p><strong>Prêmio:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }}</p>
           </div>
@@ -222,6 +229,7 @@
       <tr>
         <th>ID</th>
         <th>Nome</th>
+        <th>Usuário</th>
         <th>Vendedor</th>
         <th>Pontos</th>
         <th>Números</th>
@@ -230,6 +238,7 @@
       <tr <?php echo 'style="background-color:' . ($index % 2 == 0 ? '#ffffff' : '#add8e6') . ';"'; ?>>
         <td>{{ $purchase->id }}</td>
         <td>{{ $purchase->gambler_name }}</td>
+        <td>{{ $purchase->user->name }}</td>
         @if (in_array($purchase->user->role->level_id, ['seller']))
         <td>{{ $purchase->user->name }}</td>
 

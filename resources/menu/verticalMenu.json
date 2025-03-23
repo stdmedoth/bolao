@@ -71,6 +71,13 @@
       "icon": "menu-icon tf-icons bx bx-wallet",
       "slug": "app-email",
       "target": "_blank"
+    },
+    {
+      "name": "Comunidade",
+      "user_roles_level": ["seller", "admin", "gambler"],
+      "icon": "menu-icon tf-icons bx bx-group",
+      "slug": "app-email",
+      "target": "https://api.whatsapp.com/send?phone=19997655946"
     }
   ]
 }

@@ -12,6 +12,7 @@
     </a>
   </div>
 
+
   <div class="menu-inner-shadow"></div>
 
   <ul class="menu-inner py-1">
@@ -56,7 +57,7 @@
 
     {{-- main menu --}}
     <li class="menu-item {{$activeClass}}">
-      <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}" class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}" @if (isset($menu->target) and !empty($menu->target)) @endif>
+      <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}" class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}" @if ( !isset($menu->url) and isset($menu->target) and !empty($menu->target)) onclick="window.open('{{ $menu->target }}', '_blank')"@endif>
         @isset($menu->icon)
         <i class="{{ $menu->icon }}"></i>
         @endisset

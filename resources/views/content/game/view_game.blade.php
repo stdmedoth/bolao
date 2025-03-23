@@ -61,6 +61,7 @@
       <div class="card shadow-sm mb-4">
         @if (auth()->user()->role->level_id == 'admin')
         <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Editar</a>
+        <a class="dropdown-item" href="/concursos/generate_pdf/{{ $game->id }}"><i class="bx bx-edit-alt me-1"></i> Gerar PDF</a>
         @endif
         <div class="card-body">
           <p><strong>Nome:</strong> {{ $game->name }}</p>
@@ -353,7 +354,7 @@
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
-          <th>Nome do Apostador</th>
+          <th>Nome do Usuário</th>
           <th>Prêmio</th>
           <th>Vlr. Prêmio</th>
           <th>Pontuação</th>
@@ -367,7 +368,7 @@
           <td>{{ $winner->user->name }}</td>
           <td>{{ $winner->game_award->name }}</td>
           <td>R$ {{ number_format($winner->game_award->amount, 2, ',', '.') }}</td>
-          <td>R$ {{ $winner->userPoints }}</td>
+          <td>{{ $winner->userPoint }}</td>
           <td><span class="badge bg-label-primary me-1">{{ __($winner->status) }}</span></td>
           <td>
             <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#details-{{ $index }}" aria-expanded="false" aria-controls="details-{{ $index }}">
@@ -382,25 +383,21 @@
           </td>
         </tr>
         <tr class="collapse" id="details-{{ $index }}">
-          <td colspan="3">
+          <td colspan="6">
             <table class="table table-sm table-bordered">
               <thead>
                 <tr>
                   <th>Números</th>
-                  <th>Quantidade</th>
                   <th>Vlr. Aposta</th>
                   <th>Data da Aposta</th>
                 </tr>
               </thead>
               <tbody>
-                @foreach ($winner->purchases as $purchase)
                 <tr>
-                  <td>{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
-                  <td>{{ $purchase->quantity }}</td>
-                  <td>R$ {{ number_format($purchase->price, 2, ',', '.') }}</td>
-                  <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
+                  <td>{{ collect(explode(' ', $winner->purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}</td>
+                  <td>R$ {{ number_format($winner->purchase->price, 2, ',', '.') }}</td>
+                  <td>{{ $winner->purchase->created_at->format('d/m/Y H:i') }}</td>
                 </tr>
-                @endforeach
               </tbody>
             </table>
             <!-- Controles de paginação -->
@@ -447,7 +444,7 @@
     const numbersValue = document.getElementById('numbers').value.trim();
     const groups = numbersValue.split(/,\s*/); // Divide grupos separados por vírgula
 
-    errorMessage = document.getElementById('error-message')
+    errorMessage = document.getElementById('error-message2')
     for (let group of groups) {
       const numbersArray = group.trim().split(/\s+/); // Divide o grupo em números
       if (numbersArray.length < 11) {
@@ -468,7 +465,10 @@
     const gridContainer = document.getElementById('grid_input_container');
     const textContainer = document.getElementById('text_input_container');
     const manualInput = document.getElementById('manual_numbers');
-    const errorMessage = document.getElementById('error-message');
+
+    const isGridSelected = document.getElementById('use_grid').checked;
+    const errorMessage = isGridSelected ? document.getElementById('error-message2') : document.getElementById('error-message1');
+    
     const hiddenField = document.getElementById('numbers'); // Campo oculto para envio
 
 
@@ -493,6 +493,7 @@
 
     manualInput.addEventListener('input', function() {
 
+      const errorMessage = document.getElementById('error-message1');
       // Remove todos os caracteres que não sejam números
       let rawValue = this.value.replace(/[^0-9]/g, "");
 
@@ -506,13 +507,12 @@
         errorMessage.textContent = `As dezenas não devem ser repetidas.`;
         errorMessage.style.display = 'block';
       }
-
-      // Limita o número máximo de partes permitidas
-      if (uniqueParts.length > maxNumbers) {
+      else if (uniqueParts.length > maxNumbers) {
+        // Limita o número máximo de partes permitidas
         parts = parts.slice(0, maxNumbers);
         errorMessage.textContent = `Você pode selecionar no máximo ${maxNumbers} números.`;
         errorMessage.style.display = 'block';
-      } else {
+      }else{
         errorMessage.style.display = 'none';
       }
 
@@ -532,8 +532,8 @@
 
       if (isGridSelected && selectedNumbers.length !== maxNumbers) {
         e.preventDefault();
-        document.getElementById('error-message').textContent = 'Você deve selecionar exatamente 11 números.';
-        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('error-message2').textContent = 'Você deve selecionar exatamente 11 números.';
+        document.getElementById('error-message2').style.display = 'block';
       } else if (!isGridSelected) {
 
 
@@ -542,10 +542,10 @@
         // Validar o formato e quantidade de números no campo de texto
         if (manualNumbers.length !== maxNumbers) {
           e.preventDefault();
-          document.getElementById('error-message').textContent = `Insira exatamente ${maxNumbers} dezenas válidas separadas por espaços.`;
-          document.getElementById('error-message').style.display = 'block';
+          document.getElementById('error-message1').textContent = `Insira exatamente ${maxNumbers} dezenas válidas separadas por espaços.`;
+          document.getElementById('error-message1').style.display = 'block';
         } else {
-          document.getElementById('error-message').style.display = 'none';
+          document.getElementById('error-message1').style.display = 'none';
         }
       }
     });
@@ -563,8 +563,8 @@
             selectedNumbers.push(number);
             this.classList.add('active');
           } else {
-            document.getElementById('error-message').textContent = `Você só pode selecionar até ${maxNumbers} números.`;
-            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-message2').textContent = `Você só pode selecionar até ${maxNumbers} números.`;
+            document.getElementById('error-message2').style.display = 'block';
             return;
           }
         }
@@ -572,7 +572,7 @@
         document.getElementById('numbers').value = selectedNumbers.join(' ');
 
         if (selectedNumbers.length <= maxNumbers) {
-          document.getElementById('error-message').style.display = 'none';
+          document.getElementById('error-message2').style.display = 'none';
         }
       });
     });
