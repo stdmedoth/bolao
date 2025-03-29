@@ -20,10 +20,37 @@
   <h1 class="my-4">Concursos</h1>
 
 
-  @if (auth()->user()->role->level_id == 'admin')
-  <a class="btn btn-secondary" href="/concursos/create_game_form">Criar novo jogo</a>
-  @endif
 
+  <form action="{{ url('/concursos') }}" method="GET" class="mb-4">
+    <div class="row">
+      <div class="col-md-2">
+        @if (auth()->user()->role->level_id == 'admin')
+        <a class="btn btn-secondary" href="/concursos/create_game_form">Criar novo jogo</a>
+        @endif
+      </div>
+      <div class="col-md-4">
+        <!-- Campo de pesquisa -->
+        <div class="input-group">
+          <input type="text" name="search" class="form-control" placeholder="Pesquisar por nome do concurso, numeros..." value="{{ request('search') }}">
+          <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <!-- Select de filtro por role -->
+        <select name="status" class="form-select">
+          <option value="">Todos os status</option>
+          @foreach (['OPENED', 'CLOSED','FINISHED'] as $status)
+          <option value="{{ $status }}" {{ (request('status') == $status) ? 'selected' : '' }}>{{ __($status) }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <button class="btn btn-secondary w-100" type="submit">Aplicar Filtros</button>
+      </div>
+    </div>
+  </form>
   <!-- Lista de Jogos -->
   <div class="card shadow-lg p-3 mb-5 bg-white rounded">
     <h5 class="card-header">Jogos</h5>

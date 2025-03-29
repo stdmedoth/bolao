@@ -224,7 +224,7 @@
               </a>
 
               <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                class="btn btn-warning {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status !== 'PAID') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
+                class="btn btn-warning {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status !== 'PAID') || ($purchase->game->status == 'CLOSED') || ($purchase->paid_by_user_id !== auth()->user()->id))) ? 'disabled' : ''}}">
                 Estornar
               </a>
 

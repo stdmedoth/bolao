@@ -52,6 +52,7 @@ use App\Http\Controllers\ReferEarnController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\WithdrawalController;
+use Illuminate\Support\Facades\Redirect;
 
 // authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
@@ -144,6 +145,11 @@ Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->n
 
 Route::post('/deposit/webhook', [DepositController::class, 'webhook'])->name('deposit-webhook');
 
+
+Route::get('/comunidade', function(){
+  $url = 'https://api.whatsapp.com/send?phone=19997655946';
+  return Redirect::to($url);
+});
 
 // Main Page Route
 

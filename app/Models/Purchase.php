@@ -19,12 +19,14 @@ class Purchase extends Model
     "price",
     "status",
     "game_id",
+    "paid_by_user_id",
     "user_id",
   ];
 
   protected $with = [
     "game",
-    "user"
+    "user",
+    "paid_by_user"
   ];
 
   public function game(): BelongsTo
@@ -36,4 +38,11 @@ class Purchase extends Model
   {
     return $this->belongsTo(User::class);
   }
+
+  public function paid_by_user(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'paid_by_user_id', 'id');
+  }
+
+  
 }
