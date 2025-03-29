@@ -90,7 +90,16 @@ class PurchaseController extends Controller
       if ($role_level_id == 'gambler') {
         if ($user->invited_by_id) {
           $invited_by = User::find($user->invited_by_id);
-          $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+
+          $comission = $purchase->price * $invited_by->comission_percent;
+          Transactions::create(
+            [
+              "type" => 'PAY_PURCHASE_COMISSION',
+              "amount" => $comission,
+              "user_id" => $user->invited_by_id,
+            ]
+          );
+          $invited_by->balance = $invited_by->balance + $comission;
         }
       }
     }
@@ -134,7 +143,15 @@ class PurchaseController extends Controller
         if ($user->invited_by_id) {
           $invited_by = User::find($user->invited_by_id);
           if ($invited_by->role->level_id == 'seller') {
-            $invited_by->balance = $invited_by->balance - $purchase->price * $invited_by->comission_percent;
+            $comission = $purchase->price * $invited_by->comission_percent;
+            Transactions::create(
+              [
+                "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+                "amount" => $comission,
+                "user_id" => $user->invited_by_id,
+              ]
+            );
+            $invited_by->balance = $invited_by->balance - $comission;
           }
         }
       }
@@ -230,7 +247,15 @@ class PurchaseController extends Controller
       if ($role_level_id == 'gambler') {
         if ($user->invited_by_id) {
           $invited_by = User::find($user->invited_by_id);
-          $invited_by->balance = $invited_by->balance + $purchase->price * $invited_by->comission_percent;
+          $comission = $purchase->price * $invited_by->comission_percent;
+          Transactions::create(
+            [
+              "type" => 'PAY_PURCHASE_COMISSION',
+              "amount" => $comission,
+              "user_id" => $user->invited_by_id,
+            ]
+          );
+          $invited_by->balance = $invited_by->balance + $comission;
         }
       }
     }
@@ -302,7 +327,16 @@ class PurchaseController extends Controller
       if ($role_level_id == 'gambler') {
         if ($user->invited_by_id) {
           $invited_by = User::find($user->invited_by_id);
-          $invited_by->balance = $invited_by->balance + $newPurchase->price * $invited_by->comission_percent;
+
+          $comission = $newPurchase->price * $invited_by->comission_percent;
+          Transactions::create(
+            [
+              "type" => 'PAY_PURCHASE_COMISSION',
+              "amount" => $comission,
+              "user_id" => $user->invited_by_id,
+            ]
+          );
+          $invited_by->balance = $invited_by->balance + $comission;
         }
       }
     }
@@ -341,6 +375,17 @@ class PurchaseController extends Controller
     $purchase = Purchase::find($id);
     $purchase->update($request->all());
     return redirect()->route('minhas_compras')->with('success', 'Compra atualizada com sucesso!');
+  }
+
+  /**
+   * Remove the specified resource from storage.
+   */
+  public function delete(Request $request)
+  {
+
+    $purchase = Purchase::find($request->delete_game_purchase_id);
+    $purchase->delete();
+    return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
   }
 
   /**

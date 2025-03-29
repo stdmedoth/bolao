@@ -31,6 +31,8 @@ class TransactionsController extends Controller
       'REFER_EARN_REVERSAL' => 'Estorno de Bônus de Indicação',
       'PAY_PURCHASE' => 'Pagamento de Compra',
       'PAY_PURCHASE_WITHDRAWAL' => 'Estorno de Pagamento de Compra',
+      'PAY_PURCHASE_COMISSION' => 'Pagamento de Comissão',
+      'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'Estorno de Pagamento de Comissão',
       'PAY_AWARD' => 'Pagamento de Prêmio'
     ];
 

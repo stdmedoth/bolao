@@ -24,7 +24,9 @@ return new class extends Migration
         'PAY_PURCHASE',
         'PAY_PURCHASE_WITHDRAWAL',
         'PAY_AWARD',
-        'PAY_AWARD_WITHDRAWAL'
+        'PAY_AWARD_WITHDRAWAL',
+        'PAY_PURCHASE_COMISSION',
+        'PAY_PURCHASE_COMISSION_WITHDRAWAL'
       ]);
 
       $table->float('amount');

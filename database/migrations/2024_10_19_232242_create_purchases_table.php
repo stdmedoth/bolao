@@ -22,6 +22,7 @@ return new class extends Migration
       $table->enum('status', ['PAID', 'PENDING', 'CANCELED', 'FINISHED']);
 
       $table->integer('quantity');
+      $table->float('original_price', 8, 2);
       $table->float('price', 8, 2);
 
       $table->unsignedBigInteger('game_id');

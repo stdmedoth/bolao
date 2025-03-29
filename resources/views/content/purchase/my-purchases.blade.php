@@ -26,7 +26,8 @@
   <div class="modal" tabindex="-1" id="modal_repeat_game">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form action="{{ url('/purchase/repeat') }}" method="POST" class="mb-4">
+        <!-- request()->all() -->
+        <form action="{{ url()->query('/purchase/repeat', request()->all()) }}" method="POST" class="mb-4">
           @csrf
           @method('POST')
 
@@ -55,6 +56,53 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             <button id="repeat_game_repeat_button_id" type="submit" class="btn btn-primary">Repetir</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" tabindex="-1" id="modal_delete_game">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- request()->all() -->
+        <form action="{{ url()->query('/purchase/delete', request()->all()) }}" method="POST" class="mb-4">
+          @csrf
+          @method('POST')
+
+          <div class="modal-header">
+            <h5 class="modal-title">Deletar jogo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="delete_game_name">Jogo Concurso</label>
+                <input id="delete_game_name" name="delete_game_name" type="text" class="form-control" disabled>
+              </div>
+
+              <div class="form-group">
+                <label for="delete_game_gambler_name">Nome do apostador</label>
+                <input id="delete_game_gambler_name" name="delete_game_gambler_name" type="text" disabled class="form-control" value="">
+              </div>
+
+              <div class="form-group">
+                <label for="delete_game_gambler_phone">Telefone do apostador</label>
+                <input id="delete_game_gambler_phone" name="delete_game_gambler_phone" type="text" disabled class="form-control" value="">
+              </div>
+
+              <div class="form-group">
+                <label for="delete_game_numbers">Números</label>
+                <input id="delete_game_numbers" name="delete_game_numbers" type="text" disabled class="form-control" value="">
+              </div>
+
+              <input id="delete_game_purchase_id" name="delete_game_purchase_id" type="hidden" class="form-control" value="">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button id="delete_game_delete_button_id" type="submit" class="btn btn-primary">Deletar</button>
           </div>
         </form>
       </div>
@@ -180,13 +228,21 @@
                 Estornar
               </a>
 
-              <a href="{{ route('purchases.destroy', array_merge([$purchase->id], request()->query())) }}"
-                class="btn btn-danger {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status == 'PAID') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
+              <a
+                href="#"
+                data-purchase_id="{{$purchase->id}}"
+                data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                data-purchase_id="{{$purchase->id}}"
+                data-game_name="{{$purchase->game->name}}"
+                data-gambler_name="{{$purchase->gambler_name}}"
+                data-gambler_phone="{{$purchase->gambler_phone}}"
+                class="btn btn-danger delete_game_button {{ (!in_array($purchase->user->role->level_id, ['admin']) && (($purchase->status == 'PAID') || ($purchase->game->status == 'CLOSED'))) ? 'disabled' : ''}}">
                 Deletar
               </a>
 
               <a href="#"
                 data-purchase_id="{{$purchase->id}}"
+                data-game_name="{{$purchase->game->name}}"
                 data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
                 class="btn btn-secondary repeat_game_button">
                 Repetir
@@ -231,6 +287,44 @@
         });
       })(i);
     }
+
+
+    delete_game_buttons = document.getElementsByClassName('delete_game_button');
+    delete_game_delete_button_id = document.getElementsByClassName('delete_game_delete_button_id');
+
+    for (var i = 0; i < delete_game_buttons.length; i++) {
+      (function(index) {
+        delete_game_buttons[index].addEventListener("click", function(e) {
+          var myModal = new bootstrap.Modal(document.getElementById('modal_delete_game'), {
+            focus: true
+          });
+
+          numbers = e.target.getAttribute('data-numbers');
+          delete_game_numbers = document.getElementById('delete_game_numbers')
+          delete_game_numbers.value = numbers;
+
+          game_name = e.target.getAttribute('data-game_name');
+          delete_game_name = document.getElementById('delete_game_name')
+          delete_game_name.value = game_name;
+
+          gambler_name = e.target.getAttribute('data-gambler_name');
+          delete_game_gambler_name = document.getElementById('delete_game_gambler_name')
+          delete_game_gambler_name.value = gambler_name;
+
+          gambler_phone = e.target.getAttribute('data-gambler_phone');
+          delete_game_gambler_phone = document.getElementById('delete_game_gambler_phone')
+          delete_game_gambler_phone.value = gambler_phone;
+
+          purchase_id = e.target.getAttribute('data-purchase_id');
+          delete_game_purchase_id = document.getElementById('delete_game_purchase_id')
+          delete_game_purchase_id.value = purchase_id;
+
+          myModal.show();
+
+        });
+      })(i);
+    }
+
   });
 </script>
 @endsection
