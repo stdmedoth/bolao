@@ -21,17 +21,24 @@ class Purchase extends Model
     "game_id",
     "paid_by_user_id",
     "user_id",
+    "seller_id",
   ];
 
   protected $with = [
     "game",
     "user",
+    "seller",
     "paid_by_user"
   ];
 
   public function game(): BelongsTo
   {
     return $this->belongsTo(Game::class);
+  }
+
+  public function seller(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'seller_id', 'id');
   }
 
   public function user(): BelongsTo
@@ -43,6 +50,4 @@ class Purchase extends Model
   {
     return $this->belongsTo(User::class, 'paid_by_user_id', 'id');
   }
-
-  
 }

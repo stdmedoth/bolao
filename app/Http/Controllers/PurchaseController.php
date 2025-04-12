@@ -26,9 +26,7 @@ class PurchaseController extends Controller
 
     if (Auth::user()->role->level_id == 'seller') {
       // se for vendedor, filtrar compras de usuarios desse vendedor
-      $builder = $builder->orWhere(function ($q) {
-        $q->whereHas('user', fn($q2) => $q2->where('invited_by_id', Auth::user()->id));
-      });
+      $builder = $builder->orWhere('seller_id', Auth::user()->id);
     }
 
     if ($request->has('search') && $request->search != '') {
@@ -48,7 +46,9 @@ class PurchaseController extends Controller
     }
 
     $builder = $builder->orderBy('created_at', 'desc');
-    $purchases = $builder->paginate(5);
+    $builder = $builder->orderBy('gambler_name', 'asc');
+
+    $purchases = $builder->paginate(20);
 
     return view('content.purchase.my-purchases', ['purchases' => $purchases, 'games' => $games]);
   }
@@ -77,7 +77,7 @@ class PurchaseController extends Controller
       }
 
       if ($user->game_credit < $purchase->price) {
-        return redirect()->route('deposito')
+        return redirect()->route('transactions.deposito')
           ->with('amount', $purchase->price)
           ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
@@ -115,6 +115,17 @@ class PurchaseController extends Controller
         "user_id" => $purchase->user_id,
       ]
     );
+
+    if ($role_level_id == 'seller') {
+      $comission = $purchase->price * $user->comission_percent;
+      Transactions::create(
+        [
+          "type" => 'PAY_PURCHASE_COMISSION',
+          "amount" => $comission,
+          "user_id" => $user->id,
+        ]
+      );
+    }
 
     return redirect()->route('minhas_compras', request()->query())->with('success', 'Aposta paga com sucesso!');
   }
@@ -159,7 +170,19 @@ class PurchaseController extends Controller
     }
 
     $purchase->status = "PENDING";
+    $purchase->paid_by_user_id = NULL;
     $purchase->save();
+
+    if ($role_level_id == 'seller') {
+      $comission = $purchase->price * $user->comission_percent;
+      Transactions::create(
+        [
+          "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+          "amount" => $comission,
+          "user_id" => $user->id,
+        ]
+      );
+    }
 
     Transactions::create(
       [
@@ -189,6 +212,7 @@ class PurchaseController extends Controller
       //'quantity' => 'required|numeric|min:0',
       'game_id' => 'required|exists:games,id',
       'user_id' => 'required|exists:users,id',
+      'seller_id' => 'required|exists:users,id',
     ]);
 
     $numbers = explode(' ', $request->numbers);
@@ -206,19 +230,18 @@ class PurchaseController extends Controller
     $purchase->quantity = 1;
     $purchase->status = "PENDING";
     $purchase->game_id = $request->game_id;
+    $purchase->seller_id = $request->seller_id;
     $purchase->user_id = $request->user_id;
-    
+
     $array = explode(' ', $request->numbers);
-    
-    
+
+
     //$numbers = implode(" ", $array);
     //$numbers = explode(' ', $numbers);
-    
-    //$quantity = count($array);
-    
-    $user = User::find($request->user_id);
-    $purchase->paid_by_user_id = $user->id;
 
+    //$quantity = count($array);
+
+    $user = User::find($request->user_id);
     $role_level_id = Auth::user()->role->level_id;
 
     // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
@@ -263,7 +286,19 @@ class PurchaseController extends Controller
     }
 
     $purchase->status = "PAID";
+    $purchase->paid_by_user_id = $user->id;
     $purchase->save();
+
+    if ($role_level_id == 'seller') {
+      $comission = $purchase->price * $user->comission_percent;
+      Transactions::create(
+        [
+          "type" => 'PAY_PURCHASE_COMISSION',
+          "amount" => $comission,
+          "user_id" => $user->id,
+        ]
+      );
+    }
 
     Transactions::create(
       [
@@ -312,6 +347,7 @@ class PurchaseController extends Controller
     $price = $game->price * $quantity;
 
     $newPurchase->quantity = $quantity;
+    $newPurchase->user_id = $user->id;
     $newPurchase->price = $price;
 
     // Salvando a compra no banco de dados
@@ -344,7 +380,19 @@ class PurchaseController extends Controller
     }
 
     $newPurchase->status = "PAID";
+    $newPurchase->paid_by_user_id = $user->id;
     $newPurchase->save();
+
+    if ($role_level_id == 'seller') {
+      $comission = $newPurchase->price * $user->comission_percent;
+      Transactions::create(
+        [
+          "type" => 'PAY_PURCHASE_COMISSION',
+          "amount" => $comission,
+          "user_id" => $user->id,
+        ]
+      );
+    }
 
     Transactions::create(
       [
@@ -372,6 +420,7 @@ class PurchaseController extends Controller
       'price' => 'required|numeric',
       'game_id' => 'required|exists:games,id',
       'user_id' => 'required|exists:users,id',
+      'seller_id' => 'required|exists:users,id',
     ]);
 
     $purchase = Purchase::find($id);
@@ -386,7 +435,9 @@ class PurchaseController extends Controller
   {
 
     $purchase = Purchase::find($request->delete_game_purchase_id);
-    $purchase->delete();
+    $purchase->status =  'CANCELED';
+    $purchase->save();
+    //$purchase->delete();
     return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
   }
 
@@ -396,7 +447,10 @@ class PurchaseController extends Controller
   public function destroy(Request $request, $id)
   {
     $purchase = Purchase::find($id);
-    $purchase->delete();
+    $purchase->status =  'CANCELED';
+    $purchase->save();
+
+    //$purchase->delete();
     return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
   }
 

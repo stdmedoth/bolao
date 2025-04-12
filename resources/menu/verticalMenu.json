@@ -3,7 +3,11 @@
     {
       "url": "/",
       "name": "Inicio",
-      "user_roles_level": ["seller", "admin", "gambler"],
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
       "icon": "menu-icon tf-icons bx bxs-dashboard",
       "slug": "app-email",
       "target": "_blank"
@@ -11,7 +15,10 @@
     {
       "url": "/usuarios",
       "name": "Usuarios",
-      "user_roles_level": ["admin", "seller"],
+      "user_roles_level": [
+        "admin",
+        "seller"
+      ],
       "icon": "menu-icon tf-icons bx bxs-user-detail",
       "slug": "app-email",
       "target": "_blank"
@@ -19,15 +26,23 @@
     {
       "url": "/concursos",
       "name": "Concursos",
-      "user_roles_level": ["seller", "admin", "gambler"],
-      "icon": "menu-icon tf-icons bx bx-shopping-bag",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon tf-icons bx bx-dice-6",
       "slug": "app-email",
       "target": "_blank"
     },
     {
       "url": "/minhas_compras",
       "name": "Compras",
-      "user_roles_level": ["seller", "admin", "gambler"],
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -35,46 +50,106 @@
     {
       "url": "/meus_premios",
       "name": "Prêmios",
-      "user_roles_level": ["seller", "admin", "gambler"],
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
       "icon": "menu-icon tf-icons bx bx-medal",
-      "slug": "app-email",
+      "slug": "awards",
       "target": "_blank"
     },
     {
-      "url": "/deposito",
-      "name": "Depositar",
-      "user_roles_level": ["seller", "admin", "gambler"],
-      "icon": "menu-icon tf-icons bx bx-money",
-      "slug": "app-email",
-      "target": "_blank"
+      "url": "/transacoes",
+      "name": "Transações",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon tf-icons bx bx-transfer-alt",
+      "slug": "transactions",
+      "target": "_blank",
+      "submenu": [
+        {
+          "url": "/deposito",
+          "name": "Depositar",
+          "user_roles_level": [
+            "seller",
+            "admin",
+            "gambler"
+          ],
+          "icon": "menu-icon tf-icons bx bx-money",
+          "slug": "deposit"
+        },
+        {
+          "url": "/saque",
+          "name": "Sacar",
+          "user_roles_level": [
+            "seller",
+            "admin",
+            "gambler"
+          ],
+          "icon": "menu-icon tf-icons bx bx-dollar",
+          "slug": "withdraw"
+        }
+      ]
     },
     {
-      "url": "/saque",
-      "name": "Sacar",
-      "user_roles_level": ["seller", "admin", "gambler"],
-      "icon": "menu-icon tf-icons bx bx-dollar",
-      "slug": "app-email",
-      "target": "_blank"
-    },
-    {
-      "url": "/extrato",
-      "name": "Extrato",
-      "user_roles_level": ["seller", "admin", "gambler"],
-      "icon": "menu-icon tf-icons bx bx-list-ul",
-      "slug": "app-email",
-      "target": "_blank"
+      "url": "/financeiro",
+      "name": "Financeiro",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon tf-icons bx bx-money-withdraw",
+      "slug": "finances",
+      "target": "_blank",
+      "submenu": [
+        {
+          "url": "/financeiro/extrato",
+          "name": "Extrato",
+          "user_roles_level": [
+            "seller",
+            "admin",
+            "gambler"
+          ],
+          "icon": "menu-icon tf-icons bx bx-list-ul",
+          "slug": "transactions-list"
+        },
+        {
+          "url": "/financeiro/resumo",
+          "name": "Resumo",
+          "user_roles_level": [
+            "seller",
+            "admin",
+            "gambler"
+          ],
+          "icon": "menu-icon tf-icons bx bx-math",
+          "slug": "summary"
+        }
+      ]
     },
     {
       "url": "/indique_ganhe",
       "name": "Indique e ganhe",
-      "user_roles_level": ["seller", "admin", "gambler"],
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
       "icon": "menu-icon tf-icons bx bx-wallet",
       "slug": "app-email",
       "target": "_blank"
     },
     {
       "name": "Comunidade",
-      "user_roles_level": ["seller", "admin", "gambler"],
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
       "icon": "menu-icon tf-icons bx bx-group",
       "slug": "app-email",
       "target": "https://api.whatsapp.com/send?phone=19997655946"

@@ -54,6 +54,9 @@ use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\WithdrawalController;
 use Illuminate\Support\Facades\Redirect;
 
+use Illuminate\Support\Facades\Artisan;
+
+
 // authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('login');
 Route::post('/auth/login-basic', [LoginBasic::class, 'validate'])->name('validate-login');
@@ -126,15 +129,16 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/meus_premios/pay/{id}', [UserAwardController::class, 'pay'])->name('user_award-pay');
   Route::get('/meus_premios/withdraw/{id}', [UserAwardController::class, 'withdraw'])->name('user_award-withdraw');
 
-  Route::get('/deposito', [DepositController::class, 'index'])->name('deposito');
+  Route::get('/deposito', [DepositController::class, 'index'])->name('transactions.deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
   Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');
 
 
-  Route::get('/saque', [WithdrawalController::class, 'index'])->name('saque');
+  Route::get('/saque', [WithdrawalController::class, 'index'])->name('transactions.saque');
   Route::post('/saque', [WithdrawalController::class, 'withdraw_pay'])->name('pay-withdraw');
 
-  Route::get('/extrato', [TransactionsController::class, 'index'])->name('extract');
+  Route::get('/financeiro/extrato', [TransactionsController::class, 'index'])->name('finances.extract');
+  Route::get('/financeiro/resumo', [TransactionsController::class, 'summary'])->name('finances.summary');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
   Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');
@@ -143,10 +147,10 @@ Route::middleware('auth:web')->group(function () {
 
 Route::get('/indique_ganhe/register', [ReferEarnController::class, 'create'])->name('refer_earn-register');
 
-Route::post('/deposit/webhook', [DepositController::class, 'webhook'])->name('deposit-webhook');
+//Route::post('/deposit/webhook', [DepositController::class, 'webhook'])->name('deposit-webhook');
 
 
-Route::get('/comunidade', function(){
+Route::get('/comunidade', function () {
   $url = 'https://api.whatsapp.com/send?phone=19997655946';
   return Redirect::to($url);
 });
@@ -208,3 +212,14 @@ Route::get('/form/layouts-horizontal', [HorizontalForm::class, 'index'])->name('
 
 // tables
 Route::get('/tables/basic', [TablesBasic::class, 'index'])->name('tables-basic');
+
+
+Route::get('/clear-cache', function () {
+  Artisan::call('route:clear');
+  return 'Route cache cleared!';
+});
+
+Route::get('/optimize', function () {
+  Artisan::call('optimize');
+  return 'Artisan optimized!';
+});

@@ -13,7 +13,7 @@ class User extends Authenticatable
 
   protected $with = [
     'role',
-    'invited_by'
+    //'invited_by'
   ];
 
   /**

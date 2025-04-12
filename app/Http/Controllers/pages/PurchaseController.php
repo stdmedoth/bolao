@@ -77,7 +77,7 @@ class PurchaseController extends Controller
       }
 
       if ($user->game_credit < $purchase->price) {
-        return redirect()->route('deposito')
+        return redirect()->route('transactions.deposito')
           ->with('amount', $purchase->price)
           ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
@@ -190,15 +190,15 @@ class PurchaseController extends Controller
     $purchase->status = "PENDING";
     $purchase->game_id = $request->game_id;
     $purchase->user_id = $request->user_id;
-    
+
     $array = explode(' ', $request->numbers);
-    
-    
+
+
     //$numbers = implode(" ", $array);
     //$numbers = explode(' ', $numbers);
-    
+
     //$quantity = count($array);
-    
+
     $user = User::find($request->user_id);
     $purchase->paid_by_user_id = $user->id;
 

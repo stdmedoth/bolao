@@ -27,11 +27,14 @@ return new class extends Migration
 
       $table->unsignedBigInteger('game_id');
       $table->unsignedBigInteger('user_id');
-      $table->unsignedBigInteger('paid_by_user_id');
+      $table->unsignedBigInteger('seller_id');
+      $table->unsignedBigInteger('paid_by_user_id')->nullable();
 
 
       $table->foreign('game_id')->references('id')->on('games');
       $table->foreign('user_id')->references('id')->on('users');
+      $table->foreign('seller_id')->references('id')->on('users');
+      $table->foreign('paid_by_user_id')->references('id')->on('users');
       $table->timestamps();
     });
   }

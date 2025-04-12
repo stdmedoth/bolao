@@ -60,6 +60,8 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
+      // Caso userPoints[$purchase->user_id] ainda não esteja definido (Seja o primeiro ponto desse usuario)
+      // Então definir ele, o primeiro ponto é o mais alto.
       if (isset($userPoints[$purchase->user_id])) {
         $usersPoints[$purchase->user_id] = ['points' => (count($matchedNumbers) > $usersPoints[$purchase->user_id]) ?  count($matchedNumbers) : $usersPoints[$purchase->user_id], 'purchase' => $purchase];
       } else {
@@ -76,9 +78,7 @@ class GameController extends Controller
   {
     //
     $game = Game::find($id);
-    $purchases = Purchase::where('user_id', Auth::user()->id)->where('game_id', $id)->get();
-    $histories = GameHistory::where('game_id', $id)->where('type', 'ADDING_NUMBER')->paginate(20);
-    $user_awards = UserAwards::where('game_id', $id)->paginate(20);
+    $user_awards_builder = UserAwards::where('game_id', $id);
     $sellers = User::where('role_user_id', 2)->get();
 
     $winners = [];
@@ -91,9 +91,9 @@ class GameController extends Controller
     $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
       ->where('type', 'ADDING_NUMBER');
     if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+      $gameHistoriesBuilder = $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
     }
-    $gameHistories = $gameHistoriesBuilder->get();
+    $gameHistories = $gameHistoriesBuilder->paginate(20);
 
     // Reunir todos os números adicionados desde a última abertura
     $allAddedNumbers = $gameHistories->pluck('numbers')
@@ -101,6 +101,21 @@ class GameController extends Controller
       ->toArray();
 
     $uniqueNumbers = array_unique($allAddedNumbers);
+
+    if ($lastClosedHistory) {
+      $user_awards = $user_awards_builder->where('created_at', '>=', $lastClosedHistory->created_at);
+    } else {
+      $user_awards = $user_awards_builder->get();
+    }
+
+    $purchasesBuilder = Purchase::where('game_id', $game->id)
+      ->where('user_id', Auth::user()->id)
+      ->whereIn('status', ['PAID']);
+
+    if ($lastClosedHistory) {
+      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+    $purchases = $purchasesBuilder->get();
 
     foreach ($user_awards as $user_award) {
 
@@ -113,7 +128,6 @@ class GameController extends Controller
         $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
       }
       $_purchases = $purchasesBuilder->get();
-
       $usersPoints = $this->calculateUsersPoints($_purchases, $uniqueNumbers);
 
       $user = User::find($user_award->user_id);
@@ -132,7 +146,7 @@ class GameController extends Controller
     return view('content.game.view_game', [
       'game' => $game,
       'purchases' => $purchases,
-      'histories' => $histories,
+      'histories' => $gameHistories,
       'winners' => $winners,
       'user_awards' => $user_awards,
       'sellers' => $sellers
@@ -199,7 +213,7 @@ class GameController extends Controller
   public function generatePdf(Request $request, $id)
   {
     $game = Game::findOrFail($id);
-    $purchasesBuilder = Purchase::where('game_id', $id);
+    $purchasesBuilder = Purchase::where('game_id', $id)->where('status', 'PAID');
 
     $lastClosedHistory = GameHistory::where('game_id', $game->id)
       ->where('type', 'OPENED')
@@ -228,15 +242,7 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
-      $seller = 'Banca Central';
-
-      if ($purchase->user->role->level_id == 'seller') {
-        $seller = $purchase->user->name;
-      } elseif ($purchase->user->role->level_id == 'gambler' && $purchase->user->invited_by_id) {
-        if ($purchase->user->invited_by->role->level_id == 'seller') {
-          $seller = $purchase->user->invited_by->name;
-        }
-      }
+      $seller = $purchase->seller->name;
 
       $purchases_data[] = [
         'id' => $purchase->id,
@@ -246,6 +252,9 @@ class GameController extends Controller
         'numbers' => $purchase->numbers,
       ];
     }
+    usort($purchases_data, function ($a, $b) {
+      return $a['points'] < $b['points'];
+    });
 
     $awards = GameAward::where('game_id', $id)->get();
     // Gerar o PDF com a view

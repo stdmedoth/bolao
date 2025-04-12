@@ -233,8 +233,10 @@ class GameController extends Controller
       if ($purchase->user->role->level_id == 'seller') {
         $seller = $purchase->user->name;
       } elseif ($purchase->user->role->level_id == 'gambler' && $purchase->user->invited_by_id) {
-        if ($purchase->user->invited_by->role->level_id == 'seller') {
-          $seller = $purchase->user->invited_by->name;
+
+        $invited_by = User::find($purchase->user->invited_by_id);
+        if ($invited_by->role->level_id == 'seller') {
+          $seller = $invited_by->name;
         }
       }
 

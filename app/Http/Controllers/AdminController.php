@@ -174,7 +174,8 @@ class AdminController extends Controller
       $builder = $builder->where('role_user_id', $request->role_user_id);
     }
 
-    $users = $builder->paginate(5);
+    //dd($builder);
+    $users = $builder->paginate(10);
     $roles = RoleUser::all(); // Obtém todas as roles para o select
 
     return view('content.users.users', ['users' => $users, 'roles' => $roles]);
