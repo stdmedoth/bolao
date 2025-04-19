@@ -78,7 +78,9 @@
                         <a class="dropdown-item" href="/concursos/edit/{{ $game->id }}"><i
                                 class="bx bx-edit-alt me-1"></i> Editar</a>
                         <a class="dropdown-item" href="/concursos/generate_pdf/{{ $game->id }}"><i
-                                class="bx bx-edit-alt me-1"></i> Gerar PDF</a>
+                                class="bx bx-export me-1"></i> Gerar PDF</a>
+                        <a class="dropdown-item" href="/concursos/generate_csv/{{ $game->id }}"><i
+                                class="bx bx-list-check me-1"></i> Gerar CSV</a>
                     @endif
                     <div class="card-body">
                         <p><strong>Nome:</strong> {{ $game->name }}</p>
@@ -409,8 +411,13 @@
                                         <td>{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
                                         <td>
                                             <a href="{{ route('purchase-pay', $purchase->id) }}"
-                                                class="btn btn-success {{ !in_array($purchase->user->role->level_id, ['admin']) && ($purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED') ? 'disabled' : '' }}">
+                                                class="btn btn-success {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' ? 'disabled' : '' }}">
                                                 Pagar</a>
+
+                                            <a href="{{ route('purchase-withdraw', $purchase->id) }}"
+                                                class="btn btn-warning {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
+                                                Estornar
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

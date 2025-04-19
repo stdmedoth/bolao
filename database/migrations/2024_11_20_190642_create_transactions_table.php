@@ -36,6 +36,12 @@ return new class extends Migration
       $table->unsignedBigInteger('user_id');
       $table->foreign('user_id')->references('id')->on('users');
 
+      $table->unsignedBigInteger('purchase_id')->nullable();
+      $table->foreign('purchase_id')->references('id')->on('purchases');
+
+      $table->unsignedBigInteger('game_id')->nullable();
+      $table->foreign('game_id')->references('id')->on('games');
+
       $table->timestamps();
     });
   }

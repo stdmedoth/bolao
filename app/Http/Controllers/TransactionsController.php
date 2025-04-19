@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Game;
 use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class TransactionsController extends Controller
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
     } else {
-      if ($request->has('user_id')) {
+      if ($request->has('user_id') && $request->user_id != '') {
         $builder = $builder->where('user_id', $request->user_id);
       }
     }
@@ -32,7 +33,13 @@ class TransactionsController extends Controller
       $builder = $builder->whereDate('created_at', '<=', $request->end_date);
     }
 
+    if ($request->has('game_id') && ($request->game_id) != '') {
+      $builder = $builder->where('game_id', $request->game_id);
+    }
+
+
     $users = User::without(['invited_by'])->get();
+    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
 
     $builder = $builder->orderBy('created_at', 'DESC');
     $transactions = $builder->paginate(20);
@@ -52,7 +59,7 @@ class TransactionsController extends Controller
       'PAY_AWARD' => 'Pagamento de Prêmio'
     ];
 
-    return view('content.transactions.transactions', compact('transactions', 'typeTranslations', 'users'));
+    return view('content.transactions.transactions', compact('transactions', 'typeTranslations', 'users', 'games'));
   }
 
 
@@ -78,7 +85,12 @@ class TransactionsController extends Controller
       $builder = $builder->whereDate('created_at', '<=', $request->end_date);
     }
 
-    $users = User::get();
+    if ($request->has('game_id') && ($request->game_id) != '') {
+      $builder = $builder->where('game_id', $request->game_id);
+    }
+
+    $users = User::without(['invited_by'])->get();
+    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
 
     // Get all transactions for summary
     $transactions = $builder->orderBy('created_at', 'DESC')->get();
@@ -95,7 +107,7 @@ class TransactionsController extends Controller
       'PAY_PURCHASE_WITHDRAWAL' => 'income',
       'PAY_PURCHASE_COMISSION' => 'income',
       'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'outcome',
-      'PAY_AWARD' => 'outcome'
+      'PAY_AWARD' => 'income'
     ];
 
     // Type translations (same as your index)
@@ -155,7 +167,8 @@ class TransactionsController extends Controller
       'net' => $totalIncome - $totalOutcome,
       'typeDetails' => $typeDetails,
       'typeTranslations' => $typeTranslations,
-      'users' => $users
+      'users' => $users,
+      'games' => $games,
     ]);
   }
 

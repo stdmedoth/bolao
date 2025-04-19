@@ -12,9 +12,12 @@ class Transactions extends Model
 
   protected $fillable = [
     "type",
-    "amount",
     'external_id',
-    "user_id"
+    "amount",
+
+    "user_id",
+    "game_id",
+    "purchase_id",
   ];
 
 
@@ -26,5 +29,15 @@ class Transactions extends Model
   public function user(): BelongsTo
   {
     return $this->belongsTo(User::class);
+  }
+
+  public function game(): BelongsTo
+  {
+    return $this->belongsTo(Game::class);
+  }
+
+  public function purchase(): BelongsTo
+  {
+    return $this->belongsTo(Purchase::class);
   }
 }

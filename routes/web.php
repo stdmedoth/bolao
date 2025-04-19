@@ -94,6 +94,7 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/concursos/edit/{id}', [GameController::class, 'editGameForm'])->name('edit-game-form');
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
   Route::get('/concursos/generate_pdf/{id}', [GameController::class, 'generatePdf'])->name('game-pdf');
+  Route::get('/concursos/generate_csv/{id}', [GameController::class, 'generateCsv'])->name('game-csv');
 
 
 
@@ -219,7 +220,17 @@ Route::get('/clear-cache', function () {
   return 'Route cache cleared!';
 });
 
+Route::get('/config_clear', function () {
+  Artisan::call('config:clear');
+  return 'Route config cache cleared!';
+});
+
 Route::get('/optimize', function () {
   Artisan::call('optimize');
   return 'Artisan optimized!';
+});
+
+Route::get('/config_cache', function () {
+  Artisan::call('config:cache');
+  return 'Artisan config cached!';
 });

@@ -29,7 +29,7 @@ class UserAwardController extends Controller
     $user_award = UserAwards::find($id);
 
     $user = User::find($user_award->user_id);
-    
+
     $user->balance += $user_award->amount;
     $user->save();
 
@@ -40,6 +40,9 @@ class UserAwardController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_AWARD',
+
+        "game_id" => $user_award->game_id,
+
         "amount" => $user_award->amount,
         "user_id" => $user_award->user_id,
       ]
@@ -54,7 +57,7 @@ class UserAwardController extends Controller
     $user_award = UserAwards::find($id);
 
     $user = User::find($user_award->user_id);
-    
+
     $user->balance -= $user_award->amount;
     $user->save();
 
@@ -65,6 +68,9 @@ class UserAwardController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_AWARD_WITHDRAWAL',
+
+        "game_id" => $user_award->game_id,
+
         "amount" => $user_award->amount,
         "user_id" => $user_award->user_id,
       ]
@@ -102,7 +108,7 @@ class UserAwardController extends Controller
    */
   public function editMyAwards(UserAwards $awards)
   {
-    // 
+    //
   }
 
   /**
@@ -112,8 +118,8 @@ class UserAwardController extends Controller
   {
     //
   }
-  
-  
+
+
 
   /**
    * Remove the specified resource from storage.

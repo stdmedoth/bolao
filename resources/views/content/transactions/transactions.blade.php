@@ -29,6 +29,7 @@
                                 <label for="user_id">Usuario</label>
                                 <div class="input-group">
                                     <select class="form-control" name="user_id">
+                                        <option value="">Todos</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
                                                 {{ request('user_id') == $user->id ? 'selected' : '' }}>
@@ -38,6 +39,20 @@
                                 </div>
                             </div>
                         @endif
+                        <div class="form-group">
+                            <label for="game_id">Concurso</label>
+                            <div class="input-group">
+                                <select class="form-control" name="game_id">
+                                    <option value="">Todos</option>
+                                    @foreach ($games as $game)
+                                        <option value="{{ $game->id }}"
+                                            {{ request('game_id') == $game->id ? 'selected' : '' }}>
+                                            {{ $game->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="start_date">Data Inicial</label>
                             <input type="date" name="start_date" id="start_date" class="form-control"
@@ -50,15 +65,16 @@
                                 value="{{ request('end_date') }}">
                         </div>
 
-                        <button class="btn btn-secondary" type="submit">Buscar</button>
+                        <button class="btn btn-secondary mt-5" type="submit">Buscar</button>
                     </form>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive mt-5">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Tipo</th>
+                                    <th>Concurso</th>
                                     <th>Valor</th>
                                     @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
                                         <th>Usuário</th>
@@ -71,6 +87,9 @@
                                     <tr>
                                         <td>{{ $transaction->id }}</td>
                                         <td>{{ $typeTranslations[$transaction->type] ?? $transaction->type }}</td>
+
+                                        <td>{{ isset($transaction->game) ? $transaction->game->name : '-' }}</td>
+
                                         <td>R$ {{ number_format($transaction->amount, 2, ',', '.') }}</td>
 
                                         @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))

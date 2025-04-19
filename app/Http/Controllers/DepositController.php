@@ -46,9 +46,9 @@ class DepositController extends Controller
     if (!$user->external_finnancial_id) {
       $client_data = [
         "name"              =>          $user->name,
-        "cpfCnpj"           =>          $user->document,
+        "cpfCnpj"           =>          preg_replace('/[^0-9]/', '', $user->document),
         "email"             =>          $user->email,
-        //"phone"             =>          $user->phone,
+        //"phone"             =>          preg_replace('/[^0-9]/', '', $user->phone),
         //"mobilePhone"       =>          $user->cellphone,
         //"externalReference" =>          $user->account . "_" . $user->id
       ];
@@ -61,6 +61,15 @@ class DepositController extends Controller
             'payment_method' => 'pix'
           ])
           ->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
+      }
+
+      if (isset($client->error)) {
+        return redirect('/deposito')
+          ->with([
+            'amount' => $amount,
+            'payment_method' => 'pix'
+          ])
+          ->withErrors(['error' => array_map(fn($e) => $e->description, $client->error)]);
       }
 
       $user->update(['external_finnancial_id' => $client->id]);
@@ -90,7 +99,7 @@ class DepositController extends Controller
           'amount' => $amount,
           'payment_method' => 'pix'
         ])
-        ->withErrors(['error' => [$cobranca->error]]);;
+        ->withErrors(['error' => array_map(fn($e) => $e->description, $client->error)]);
     }
     if (isset($cobranca->errors)) {
       return redirect('/deposito')
@@ -149,11 +158,19 @@ class DepositController extends Controller
     if (!$user->external_finnancial_id) {
       $client_data = [
         "name"    => $user->name,
-        "cpfCnpj" => $user->document,
+        "cpfCnpj" => preg_replace('/[^0-9]/', '', $user->document),
         "email"   => $user->email,
       ];
 
       $client = $asaas->Cliente()->create($client_data);
+      if (isset($client->error)) {
+        return redirect('/deposito')
+          ->with([
+            'amount' => $amount,
+            'payment_method' => 'pix'
+          ])
+          ->withErrors(['error' => array_map(fn($e) => $e->description, $client->error)]);
+      }
       if (isset($client->errors)) {
         return redirect('/deposito')
           ->with(['amount' => $amount, 'payment_method' => 'credit_card'])

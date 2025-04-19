@@ -95,6 +95,8 @@ class PurchaseController extends Controller
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
+              "game_id" => $purchase->game_id,
+              "purchase_id" => $purchase->id,
               "amount" => $comission,
               "user_id" => $user->invited_by_id,
             ]
@@ -111,8 +113,10 @@ class PurchaseController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
+        "game_id" => $purchase->game_id,
+        "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
-        "user_id" => $purchase->user_id,
+        "user_id" => $purchase->paid_by_user_id,
       ]
     );
 
@@ -121,6 +125,8 @@ class PurchaseController extends Controller
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION',
+          "game_id" => $purchase->game_id,
+          "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
         ]
@@ -137,15 +143,11 @@ class PurchaseController extends Controller
   {
     $purchase = Purchase::find($id);
 
-    $user = User::find($purchase->user_id);
+    $user = User::find($purchase->paid_by_user_id);
 
     $role_level_id = Auth::user()->role->level_id;
 
     if (!in_array($role_level_id, ['admin'])) {
-
-      if ($role_level_id == 'seller' && ($purchase->user_id !== Auth::user()->id)) {
-        $user = User::find(Auth::user()->id);
-      }
 
       $user->game_credit += $purchase->price;
       $user->save();
@@ -159,6 +161,8 @@ class PurchaseController extends Controller
             Transactions::create(
               [
                 "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+                "game_id" => $purchase->game_id,
+                "purchase_id" => $purchase->id,
                 "amount" => $comission,
                 "user_id" => $user->invited_by_id,
               ]
@@ -170,6 +174,7 @@ class PurchaseController extends Controller
     }
 
     $purchase->status = "PENDING";
+
     $purchase->paid_by_user_id = NULL;
     $purchase->save();
 
@@ -178,6 +183,8 @@ class PurchaseController extends Controller
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+          "game_id" => $purchase->game_id,
+          "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
         ]
@@ -187,8 +194,10 @@ class PurchaseController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE_WITHDRAWAL',
+        "game_id" => $purchase->game_id,
+        "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
-        "user_id" => $purchase->user_id,
+        "user_id" => $user->id,
       ]
     );
 
@@ -276,6 +285,8 @@ class PurchaseController extends Controller
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
+              "game_id" => $purchase->game_id,
+              "purchase_id" => $purchase->id,
               "amount" => $comission,
               "user_id" => $user->invited_by_id,
             ]
@@ -294,6 +305,8 @@ class PurchaseController extends Controller
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION',
+          "game_id" => $purchase->game_id,
+          "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
         ]
@@ -303,6 +316,8 @@ class PurchaseController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
+        "game_id" => $purchase->game_id,
+        "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
         "user_id" => $purchase->user_id,
       ]
@@ -370,6 +385,8 @@ class PurchaseController extends Controller
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
+              "game_id" => $newPurchase->game_id,
+              "purchase_id" => $newPurchase->id,
               "amount" => $comission,
               "user_id" => $user->invited_by_id,
             ]
@@ -388,6 +405,8 @@ class PurchaseController extends Controller
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION',
+          "game_id" => $newPurchase->game_id,
+          "purchase_id" => $newPurchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
         ]
@@ -397,6 +416,8 @@ class PurchaseController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
+        "game_id" => $newPurchase->game_id,
+        "purchase_id" => $newPurchase->id,
         "amount" => $newPurchase->price,
         "user_id" => $newPurchase->user_id,
       ]

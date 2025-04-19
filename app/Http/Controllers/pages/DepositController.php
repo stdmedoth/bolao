@@ -154,6 +154,11 @@ class DepositController extends Controller
       ];
 
       $client = $asaas->Cliente()->create($client_data);
+      if (isset($client->error)) {
+        return redirect('/deposito')
+          ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
+          ->withErrors(['error' => [$client->error]]);
+      }
       if (isset($client->errors)) {
         return redirect('/deposito')
           ->with(['amount' => $amount, 'payment_method' => 'credit_card'])

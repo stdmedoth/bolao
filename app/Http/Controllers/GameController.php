@@ -12,8 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
-
-
+use Illuminate\Support\Facades\Response;
 
 class GameController extends Controller
 {
@@ -110,7 +109,7 @@ class GameController extends Controller
 
     $purchasesBuilder = Purchase::where('game_id', $game->id)
       ->where('user_id', Auth::user()->id)
-      ->whereIn('status', ['PAID']);
+      ->whereIn('status', ['PAID', 'PENDING']);
 
     if ($lastClosedHistory) {
       $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
@@ -273,6 +272,93 @@ class GameController extends Controller
   }
 
 
+
+
+  public function generateCsv(Request $request, $id)
+  {
+    $game = Game::findOrFail($id);
+    $purchasesBuilder = Purchase::where('game_id', $id)->where('status', 'PAID');
+
+    $lastClosedHistory = GameHistory::where('game_id', $game->id)
+      ->where('type', 'OPENED')
+      ->orderBy('created_at', 'DESC')
+      ->first();
+
+    $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER');
+
+    if ($lastClosedHistory) {
+      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
+    }
+
+    $gameHistories = $gameHistoriesBuilder->get();
+    $purchases = $purchasesBuilder->get();
+
+    $allAddedNumbers = $gameHistories->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+    $uniqueNumbers = array_unique($allAddedNumbers);
+
+    $purchases_data = [];
+    foreach ($purchases as $purchase) {
+      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+
+      $seller = $purchase->seller->name;
+
+      $purchases_data[] = [
+        'id' => $purchase->id,
+        'gambler_name' => $purchase->gambler_name,
+        'seller' => $seller,
+        'points' => count($matchedNumbers),
+        'numbers' => $purchase->numbers,
+        'created_at' => $purchase->created_at->format('d/m/Y H:i:s'),
+      ];
+    }
+
+    usort($purchases_data, function ($a, $b) {
+      return $a['points'] < $b['points'];
+    });
+
+    // Cabeçalhos do CSV
+    $headers = [
+      'Content-Type' => 'text/csv',
+      'Content-Disposition' => 'attachment; filename="compras_jogo_' . $id . '.csv"',
+    ];
+
+    // Criar o arquivo CSV
+    $callback = function () use ($purchases_data) {
+      $file = fopen('php://output', 'w');
+
+      // Escrever cabeçalho
+      fputcsv($file, [
+        'ID',
+        'Apostador',
+        'Vendedor',
+        'Pontos',
+        'Números',
+        'Data/Hora'
+      ], ';');
+
+      // Escrever dados
+      foreach ($purchases_data as $purchase) {
+        fputcsv($file, [
+          $purchase['id'],
+          $purchase['gambler_name'],
+          $purchase['seller'],
+          $purchase['points'],
+          $purchase['numbers'],
+          $purchase['created_at']
+        ], ';');
+      }
+
+      fclose($file);
+    };
+
+    return Response::stream($callback, 200, $headers);
+  }
 
 
   /**

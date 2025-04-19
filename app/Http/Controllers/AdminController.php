@@ -588,6 +588,7 @@ class AdminController extends Controller
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
+
         "amount" => $user->game_credit_limit - $user->game_credit,
         "user_id" => $user->id,
       ]
