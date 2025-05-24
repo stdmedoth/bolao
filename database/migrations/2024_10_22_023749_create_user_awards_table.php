@@ -20,6 +20,8 @@ return new class extends Migration
 
       $table->float('amount')->nullable();
 
+      $table->integer('round')->default(1);
+
       $table->foreign('game_id')->references('id')->on('games');
       $table->foreign('user_id')->references('id')->on('users');
       $table->foreign('game_award_id')->references('id')->on('game_awards');

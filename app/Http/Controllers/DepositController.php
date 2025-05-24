@@ -122,6 +122,11 @@ class DepositController extends Controller
   public function pay_credit_card(Request $request)
   {
 
+    $request->merge([
+      'cc_expiry_month' => (int) $request->cc_expiry_month,
+      'cc_expiry_year' => (int) $request->cc_expiry_year,
+    ]);
+
     // Validações básicas
     $validator = Validator::make($request->all(), [
       'cc_name'        => 'required|string|max:255',

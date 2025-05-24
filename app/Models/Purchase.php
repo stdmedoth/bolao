@@ -19,6 +19,7 @@ class Purchase extends Model
     "price",
     "status",
     "game_id",
+    "round",
     "paid_by_user_id",
     "user_id",
     "seller_id",

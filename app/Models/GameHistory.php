@@ -12,7 +12,8 @@ class GameHistory extends Model
     "game_id",
     "description",
     "type",
+    "round",
     "result_numbers",
-    "numbers"
+    "numbers",
   ];
 }

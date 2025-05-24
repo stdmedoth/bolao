@@ -73,7 +73,7 @@ class GameController extends Controller
   /**
    * Display the specified resource.
    */
-  public function show($id)
+  public function show(Request $request, $id)
   {
     //
     $game = Game::find($id);
@@ -81,17 +81,13 @@ class GameController extends Controller
     $sellers = User::where('role_user_id', 2)->get();
 
     $winners = [];
-    $lastClosedHistory = GameHistory::where('game_id', $game->id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
-      ->first();
+    $round = $game->round;
 
     // Pegar todos os números válidos desde a última abertura
     $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
-      ->where('type', 'ADDING_NUMBER');
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder = $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
+      ->where('type', 'ADDING_NUMBER')
+      ->where('round', $round);
+
     $gameHistories = $gameHistoriesBuilder->paginate(20);
 
     // Reunir todos os números adicionados desde a última abertura
@@ -101,31 +97,16 @@ class GameController extends Controller
 
     $uniqueNumbers = array_unique($allAddedNumbers);
 
-    if ($lastClosedHistory) {
-      $user_awards = $user_awards_builder->where('created_at', '>=', $lastClosedHistory->created_at);
-    } else {
-      $user_awards = $user_awards_builder->get();
-    }
-
-    $purchasesBuilder = Purchase::where('game_id', $game->id)
-      ->where('user_id', Auth::user()->id)
-      ->whereIn('status', ['PAID', 'PENDING']);
-
-    if ($lastClosedHistory) {
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $purchases = $purchasesBuilder->get();
+    $user_awards = $user_awards_builder->where('round', $round);
 
     foreach ($user_awards as $user_award) {
 
       // Obter todas as compras relacionadas ao jogo
       $purchasesBuilder = Purchase::where('game_id', $game->id)
         ->whereIn('status', ['PAID'])
-        ->where('user_id', $user_award->user_id);
+        ->where('user_id', $user_award->user_id)
+        ->where('round', $round);
 
-      if ($lastClosedHistory) {
-        $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-      }
       $_purchases = $purchasesBuilder->get();
       $usersPoints = $this->calculateUsersPoints($_purchases, $uniqueNumbers);
 
@@ -142,8 +123,50 @@ class GameController extends Controller
       ];
     }
 
+
+    $builder = new Purchase();
+
+    if (Auth::user()->role->level_id == 'gumbler') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+
+    if (Auth::user()->role->level_id == 'seller') {
+      // Mostrar compras feitas por ele ou compras de clientes dele
+      $builder = $builder->where(function ($query) {
+        $query->where('user_id', Auth::user()->id)
+          ->orWhere('seller_id', Auth::user()->id);
+      });
+    }
+
+    if ($request->has('search') && $request->search != '') {
+      $builder = $builder->where(function ($q) use ($request) {
+        $q->whereHas('game', function ($gameq) use ($request) {
+          $gameq->where('name', 'like', '%' . $request->search . '%');
+        })->orWhere('numbers', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%');
+      });
+    }
+
+    $builder = $builder->where('game_id', $id);
+
+    if ($request->has('status') && $request->status != '') {
+      $builder = $builder->where('status', $request->status);
+    }
+
+    // only shows purchases in same round that the last game opening
+    $builder = $builder->whereHas('game', function ($query) {
+      $query->whereColumn('purchases.round', 'games.round');
+    });
+
+    //$builder = $builder->orderBy('created_at', 'desc');
+    $builder = $builder->orderBy('gambler_name', 'asc');
+
+    $purchases = $builder->paginate(20);
+    $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
+
     return view('content.game.view_game', [
       'game' => $game,
+      'games' => $games,
       'purchases' => $purchases,
       'histories' => $gameHistories,
       'winners' => $winners,
@@ -174,6 +197,7 @@ class GameController extends Controller
       'name' => 'required|string|max:255',
       'price' => 'required|numeric|min:0',
       'open_at' => 'required|date',
+      'round' => 'required|numeric',
       'close_at' => 'required|date|after_or_equal:open_at',
       'status' => 'required|in:OPENED,CLOSED,FINISHED',
       'awards' => 'array',
@@ -183,13 +207,26 @@ class GameController extends Controller
     ]);
 
     $game = Game::findOrFail($id);
+    $round = $request->input('round');
 
-    if (($game->status == "OPENED") && ($request->input('status') == "CLOSED")) {
+    if (($game->status == "OPENED") && ($request->input('status') == "FINISHED")) {
       $game_history = GameHistory::create([
         "description" => "JOGO FECHADO",
         "numbers" => "",
-        "type" => "CLOSED",
+        "type" => "FINISHED",
         'game_id' => $game->id,
+      ]);
+    }
+
+
+    if (($game->status == "FINISHED") && ($request->input('status') == "OPENED")) {
+      $round = $game->round + 1;
+      $game_history = GameHistory::create([
+        "description" => "JOGO ABERTO",
+        "numbers" => "",
+        "type" => "OPENED",
+        'game_id' => $game->id,
+        'round' => $round,
       ]);
     }
 
@@ -200,10 +237,30 @@ class GameController extends Controller
       'open_at' => $request->input('open_at'),
       'close_at' => $request->input('close_at'),
       'status' => $request->input('status'),
+      'round' => $round
     ]);
 
-    // Chama o método para atualizar os prêmios
-    app(GameAwardController::class)->updateAwards($request, $game);
+    // Atualiza os prêmios
+    $awardsData = $request->input('awards', []);
+
+    foreach ($awardsData as $awardData) {
+      if (isset($awardData['id'])) {
+        // Atualizar prêmio existente
+        $award = GameAward::findOrFail($awardData['id']);
+        $award->update([
+          'condition_type' => $awardData['condition_type'],
+          'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'amount' => $awardData['amount'],
+        ]);
+      } else {
+        // Criar novo prêmio
+        $game->awards()->create([
+          'condition_type' => $awardData['condition_type'],
+          'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'amount' => $awardData['amount'],
+        ]);
+      }
+    }
 
     return redirect(route("show-game", $game->id))->with('success', 'Jogo e prêmios atualizados com sucesso!');
   }
@@ -212,20 +269,20 @@ class GameController extends Controller
   public function generatePdf(Request $request, $id)
   {
     $game = Game::findOrFail($id);
+    $round = $game->round;
+
     $purchasesBuilder = Purchase::where('game_id', $id)->where('status', 'PAID');
 
     $lastClosedHistory = GameHistory::where('game_id', $game->id)
       ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
+      ->where('round', $round)
       ->first();
 
     $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
       ->where('type', 'ADDING_NUMBER');
 
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
+    $gameHistoriesBuilder = $gameHistoriesBuilder->where('round', $round);
+    $purchasesBuilder = $purchasesBuilder->where('round', $round);
 
     $gameHistories = $gameHistoriesBuilder->get();
     $purchases = $purchasesBuilder->get();
@@ -277,20 +334,15 @@ class GameController extends Controller
   public function generateCsv(Request $request, $id)
   {
     $game = Game::findOrFail($id);
+    $round = $game->round;
     $purchasesBuilder = Purchase::where('game_id', $id)->where('status', 'PAID');
-
-    $lastClosedHistory = GameHistory::where('game_id', $game->id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
-      ->first();
 
     $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
       ->where('type', 'ADDING_NUMBER');
 
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
+    $gameHistoriesBuilder = $gameHistoriesBuilder->where('round', $round);
+    $purchasesBuilder = $purchasesBuilder->where('round', $round);
+
 
     $gameHistories = $gameHistoriesBuilder->get();
     $purchases = $purchasesBuilder->get();

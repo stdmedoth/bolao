@@ -26,7 +26,9 @@ return new class extends Migration
         'PAY_AWARD',
         'PAY_AWARD_WITHDRAWAL',
         'PAY_PURCHASE_COMISSION',
-        'PAY_PURCHASE_COMISSION_WITHDRAWAL'
+        'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+        'GAME_CREDIT',
+        'GAME_CREDIT_REVERSAL'
       ]);
 
       $table->float('amount');

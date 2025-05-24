@@ -39,9 +39,7 @@
       "url": "/minhas_compras",
       "name": "Compras",
       "user_roles_level": [
-        "seller",
-        "admin",
-        "gambler"
+        "admin"
       ],
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",

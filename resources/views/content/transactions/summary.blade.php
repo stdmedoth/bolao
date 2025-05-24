@@ -39,7 +39,9 @@
                 <label for="game_id">Concurso</label>
                 <div class="input-group">
                     <select class="form-control" name="game_id">
-                        <option value="">Todos</option>
+                        @if (auth()->user()->role->level_id == 'admin')
+                            <option value="">Todos</option>
+                        @endif
                         @foreach ($games as $game)
                             <option value="{{ $game->id }}" {{ request('game_id') == $game->id ? 'selected' : '' }}>
                                 {{ $game->name }}</option>
@@ -48,17 +50,19 @@
                 </div>
             </div>
 
+            @if (auth()->user()->role->level_id == 'admin')
+                <div class="form-group">
+                    <label for="start_date">Data Inicial</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control"
+                        value="{{ request('start_date') }}">
+                </div>
 
-            <div class="form-group">
-                <label for="start_date">Data Inicial</label>
-                <input type="date" name="start_date" id="start_date" class="form-control"
-                    value="{{ request('start_date') }}">
-            </div>
-
-            <div class="form-group">
-                <label for="end_date">Data Final</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request('end_date') }}">
-            </div>
+                <div class="form-group">
+                    <label for="end_date">Data Final</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control"
+                        value="{{ request('end_date') }}">
+                </div>
+            @endif
 
             <button class="btn btn-secondary mt-5" type="submit">Buscar</button>
         </form>
@@ -67,24 +71,24 @@
             <div class="col-md-4">
                 <div class="card bg-success text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Total de Entradas</h5>
-                        <p class="card-text h4">{{ number_format($totalIncome, 2, ',', '.') }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">Total de Saídas</h5>
-                        <p class="card-text h4">{{ number_format($totalOutcome, 2, ',', '.') }}</p>
+                        <h5 class="card-title">Saldo para Jogar</h5>
+
+                        @if (auth()->user()->role->level_id !== 'admin' || !strlen(request('user_id')))
+                            <p class="card-text h4">R$ {{ number_format(auth()->user()->game_credit, 2, ',', '.') }}</p>
+                        @else
+                            <p class="card-text h4">R$
+                                {{ number_format($users->filter(fn($u) => $u->id == request('user_id'))->first()->game_credit, 2, ',', '.') }}
+                            </p>
+                        @endif
+
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Saldo Líquido</h5>
-                        <p class="card-text h4">{{ number_format($net, 2, ',', '.') }}</p>
+                        <h5 class="card-title">Saldo para sacar</h5>
+                        <p class="card-text h4">R$ {{ number_format(auth()->user()->balance, 2, ',', '.') }}</p>
                     </div>
                 </div>
             </div>

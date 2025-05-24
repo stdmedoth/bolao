@@ -65,7 +65,7 @@ class AdminController extends Controller
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
-      'document' => 'string|max:255',
+      'document' => 'string|max:255|unique:users',
       'balance' => 'required',
       'game_credit' => 'required',
       //'game_credit_limit' => 'required',
@@ -232,6 +232,7 @@ class AdminController extends Controller
       'price' => $request->price,
       'open_at' => $request->open_at,
       'close_at' => $request->close_at,
+      'round' => 1,
       'status' => 'OPENED',
       'active' => true,
     ]);
@@ -260,6 +261,8 @@ class AdminController extends Controller
     $game = Game::findOrFail($id);
     // Fechar o jogo
     $game->status = 'OPENED';
+    $game->round = $game->round + 1;
+
     $game->save();
 
     $game_history = GameHistory::create([
@@ -302,8 +305,9 @@ class AdminController extends Controller
     return $usersPoints;
   }
 
-  protected function handleAwards($gameId, $userPoints, $awards, $lastClosedHistory)
+  protected function handleAwards($gameId, $userPoints, $awards, $round)
   {
+
     foreach ($awards as $award) {
       // Filtrar usuários que atendem às condições do prêmio
       $eligibleUsers = [];
@@ -325,10 +329,9 @@ class AdminController extends Controller
           // Verificar se o prêmio já foi concedido para este usuário
           $builder = UserAwards::where('game_id', $gameId)
             ->where('game_award_id', $award->id)
-            ->where('user_id', $userId);
-          if ($lastClosedHistory) {
-            $builder = $builder->where('created_at', '>=', $lastClosedHistory->created_at);
-          }
+            ->where('user_id', $userId)
+            ->where('round', $round);
+
           $awardExists = $builder->exists();
 
           // Criar o prêmio para o usuário, se ainda não foi concedido
@@ -336,6 +339,7 @@ class AdminController extends Controller
             UserAwards::create([
               'user_id' => $userId,
               'game_id' => $gameId,
+              'round' => $round,
               'game_award_id' => $award->id,
               'amount' => $awardAmountPerUser,
               'status' => 'PENDING',
@@ -354,69 +358,62 @@ class AdminController extends Controller
   {
     $game = Game::findOrFail($id);
 
-    // Verificar se o jogo está fechado
+    // Verifica se o jogo está fechado
     if ($game->status !== 'CLOSED') {
       return redirect()->back()->withErrors(['error' => ["Jogo ainda está aberto"]]);
     }
 
+    // Divide os conjuntos de números de resultado informados
     $resultNumbersArray = explode(", ", $request->result_numbers);
 
-    // Última vez que o concurso foi aberto
-    $lastClosedHistory = GameHistory::where('game_id', $game->id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
-      ->first();
+    // Obtém todos os números adicionados neste round (via GameHistory)
+    $addedNumberHistories = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER')
+      ->where('round', $game->round) // novo uso do campo round
+      ->get();
 
-    // Pegar todos os números válidos desde a última abertura
-    $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
-      ->where('type', 'ADDING_NUMBER');
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $gameHistories = $gameHistoriesBuilder->get();
-
-    // Reunir todos os números adicionados desde a última abertura
-    $allAddedNumbers = $gameHistories->pluck('numbers')
+    // Reúne todos os números previamente adicionados
+    $allAddedNumbers = $addedNumberHistories->pluck('numbers')
       ->flatMap(fn($numbers) => explode(" ", $numbers))
       ->toArray();
 
-    foreach ($resultNumbersArray as $resultNumbers) {
-      $resultNumbers = explode(" ", $resultNumbers);
+    // Adiciona os novos números ao histórico e à lista acumulada
+    foreach ($resultNumbersArray as $resultSet) {
+      $rawNumbers = explode(" ", $resultSet);
 
-      // Extrair os últimos dois dígitos de cada número
-      $numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
+      // Extrai os dois últimos dígitos de cada número
+      $numbers = array_map(fn($num) => intval(substr($num, -2)), $rawNumbers);
 
-      // Adicionar os novos números ao histórico
+      // Cria novo registro no histórico
       GameHistory::create([
         "description" => $request->description,
         "type" => 'ADDING_NUMBER',
-        "result_numbers" => implode(" ", $resultNumbers),
+        "result_numbers" => implode(" ", $rawNumbers),
         "numbers" => implode(" ", $numbers),
-        'game_id' => $game->id,
+        "game_id" => $game->id,
+        "round" => $game->round,
       ]);
 
-      // Adicionar os novos números à lista acumulada
       $allAddedNumbers = array_merge($allAddedNumbers, $numbers);
     }
 
-    // Remover duplicados para garantir que só os números únicos sejam usados
+    // Remove duplicados
     $uniqueNumbers = array_unique($allAddedNumbers);
 
-    // Obter todas as compras relacionadas ao jogo desde o último concurso aberto
-    $purchasesBuilder = Purchase::where('game_id', $game->id)
-      ->whereIn('status', ['PAID']);
-    if ($lastClosedHistory) {
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $purchases = $purchasesBuilder->get();
+    // Obtém todas as compras deste jogo e round
+    $purchases = Purchase::where('game_id', $game->id)
+      ->where('round', $game->round)
+      ->where('status', 'PAID')
+      ->get();
 
-    // Calcular pontos por usuário usando TODOS os números acumulados
+    // Calcula os pontos por usuário
     $userPoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
-    //dd($userPoints);
 
-    // Verificar condições de prêmios e distribuir
+    // Pega os prêmios configurados para o jogo
     $awards = GameAward::where('game_id', $game->id)->get();
-    $this->handleAwards($game->id, $userPoints, $awards, $lastClosedHistory);
+
+    // Distribui os prêmios conforme os pontos
+    $this->handleAwards($game->id, $userPoints, $awards, $game->round);
 
     return redirect(route('show-game', ['id' => $game->id]))->with(['tab' => 'tab-results']);
   }
@@ -437,131 +434,101 @@ class AdminController extends Controller
 
   public function updateGameHistory(Request $request, $game_history_id)
   {
-    $game_history = GameHistory::find($game_history_id);
+    $game_history = GameHistory::findOrFail($game_history_id);
+    $game_id = $game_history->game_id;
+    $round = $game_history->round;
 
-    $user_awards = UserAwards::where('game_id', $game_history->game_id)
-      ->where('created_at', '>=', $game_history->created_at);
-
-    // Validação dos dados de entrada
+    // Validação
     $validatedData = $request->validate([
       "description" => "string",
       "result_numbers" => "string",
     ]);
-    $game_id = $game_history->game_id;
 
-    if (!isset($request->result_numbers)) {
+    // Se não tiver novos números, só atualiza os dados e retorna
+    if (!$request->filled('result_numbers')) {
       $game_history->update($validatedData);
       return redirect(route('show-game', ['id' => $game_id]));
     }
 
-    $user_awards->delete();
+    // Apaga os prêmios dos usuários deste round
+    UserAwards::where('game_id', $game_id)
+      ->where('round', $round)
+      ->delete();
 
+    // Processa os novos números
     $resultNumbers = explode(" ", $request->result_numbers);
-
-    // Extrair os últimos dois dígitos de cada número
-    //$numbers = array_map(fn($num) => intval(substr($num, -2)), $resultNumbers);
     $numbers = array_map(fn($num) => intval($num), $resultNumbers);
-
 
     $validatedData['result_numbers'] = implode(" ", $resultNumbers);
     $validatedData['numbers'] = implode(" ", $numbers);
     $game_history->update($validatedData);
 
-    // Recalcular
+    // Recalcular os pontos com base nos históricos deste round
+    $gameHistories = GameHistory::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('type', 'ADDING_NUMBER')
+      ->get();
 
-    // Última vez que o concurso foi aberto
-    $lastClosedHistory = GameHistory::where('game_id', $game_id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
-      ->first();
-
-
-    // Pegar todos os números válidos desde a última abertura
-    $gameHistoriesBuilder = GameHistory::where('game_id', $game_id)
-      ->where('type', 'ADDING_NUMBER');
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $gameHistories = $gameHistoriesBuilder->get();
-
-    // Reunir todos os números adicionados desde a última abertura
     $allAddedNumbers = $gameHistories->pluck('numbers')
       ->flatMap(fn($numbers) => explode(" ", $numbers))
       ->toArray();
 
+    // Obtém as compras pagas para esse round
+    $purchases = Purchase::where('game_id', $game_id)
+      ->where('game_round', $round)
+      ->where('status', 'PAID')
+      ->get();
 
-    // Obter todas as compras relacionadas ao jogo desde o último concurso aberto
-    $purchasesBuilder = Purchase::where('game_id', $game_id)
-      ->whereIn('status', ['PAID']);
-    if ($lastClosedHistory) {
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $purchases = $purchasesBuilder->get();
-
-    // Calcular pontos por usuário usando TODOS os números acumulados
+    // Calcula pontos
     $userPoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
-    //dd($userPoints);
 
-    // Verificar condições de prêmios e distribuir
+    // Reatribui os prêmios com base nos novos pontos
     $awards = GameAward::where('game_id', $game_id)->get();
-    $this->handleAwards($game_id, $userPoints, $awards, $lastClosedHistory);
+    $this->handleAwards($game_id, $userPoints, $awards, $round);
 
     return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }
+
 
   public function removeGameHistory(Request $request, $game_history_id)
   {
-    $game_history = GameHistory::find($game_history_id);
-
-    $user_awards = UserAwards::where('game_id', $game_history->game_id)
-      ->where('created_at', '>=', $game_history->created_at);
-
-
+    $game_history = GameHistory::findOrFail($game_history_id);
     $game_id = $game_history->game_id;
+    $round = $game_history->round;
+
+    // Deleta o histórico e os prêmios do round correspondente
     $game_history->delete();
-    $user_awards->delete();
 
+    UserAwards::where('game_id', $game_id)
+      ->where('round', $round)
+      ->delete();
 
-    // Recalcular
+    // Recalcular os pontos com base nos históricos restantes desse round
+    $gameHistories = GameHistory::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('type', 'ADDING_NUMBER')
+      ->get();
 
-    // Última vez que o concurso foi aberto
-    $lastClosedHistory = GameHistory::where('game_id', $game_id)
-      ->where('type', 'OPENED')
-      ->orderBy('created_at', 'DESC')
-      ->first();
-
-
-    // Pegar todos os números válidos desde a última abertura
-    $gameHistoriesBuilder = GameHistory::where('game_id', $game_id)
-      ->where('type', 'ADDING_NUMBER');
-    if ($lastClosedHistory) {
-      $gameHistoriesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $gameHistories = $gameHistoriesBuilder->get();
-
-    // Reunir todos os números adicionados desde a última abertura
     $allAddedNumbers = $gameHistories->pluck('numbers')
       ->flatMap(fn($numbers) => explode(" ", $numbers))
       ->toArray();
 
+    // Obter todas as compras válidas para esse round
+    $purchases = Purchase::where('game_id', $game_id)
+      ->where('game_round', $round)
+      ->where('status', 'PAID')
+      ->get();
 
-    // Obter todas as compras relacionadas ao jogo desde o último concurso aberto
-    $purchasesBuilder = Purchase::where('game_id', $game_id)
-      ->whereIn('status', ['PAID']);
-    if ($lastClosedHistory) {
-      $purchasesBuilder->where('created_at', '>=', $lastClosedHistory->created_at);
-    }
-    $purchases = $purchasesBuilder->get();
-
-    // Calcular pontos por usuário usando TODOS os números acumulados
+    // Calcular pontos
     $userPoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
-    //dd($userPoints);
 
-    // Verificar condições de prêmios e distribuir
+    // Reatribuir prêmios com base nos novos pontos
     $awards = GameAward::where('game_id', $game_id)->get();
-    $this->handleAwards($game_id, $userPoints, $awards, $lastClosedHistory);
+    $this->handleAwards($game_id, $userPoints, $awards, $round);
+
     return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }
+
 
 
   // Atualizar indicação e ganhos de referência
@@ -587,7 +554,7 @@ class AdminController extends Controller
 
     Transactions::create(
       [
-        "type" => 'PAY_PURCHASE',
+        "type" => 'GAME_CREDIT',
 
         "amount" => $user->game_credit_limit - $user->game_credit,
         "user_id" => $user->id,

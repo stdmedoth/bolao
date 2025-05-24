@@ -22,7 +22,7 @@ class RegisterBasic extends Controller
     // Validação dos dados de entrada
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
-      'document' => 'string|max:255',
+      'document' => 'string|max:255|unique:users',
       'email' => 'required|string|email|max:255|unique:users',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:8',
@@ -53,7 +53,7 @@ class RegisterBasic extends Controller
 
       // Redireciona para a página de exibição do usuário criado
       return Redirect::back()
-        ->with(['success'=> 'Usuário criado com sucesso! Aguarde confirmação do seu convidante']);
+        ->with(['success' => 'Usuário criado com sucesso! Aguarde confirmação do seu convidante']);
     } catch (\Exception $e) {
       // Retorna um erro em caso de falha na criação do usuário
       return Redirect::back()->withErrors(['error' => 'Falha ao criar usuário: ' . $e->getMessage()]);

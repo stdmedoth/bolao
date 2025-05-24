@@ -24,6 +24,9 @@ return new class extends Migration
       $table->datetime('close_at');
 
       $table->enum('status', ['OPENED', 'CLOSED', 'FINISHED']);
+
+      $table->integer('round')->default(1);
+
       $table->boolean('active');
       $table->timestamps();
     });

@@ -14,6 +14,7 @@ class UserAwards extends Model
     'user_id',
     'game_award_id',
     'amount',
+    'round',
     'status'
   ];
 

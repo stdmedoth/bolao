@@ -211,7 +211,7 @@
                     document.getElementById("credit_card_address_info").style.display = 'none';
 
                 } else if (selectedMethod === 'credit_card') {
-                    form.action = "{{ route('deposit-create-credit-card') }}";
+                    form.action = "{{ route('transactions.deposit-create-credit-card') }}";
                     if (document.getElementById("pix_qrcode_image")) {
                         document.getElementById("pix_qrcode_image").style.display = 'none';
                     }

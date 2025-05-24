@@ -132,7 +132,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/deposito', [DepositController::class, 'index'])->name('transactions.deposito');
   Route::post('/deposito/criar_pix', [DepositController::class, 'create_pix'])->name('deposit-create-pix');
-  Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('deposit-create-credit-card');
+  Route::post('/deposito/cartao_credito', [DepositController::class, 'pay_credit_card'])->name('transactions.deposit-create-credit-card');
 
 
   Route::get('/saque', [WithdrawalController::class, 'index'])->name('transactions.saque');

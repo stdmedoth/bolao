@@ -15,10 +15,12 @@ return new class extends Migration
       $table->id();
 
       $table->string('description');
-      $table->enum('type', ['OPENED', 'ADDING_NUMBER', 'CLOSED',]);
+      $table->enum('type', ['OPENED', 'ADDING_NUMBER', 'CLOSED', 'FINISHED']);
 
       $table->string('result_numbers')->nullable();
       $table->string('numbers')->nullable();
+
+      $table->integer('round')->default(1);
 
       $table->unsignedBigInteger('game_id');
       $table->foreign('game_id')->references('id')->on('games');

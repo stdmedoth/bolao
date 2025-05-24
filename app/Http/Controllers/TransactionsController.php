@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\GameHistory;
 use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -35,6 +36,20 @@ class TransactionsController extends Controller
 
     if ($request->has('game_id') && ($request->game_id) != '') {
       $builder = $builder->where('game_id', $request->game_id);
+
+      // If the date wasnt specified, so we should get the date of last opened game for game_id
+      if (!$request->has('end_date') || $request->end_date == '') {
+
+        // only shows transactions in same round that the last game opening
+        $lastClosedHistory = GameHistory::where('game_id', $request->game_id)
+          ->where('type', 'OPENED')
+          ->orderBy('created_at', 'DESC')
+          ->first();
+
+        if ($lastClosedHistory) {
+          $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
+        }
+      }
     }
 
 
@@ -56,7 +71,10 @@ class TransactionsController extends Controller
       'PAY_PURCHASE_WITHDRAWAL' => 'Estorno de Pagamento de Compra',
       'PAY_PURCHASE_COMISSION' => 'Pagamento de Comissão',
       'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'Estorno de Pagamento de Comissão',
-      'PAY_AWARD' => 'Pagamento de Prêmio'
+      'PAY_AWARD' => 'Pagamento de Prêmio',
+      'PAY_AWARD_WITHDRAWAL' => 'Estorno de Pagamento de Prêmio',
+      'GAME_CREDIT' => 'Crédito para Jogar',
+      'GAME_CREDIT_REVERSAL' => 'Estorno de Crédito para Jogar'
     ];
 
     return view('content.transactions.transactions', compact('transactions', 'typeTranslations', 'users', 'games'));
@@ -87,6 +105,21 @@ class TransactionsController extends Controller
 
     if ($request->has('game_id') && ($request->game_id) != '') {
       $builder = $builder->where('game_id', $request->game_id);
+
+
+      // If the date wasnt specified, so we should get the date of last opened game for game_id
+      if (!$request->has('end_date') || $request->end_date == '') {
+
+        // only shows transactions in same round that the last game opening
+        $lastClosedHistory = GameHistory::where('game_id', $request->game_id)
+          ->where('type', 'OPENED')
+          ->orderBy('created_at', 'DESC')
+          ->first();
+
+        if ($lastClosedHistory) {
+          $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
+        }
+      }
     }
 
     $users = User::without(['invited_by'])->get();
@@ -107,7 +140,10 @@ class TransactionsController extends Controller
       'PAY_PURCHASE_WITHDRAWAL' => 'income',
       'PAY_PURCHASE_COMISSION' => 'income',
       'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'outcome',
-      'PAY_AWARD' => 'income'
+      'PAY_AWARD' => 'income',
+      'PAY_AWARD_WITHDRAWAL' => 'outcome',
+      'GAME_CREDIT' => 'income',
+      'GAME_CREDIT_REVERSAL' => 'outcome'
     ];
 
     // Type translations (same as your index)
@@ -122,7 +158,10 @@ class TransactionsController extends Controller
       'PAY_PURCHASE_WITHDRAWAL' => 'Estorno de Pagamento de Compra',
       'PAY_PURCHASE_COMISSION' => 'Pagamento de Comissão',
       'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'Estorno de Pagamento de Comissão',
-      'PAY_AWARD' => 'Pagamento de Prêmio'
+      'PAY_AWARD' => 'Pagamento de Prêmio',
+      'PAY_AWARD_WITHDRAWAL' => 'Estorno de Pagamento de Prêmio',
+      'GAME_CREDIT' => 'Crédito para Jogar',
+      'GAME_CREDIT_REVERSAL' => 'Estorno de Crédito para Jogar'
     ];
 
     // Calculate totals
@@ -160,6 +199,49 @@ class TransactionsController extends Controller
     uasort($typeDetails, function ($a, $b) {
       return $b['total'] <=> $a['total'];
     });
+
+    if (isset($typeDetails['DEPOSIT_REVERSAL'])) {
+      $typeDetails['DEPOSIT']['total'] -= $typeDetails['DEPOSIT_REVERSAL']['total'];
+      $typeDetails['DEPOSIT']['count'] -= $typeDetails['DEPOSIT_REVERSAL']['count'];
+      unset($typeDetails['DEPOSIT_REVERSAL']);
+    }
+
+    if (isset($typeDetails['WITHDRAWAL_REVERSAL'])) {
+      $typeDetails['WITHDRAWAL']['total'] -= $typeDetails['WITHDRAWAL_REVERSAL']['total'];
+      $typeDetails['WITHDRAWAL']['count'] -= $typeDetails['WITHDRAWAL_REVERSAL']['count'];
+      unset($typeDetails['WITHDRAWAL_REVERSAL']);
+    }
+
+    if (isset($typeDetails['REFER_EARN_REVERSAL'])) {
+      $typeDetails['REFER_EARN']['total'] -= $typeDetails['REFER_EARN_REVERSAL']['total'];
+      $typeDetails['REFER_EARN']['count'] -= $typeDetails['REFER_EARN_REVERSAL']['count'];
+      unset($typeDetails['REFER_EARN_REVERSAL']);
+    }
+
+    if (isset($typeDetails['PAY_PURCHASE_WITHDRAWAL'])) {
+      $typeDetails['PAY_PURCHASE']['total'] -= $typeDetails['PAY_PURCHASE_WITHDRAWAL']['total'];
+      $typeDetails['PAY_PURCHASE']['count'] -= $typeDetails['PAY_PURCHASE_WITHDRAWAL']['count'];
+      unset($typeDetails['PAY_PURCHASE_WITHDRAWAL']);
+    }
+
+    if (isset($typeDetails['PAY_PURCHASE_COMISSION_WITHDRAWAL'])) {
+      $typeDetails['PAY_PURCHASE_COMISSION']['total'] -= $typeDetails['PAY_PURCHASE_COMISSION_WITHDRAWAL']['total'];
+      $typeDetails['PAY_PURCHASE_COMISSION']['count'] -= $typeDetails['PAY_PURCHASE_COMISSION_WITHDRAWAL']['count'];
+      unset($typeDetails['PAY_PURCHASE_COMISSION_WITHDRAWAL']);
+    }
+
+    if (isset($typeDetails['PAY_AWARD_WITHDRAWAL'])) {
+      $typeDetails['PAY_AWARD']['total'] -= $typeDetails['PAY_AWARD_WITHDRAWAL']['total'];
+      $typeDetails['PAY_AWARD']['count'] -= $typeDetails['PAY_AWARD_WITHDRAWAL']['count'];
+      unset($typeDetails['PAY_AWARD_WITHDRAWAL']);
+    }
+
+    if (isset($typeDetails['GAME_CREDIT_REVERSAL'])) {
+      $typeDetails['GAME_CREDIT']['total'] -= $typeDetails['GAME_CREDIT_REVERSAL']['total'];
+      $typeDetails['GAME_CREDIT']['count'] -= $typeDetails['GAME_CREDIT_REVERSAL']['count'];
+      unset($typeDetails['GAME_CREDIT_REVERSAL']);
+    }
+
 
     return view('content.transactions.summary', [
       'totalIncome' => $totalIncome,

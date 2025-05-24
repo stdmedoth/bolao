@@ -20,32 +20,43 @@ class PurchaseController extends Controller
     $builder = new Purchase();
     $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
 
-    if (Auth::user()->role->level_id !== 'admin') {
+    if (Auth::user()->role->level_id == 'gumbler') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
 
     if (Auth::user()->role->level_id == 'seller') {
-      // se for vendedor, filtrar compras de usuarios desse vendedor
-      $builder = $builder->orWhere('seller_id', Auth::user()->id);
+      // Mostrar compras feitas por ele ou compras de clientes dele
+      $builder = $builder->where(function ($query) {
+        $query->where('user_id', Auth::user()->id)
+          ->orWhere('seller_id', Auth::user()->id);
+      });
     }
+
 
     if ($request->has('search') && $request->search != '') {
       $builder = $builder->where(function ($q) use ($request) {
         $q->whereHas('game', function ($gameq) use ($request) {
           $gameq->where('name', 'like', '%' . $request->search . '%');
-        })->orWhere('numbers', 'like', '%' . $request->search . '%');
+        })->orWhere('numbers', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%');
       });
     }
 
     if ($request->has('game_id') && $request->game_id != '') {
       $builder = $builder->where('game_id', $request->game_id);
+      //dd($builder);
     }
 
     if ($request->has('status') && $request->status != '') {
       $builder = $builder->where('status', $request->status);
     }
 
-    $builder = $builder->orderBy('created_at', 'desc');
+    // only shows purchases in same round that the last game opening
+    $builder = $builder->whereHas('game', function ($query) {
+      $query->whereColumn('purchases.round', 'games.round');
+    });
+
+    //$builder = $builder->orderBy('created_at', 'desc');
     $builder = $builder->orderBy('gambler_name', 'asc');
 
     $purchases = $builder->paginate(20);
@@ -101,7 +112,8 @@ class PurchaseController extends Controller
               "user_id" => $user->invited_by_id,
             ]
           );
-          $invited_by->balance = $invited_by->balance + $comission;
+          $invited_by->game_credit = $invited_by->game_credit + $comission;
+          $invited_by->save();
         }
       }
     }
@@ -131,9 +143,11 @@ class PurchaseController extends Controller
           "user_id" => $user->id,
         ]
       );
+      $user->game_credit = $user->game_credit + $comission;
+      $user->save();
     }
 
-    return redirect()->route('minhas_compras', request()->query())->with('success', 'Aposta paga com sucesso!');
+    return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta paga com sucesso!');
   }
 
 
@@ -167,7 +181,8 @@ class PurchaseController extends Controller
                 "user_id" => $user->invited_by_id,
               ]
             );
-            $invited_by->balance = $invited_by->balance - $comission;
+            $invited_by->game_credit = $invited_by->game_credit - $comission;
+            $invited_by->save();
           }
         }
       }
@@ -189,6 +204,8 @@ class PurchaseController extends Controller
           "user_id" => $user->id,
         ]
       );
+      $user->game_credit = $user->game_credit - $comission;
+      $user->save();
     }
 
     Transactions::create(
@@ -201,7 +218,7 @@ class PurchaseController extends Controller
       ]
     );
 
-    return redirect()->route('minhas_compras', request()->query())->with('success', 'Aposta estornada com sucesso!');
+    return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta estornada com sucesso!')->with('tab', 'tab-mybets');
   }
 
 
@@ -266,6 +283,8 @@ class PurchaseController extends Controller
     $purchase->quantity = $quantity;
     $purchase->price = $price;
 
+    $purchase->round = $game->round;
+
     // Salvando a compra no banco de dados
     $purchase->save();
 
@@ -279,8 +298,8 @@ class PurchaseController extends Controller
 
       // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
       if ($role_level_id == 'gambler') {
-        if ($user->invited_by_id) {
-          $invited_by = User::find($user->invited_by_id);
+        if ($request->seller_id) {
+          $invited_by = User::find($request->seller_id);
           $comission = $purchase->price * $invited_by->comission_percent;
           Transactions::create(
             [
@@ -288,10 +307,11 @@ class PurchaseController extends Controller
               "game_id" => $purchase->game_id,
               "purchase_id" => $purchase->id,
               "amount" => $comission,
-              "user_id" => $user->invited_by_id,
+              "user_id" => $request->seller_id,
             ]
           );
-          $invited_by->balance = $invited_by->balance + $comission;
+          $invited_by->game_credit = $invited_by->game_credit + $comission;
+          $invited_by->save();
         }
       }
     }
@@ -311,6 +331,8 @@ class PurchaseController extends Controller
           "user_id" => $user->id,
         ]
       );
+      $user->game_credit = $user->game_credit + $comission;
+      $user->save();
     }
 
     Transactions::create(
@@ -322,8 +344,6 @@ class PurchaseController extends Controller
         "user_id" => $purchase->user_id,
       ]
     );
-
-
 
     // Redirecionamento com mensagem de sucesso
     return redirect()->back()->with(['success' => 'Compra realizada com sucesso!', 'tab' => 'tab-mybets']);
@@ -378,8 +398,8 @@ class PurchaseController extends Controller
 
       // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
       if ($role_level_id == 'gambler') {
-        if ($user->invited_by_id) {
-          $invited_by = User::find($user->invited_by_id);
+        if ($request->seller_id) {
+          $invited_by = User::find($request->seller_id);
 
           $comission = $newPurchase->price * $invited_by->comission_percent;
           Transactions::create(
@@ -388,10 +408,11 @@ class PurchaseController extends Controller
               "game_id" => $newPurchase->game_id,
               "purchase_id" => $newPurchase->id,
               "amount" => $comission,
-              "user_id" => $user->invited_by_id,
+              "user_id" => $request->seller_id,
             ]
           );
-          $invited_by->balance = $invited_by->balance + $comission;
+          $invited_by->game_credit = $invited_by->game_credit + $comission;
+          $invited_by->save();
         }
       }
     }
@@ -411,6 +432,8 @@ class PurchaseController extends Controller
           "user_id" => $user->id,
         ]
       );
+      $user->game_credit = $user->game_credit + $comission;
+      $user->save();
     }
 
     Transactions::create(
@@ -446,7 +469,7 @@ class PurchaseController extends Controller
 
     $purchase = Purchase::find($id);
     $purchase->update($request->all());
-    return redirect()->route('minhas_compras')->with('success', 'Compra atualizada com sucesso!');
+    return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta realizada com sucesso!')->with('tab', 'tab-mybets');
   }
 
   /**
@@ -458,8 +481,9 @@ class PurchaseController extends Controller
     $purchase = Purchase::find($request->delete_game_purchase_id);
     $purchase->status =  'CANCELED';
     $purchase->save();
+
     //$purchase->delete();
-    return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
+    return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta deletada com sucesso!')->with('tab', 'tab-mybets');
   }
 
   /**
@@ -472,7 +496,7 @@ class PurchaseController extends Controller
     $purchase->save();
 
     //$purchase->delete();
-    return redirect()->route('minhas_compras', request()->query())->with('success', 'Compra deletada com sucesso!');
+    return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta deletada com sucesso!')->with('tab', 'tab-mybets');
   }
 
   /**

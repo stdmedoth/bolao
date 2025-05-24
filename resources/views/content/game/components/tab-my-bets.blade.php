@@ -1,39 +1,51 @@
-@extends('layouts/contentNavbarLayout')
+<div class="tab-pane fade {{ $tab == 'tab-mybets' ? 'show active' : '' }}" id="mybets" role="tabpanel"
+    aria-labelledby="mybets-tab">
 
-@section('title', 'Dashboard - Minhas Compras')
+    <!-- Formulário de Pesquisa e Filtro -->
+    <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <!-- Campo de pesquisa -->
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control"
+                        placeholder="Pesquisar por nome do concurso, numeros..." value="{{ request('search') }}">
+                    <button class="btn btn-primary" type="submit">Buscar</button>
+                </div>
+            </div>
 
-@section('vendor-style')
-    @vite('resources/assets/vendor/libs/apex-charts/apex-charts.scss')
-@endsection
+            <div class="col-md-3">
+                <!-- Select de filtro por role -->
+                <select name="status" class="form-select">
+                    <option value="">Todos os status</option>
+                    @foreach (['PAID', 'PENDING', 'CANCELED', 'FINISHED'] as $status)
+                        <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
+                            {{ __($status) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-@section('vendor-script')
-    @vite('resources/assets/vendor/libs/apex-charts/apexcharts.js')
-@endsection
-
-@section('page-script')
-    @vite('resources/assets/js/dashboards-analytics.js')
-@endsection
-
-@section('content')
-
-    <div class="container-fluid">
-        @if (!in_array(auth()->user()->role->level_id, ['admin', 'seller']))
-            <h1 class="my-4">Minhas Compras</h1>
-        @else
-            <h1 class="my-4">Compras realizadas</h1>
-        @endif
-
+            <div class="col-md-2">
+                <button class="btn btn-secondary w-100" type="submit">Aplicar Filtros</button>
+            </div>
+        </div>
+    </form>
+    @if ($purchases->isEmpty())
+        <p class="text-muted">Não há apostas para esse jogo com os filtros especificados.</p>
+    @else
         <div class="modal" tabindex="-1" id="modal_repeat_game">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <!-- request()->all() -->
-                    <form action="{{ url()->query('/purchase/repeat', request()->all()) }}" method="POST" class="mb-4">
+                    <form action="{{ url()->query('/purchase/repeat', request()->all()) }}" method="POST"
+                        class="mb-4">
                         @csrf
                         @method('POST')
 
                         <div class="modal-header">
                             <h5 class="modal-title">Repetir jogo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="col-md-12">
@@ -50,8 +62,8 @@
 
                                 <div class="form-group">
                                     <label for="repeat_game_numbers">Números para repetir</label>
-                                    <input id="repeat_game_numbers_id" name="repeat_game_numbers" type="text" disabled
-                                        class="form-control" value="">
+                                    <input id="repeat_game_numbers_id" name="repeat_game_numbers" type="text"
+                                        disabled class="form-control" value="">
                                 </div>
                                 <input id="repeat_game_purchase_id" name="repeat_game_purchase_id" type="hidden"
                                     class="form-control" value="">
@@ -72,20 +84,22 @@
                 <div class="modal-content">
 
                     <!-- request()->all() -->
-                    <form action="{{ url()->query('/purchase/delete', request()->all()) }}" method="POST" class="mb-4">
+                    <form action="{{ url()->query('/purchase/delete', request()->all()) }}" method="POST"
+                        class="mb-4">
                         @csrf
                         @method('POST')
 
                         <div class="modal-header">
                             <h5 class="modal-title">Deletar jogo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="delete_game_name">Jogo Concurso</label>
-                                    <input id="delete_game_name" name="delete_game_name" type="text" class="form-control"
-                                        disabled>
+                                    <input id="delete_game_name" name="delete_game_name" type="text"
+                                        class="form-control" disabled>
                                 </div>
 
                                 <div class="form-group">
@@ -96,14 +110,14 @@
 
                                 <div class="form-group">
                                     <label for="delete_game_gambler_phone">Telefone do apostador</label>
-                                    <input id="delete_game_gambler_phone" name="delete_game_gambler_phone" type="text"
-                                        disabled class="form-control" value="">
+                                    <input id="delete_game_gambler_phone" name="delete_game_gambler_phone"
+                                        type="text" disabled class="form-control" value="">
                                 </div>
 
                                 <div class="form-group">
                                     <label for="delete_game_numbers">Números</label>
-                                    <input id="delete_game_numbers" name="delete_game_numbers" type="text" disabled
-                                        class="form-control" value="">
+                                    <input id="delete_game_numbers" name="delete_game_numbers" type="text"
+                                        disabled class="form-control" value="">
                                 </div>
 
                                 <input id="delete_game_purchase_id" name="delete_game_purchase_id" type="hidden"
@@ -125,48 +139,7 @@
 
             <div class="table-responsive text-nowrap" style="max-height: 70vh; overflow-y: auto;">
 
-                <!-- Formulário de Pesquisa e Filtro -->
-                <form action="{{ url('/concursos' . $game->id) }}" method="GET" class="mb-4">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <!-- Campo de pesquisa -->
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control"
-                                    placeholder="Pesquisar por nome do concurso, numeros..."
-                                    value="{{ request('search') }}">
-                                <button class="btn btn-primary" type="submit">Buscar</button>
-                            </div>
-                        </div>
 
-                        <div class="col-md-3">
-                            <!-- Select de filtro por role -->
-                            <select name="game_id" class="form-select">
-                                <option value="">Todos Concursos</option>
-                                @foreach ($games as $game)
-                                    <option value="{{ $game->id }}"
-                                        {{ request('game_id') == $game->id ? 'selected' : '' }}>{{ $game->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <!-- Select de filtro por role -->
-                            <select name="status" class="form-select">
-                                <option value="">Todos os status</option>
-                                @foreach (['PAID', 'PENDING', 'CANCELED', 'FINISHED'] as $status)
-                                    <option value="{{ $status }}"
-                                        {{ request('status') == $status ? 'selected' : '' }}>{{ __($status) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <button class="btn btn-secondary w-100" type="submit">Aplicar Filtros</button>
-                        </div>
-                    </div>
-                </form>
 
 
                 <table class="table">
@@ -259,8 +232,8 @@
                                         data-game_name="{{ $purchase->game->name }}"
                                         data-gambler_name="{{ $purchase->gambler_name }}"
                                         data-gambler_phone="{{ $purchase->gambler_phone }}"
-                                        class="btn btn-danger delete_game_button {{ $purchase->status == 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
-                                        Deletar
+                                        class="btn btn-danger delete_game_button {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
+                                        Cancelar
                                     </a>
 
                                     <a href="#" data-purchase_id="{{ $purchase->id }}"
@@ -281,74 +254,5 @@
 
             </div>
         </div>
-    </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-
-            repeat_game_buttons = document.getElementsByClassName('repeat_game_button');
-            repeat_game_repeat_button_id = document.getElementsByClassName('repeat_game_repeat_button_id');
-
-            for (var i = 0; i < repeat_game_buttons.length; i++) {
-                (function(index) {
-                    repeat_game_buttons[index].addEventListener("click", function(e) {
-                        var myModal = new bootstrap.Modal(document.getElementById(
-                            'modal_repeat_game'), {
-                            focus: true
-                        });
-
-                        numbers = e.target.getAttribute('data-numbers');
-                        repeat_game_numbers_id = document.getElementById('repeat_game_numbers_id')
-                        repeat_game_numbers_id.value = numbers;
-
-                        purchase_id = e.target.getAttribute('data-purchase_id');
-                        repeat_game_purchase_id = document.getElementById('repeat_game_purchase_id')
-                        repeat_game_purchase_id.value = purchase_id;
-
-                        myModal.show();
-
-                    });
-                })(i);
-            }
-
-
-            delete_game_buttons = document.getElementsByClassName('delete_game_button');
-            delete_game_delete_button_id = document.getElementsByClassName('delete_game_delete_button_id');
-
-            for (var i = 0; i < delete_game_buttons.length; i++) {
-                (function(index) {
-                    delete_game_buttons[index].addEventListener("click", function(e) {
-                        var myModal = new bootstrap.Modal(document.getElementById(
-                            'modal_delete_game'), {
-                            focus: true
-                        });
-
-                        numbers = e.target.getAttribute('data-numbers');
-                        delete_game_numbers = document.getElementById('delete_game_numbers')
-                        delete_game_numbers.value = numbers;
-
-                        game_name = e.target.getAttribute('data-game_name');
-                        delete_game_name = document.getElementById('delete_game_name')
-                        delete_game_name.value = game_name;
-
-                        gambler_name = e.target.getAttribute('data-gambler_name');
-                        delete_game_gambler_name = document.getElementById('delete_game_gambler_name')
-                        delete_game_gambler_name.value = gambler_name;
-
-                        gambler_phone = e.target.getAttribute('data-gambler_phone');
-                        delete_game_gambler_phone = document.getElementById('delete_game_gambler_phone')
-                        delete_game_gambler_phone.value = gambler_phone;
-
-                        purchase_id = e.target.getAttribute('data-purchase_id');
-                        delete_game_purchase_id = document.getElementById('delete_game_purchase_id')
-                        delete_game_purchase_id.value = purchase_id;
-
-                        myModal.show();
-
-                    });
-                })(i);
-            }
-
-        });
-    </script>
-@endsection
+    @endif
+</div>
