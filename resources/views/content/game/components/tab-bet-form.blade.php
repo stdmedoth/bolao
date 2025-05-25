@@ -3,6 +3,18 @@
     @if ($game->status == 'OPENED')
         <div class="card shadow-sm mb-4">
             <div class="card-body">
+
+                @if (session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <form id="bet_form" action="{{ route('purchase-store', $game->id) }}" method="POST">
                     @csrf
                     <div class="form-group">

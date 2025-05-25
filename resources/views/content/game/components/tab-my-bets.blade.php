@@ -145,20 +145,21 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Jogo</th>
+                            <th>Id</th>
                             <th>Apostador</th>
-                            @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
-                                <!-- Usuario de quem Comprou -->
-                                <th>Usuário</th>
-                            @endif
                             @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
                                 <th>Vendedor</th>
                             @endif
-                            <th>Compra em</th>
+                            <th>Pontuação</th>
                             <th>Números</th>
                             <th>Status</th>
                             <th>Pago por</th>
                             <th>Ações</th>
+                            @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
+                                <!-- Usuario de quem Comprou -->
+                                <th>Usuário</th>
+                            @endif
+                            <th>Compra em</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -168,26 +169,13 @@
                         @foreach ($purchases as $purchase)
                             <tr>
                                 <td>
-                                    <a href='/concursos/{{ $purchase->game->id }}'>
-                                        <!-- Mostrando o nome do jogo relacionado -->
-                                        <i class="bx bxl-game bx-md text-info me-4"></i>
-                                        <span>{{ $purchase->game ? $purchase->game->name : '-' }}</span>
-                                        <!-- Nome do jogo é o dia na semana em que se passa a aposta-->
-                                    </a>
+                                    <strong>{{ $purchase->identifier }}</strong>
                                 </td>
                                 <td>
                                     <span class="badge bg-label-primary me-1">{{ __($purchase->gambler_name) }}</span>
                                 </td>
 
                                 @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
-                                    <!-- Usuario de quem Comprou -->
-                                    @if (in_array($purchase->user->role->level_id, ['seller', 'gambler']))
-                                        <td>{{ $purchase->user->name }}</td>
-                                    @else
-                                        <td>Banca Central</td>
-                                    @endif
-                                    <!-- -->
-
                                     <!-- Quem é o Vendedor -->
                                     @if (in_array($purchase->seller->role->level_id, ['seller']))
                                         <td>{{ $purchase->seller->name }}</td>
@@ -198,11 +186,12 @@
                                     <!-- -->
                                 @endif
 
-                                <!-- Usar timestamp do próprio produto? -->
+                                <td>{{ $purchase->points }}</td>
 
-                                <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
                                 <td> {{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}
                                 </td>
+
+
                                 <td>
                                     <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>
                                 </td>
@@ -243,6 +232,21 @@
                                         Repetir
                                     </a>
                                 </td>
+
+
+                                @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
+                                    <!-- Usuario de quem Comprou -->
+                                    @if (in_array($purchase->user->role->level_id, ['seller', 'gambler']))
+                                        <td>{{ $purchase->user->name }}</td>
+                                    @else
+                                        <td>Banca Central</td>
+                                    @endif
+                                    <!-- -->
+                                @endif
+
+
+                                <!-- Usar timestamp do próprio produto? -->
+                                <td>{{ $purchase->created_at->format('d/m/Y') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -38,7 +38,9 @@ class PurchaseController extends Controller
         $q->whereHas('game', function ($gameq) use ($request) {
           $gameq->where('name', 'like', '%' . $request->search . '%');
         })->orWhere('numbers', 'like', '%' . $request->search . '%')
-          ->orWhere('gambler_name', 'like', '%' . $request->search . '%');
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
+          ->orWhere('identifier', 'like', '%' . $request->search . '%');
       });
     }
 
@@ -250,6 +252,7 @@ class PurchaseController extends Controller
     $purchase = new Purchase();
     $purchase->gambler_name = $request->gambler_name;
     $purchase->gambler_phone = $request->gambler_phone;
+    $purchase->identifier = generate_identifier();
     $purchase->numbers = $numbers;
     //$purchase->quantity = $request->quantity;
 
@@ -366,6 +369,7 @@ class PurchaseController extends Controller
     // Criação da compra
     $newPurchase = $old_purchase->replicate();
     $newPurchase->status = "PENDING";
+    $newPurchase->identifier = generate_identifier();
     $newPurchase->game_id = $request->repeat_game_id;
 
     $user = User::find(Auth::user()->id);

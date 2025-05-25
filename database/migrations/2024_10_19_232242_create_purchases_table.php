@@ -26,6 +26,8 @@ return new class extends Migration
 
       $table->integer('round')->default(1);
 
+      $table->string('identifier')->unique()->nullable();
+
       $table->unsignedBigInteger('game_id');
       $table->unsignedBigInteger('user_id');
       $table->unsignedBigInteger('seller_id');

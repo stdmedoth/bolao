@@ -68,7 +68,7 @@
         </form>
 
         <div class="row mb-4 mt-5">
-            <div class="col-md-4">
+            <div class="col-md-4 mt-5">
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Saldo para Jogar</h5>
@@ -84,11 +84,17 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4  mt-5">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Saldo para sacar</h5>
-                        <p class="card-text h4">R$ {{ number_format(auth()->user()->balance, 2, ',', '.') }}</p>
+                        @if (auth()->user()->role->level_id !== 'admin' || !strlen(request('user_id')))
+                            <p class="card-text h4">R$ {{ number_format(auth()->user()->balance, 2, ',', '.') }}</p>
+                        @else
+                            <p class="card-text h4">R$
+                                {{ number_format($users->filter(fn($u) => $u->id == request('user_id'))->first()->balance, 2, ',', '.') }}
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>

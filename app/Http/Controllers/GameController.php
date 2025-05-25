@@ -143,7 +143,9 @@ class GameController extends Controller
         $q->whereHas('game', function ($gameq) use ($request) {
           $gameq->where('name', 'like', '%' . $request->search . '%');
         })->orWhere('numbers', 'like', '%' . $request->search . '%')
-          ->orWhere('gambler_name', 'like', '%' . $request->search . '%');
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
+          ->orWhere('identifier', 'like', '%' . $request->search . '%');
       });
     }
 
@@ -162,6 +164,15 @@ class GameController extends Controller
     $builder = $builder->orderBy('gambler_name', 'asc');
 
     $purchases = $builder->paginate(20);
+
+    foreach ($purchases as $key => $purchase) {
+      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+      $points = count($matchedNumbers);
+      $purchases[$key]['points'] = $points;
+    }
+
+
     $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
 
     return view('content.game.view_game', [
@@ -298,7 +309,12 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
-      $seller = $purchase->seller->name;
+      $seller = "";
+      if (in_array($purchase->seller->role->level_id, ['seller'])) {
+        $seller = $purchase->seller->name;
+      } else {
+        $seller = "Banca Central";
+      }
 
       $purchases_data[] = [
         'id' => $purchase->id,
@@ -358,7 +374,12 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
-      $seller = $purchase->seller->name;
+      $seller = "";
+      if (in_array($purchase->seller->role->level_id, ['seller'])) {
+        $seller = $purchase->seller->name;
+      } else {
+        $seller = "Banca Central";
+      }
 
       $purchases_data[] = [
         'id' => $purchase->id,
