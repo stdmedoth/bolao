@@ -325,6 +325,7 @@ class AdminController extends Controller
         // Dividir o valor do prêmio igualmente entre os ganhadores
         $awardAmountPerUser = $award->amount / $numWinners;
 
+
         foreach ($eligibleUsers as $userId) {
           // Verificar se o prêmio já foi concedido para este usuário
           $builder = UserAwards::where('game_id', $gameId)
@@ -333,6 +334,7 @@ class AdminController extends Controller
             ->where('round', $round);
 
           $awardExists = $builder->exists();
+          //dd($userId, $awardAmountPerUser, $award, $awardExists);
 
           // Criar o prêmio para o usuário, se ainda não foi concedido
           if (!$awardExists) {
@@ -475,7 +477,7 @@ class AdminController extends Controller
 
     // Obtém as compras pagas para esse round
     $purchases = Purchase::where('game_id', $game_id)
-      ->where('game_round', $round)
+      ->where('round', $round)
       ->where('status', 'PAID')
       ->get();
 
@@ -515,7 +517,7 @@ class AdminController extends Controller
 
     // Obter todas as compras válidas para esse round
     $purchases = Purchase::where('game_id', $game_id)
-      ->where('game_round', $round)
+      ->where('round', $round)
       ->where('status', 'PAID')
       ->get();
 

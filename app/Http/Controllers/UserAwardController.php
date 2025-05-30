@@ -19,7 +19,11 @@ class UserAwardController extends Controller
   {
     //
 
-    $user_awards = UserAwards::where('user_id', Auth::user()->id)->get();
+    $builder = new UserAwards();
+    if (Auth::user()->role->level_id !== 'admin') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+    $user_awards = $builder->orderBy('created_at', 'DESC')->paginate(6);
 
     return view('content.awards.my-awards', ['user_awards' => $user_awards]);
   }

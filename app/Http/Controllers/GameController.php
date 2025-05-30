@@ -97,7 +97,7 @@ class GameController extends Controller
 
     $uniqueNumbers = array_unique($allAddedNumbers);
 
-    $user_awards = $user_awards_builder->where('round', $round);
+    $user_awards = $user_awards_builder->where('round', $round)->orderBy('created_at', 'DESC')->paginate(20);
 
     foreach ($user_awards as $user_award) {
 
@@ -317,7 +317,7 @@ class GameController extends Controller
       }
 
       $purchases_data[] = [
-        'id' => $purchase->id,
+        'identifier' => $purchase->identifier,
         'gambler_name' => $purchase->gambler_name,
         'seller' => $seller,
         'points' => count($matchedNumbers),
@@ -383,6 +383,7 @@ class GameController extends Controller
 
       $purchases_data[] = [
         'id' => $purchase->id,
+        'identifier' => $purchase->identifier,
         'gambler_name' => $purchase->gambler_name,
         'seller' => $seller,
         'points' => count($matchedNumbers),
@@ -405,9 +406,12 @@ class GameController extends Controller
     $callback = function () use ($purchases_data) {
       $file = fopen('php://output', 'w');
 
+      echo "\xEF\xBB\xBF";
+
       // Escrever cabeçalho
       fputcsv($file, [
         'ID',
+        'Código',
         'Apostador',
         'Vendedor',
         'Pontos',
@@ -419,6 +423,7 @@ class GameController extends Controller
       foreach ($purchases_data as $purchase) {
         fputcsv($file, [
           $purchase['id'],
+          $purchase['identifier'],
           $purchase['gambler_name'],
           $purchase['seller'],
           $purchase['points'],

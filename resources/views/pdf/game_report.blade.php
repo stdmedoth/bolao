@@ -238,7 +238,7 @@
                             @if (isset($purchasesChunks[$i]))
                                 @foreach ($purchasesChunks[$i] as $index => $purchase)
                                     <tr style="background-color: {{ $index % 2 == 0 ? '#ffffff' : '#add8e6' }};">
-                                        <td>{{ $purchase->id }}</td>
+                                        <td>{{ $purchase->identifier }}</td>
                                         <td>{{ $purchase->gambler_name }}</td>
                                         @if (in_array($purchase->user->role->level_id, ['seller']))
                                             <td>{{ $purchase->user->name }}</td>
