@@ -43,7 +43,7 @@ class DepositController extends Controller
     $asaas = new Asaas(env('ASAAS_API_KEY'), env('ASAAS_API_ENV'));
 
 
-    if (!$user->external_finnancial_id) {
+    if (!$user->external_financial_id) {
       $client_data = [
         "name"              =>          $user->name,
         "cpfCnpj"           =>          preg_replace('/[^0-9]/', '', $user->document),
@@ -72,12 +72,12 @@ class DepositController extends Controller
           ->withErrors(['error' => array_map(fn($e) => $e->description, $client->error)]);
       }
 
-      $user->update(['external_finnancial_id' => $client->id]);
-      $user->external_finnancial_id = $client->id;
+      $user->update(['external_financial_id' => $client->id]);
+      $user->external_financial_id = $client->id;
     }
 
     $dadosCobranca = [
-      'customer'             => $user->external_finnancial_id,
+      'customer'             => $user->external_financial_id,
       'billingType'          => 'PIX',
       'value'                => $amount,
       'dueDate'              => date("Y-m-d H:i:s", strtotime("+1 day")), // TODO: Estipular vencimento em Y-m-d
@@ -160,7 +160,7 @@ class DepositController extends Controller
     $asaas = new Asaas(env('ASAAS_API_KEY'), env('ASAAS_API_ENV'));
 
     // Criar cliente no Asaas, se ainda não existir
-    if (!$user->external_finnancial_id) {
+    if (!$user->external_financial_id) {
       $client_data = [
         "name"    => $user->name,
         "cpfCnpj" => preg_replace('/[^0-9]/', '', $user->document),
@@ -181,13 +181,13 @@ class DepositController extends Controller
           ->with(['amount' => $amount, 'payment_method' => 'credit_card'])
           ->withErrors(['error' => array_map(fn($e) => $e->description, $client->errors)]);
       }
-      $user->update(['external_finnancial_id' => $client->id]);
-      $user->external_finnancial_id = $client->id;
+      $user->update(['external_financial_id' => $client->id]);
+      $user->external_financial_id = $client->id;
     }
 
     // Dados do pagamento
     $paymentData = [
-      'customer'             => $user->external_finnancial_id,
+      'customer'             => $user->external_financial_id,
       'billingType'          => 'CREDIT_CARD',
       'value'                => $amount,
       'dueDate'              => now()->addDay()->format('Y-m-d'),
@@ -268,7 +268,7 @@ class DepositController extends Controller
 
         $customer_id = $request->payment['customer'];
         $external_id = $request->payment['id'];
-        $user = User::where('external_finnancial_id', $customer_id)->first();
+        $user = User::where('external_financial_id', $customer_id)->first();
         if (!$user) return response()->json(['message' => 'Usuario não encontrado'], 200);
 
         $exists = Transactions::where('external_id', $external_id)

@@ -26,7 +26,7 @@ class User extends Authenticatable
     'email',
     'phone',
     'document',
-    'external_finnancial_id',
+    'external_financial_id',
     'password',
 
     'balance',
