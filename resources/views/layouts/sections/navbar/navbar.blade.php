@@ -47,20 +47,26 @@
     <!-- /Search -->
     <ul class="navbar-nav flex-row align-items-center ms-auto">
         <li class="nav-item lh-1 me-4">
-            <div>
+            <!--<div>
                 <a href="{{ route('transactions.saque') }}" data-icon="octicon-star" data-size="large"
                     data-show-count="true" aria-label="Saldo">
                     <i class="bx bx-money"></i>
                 </a>
                 <span>Disponível para Sacar: R$ {{ number_format(auth()->user()->balance, 2, ',', '.') }}</span>
             </div>
-            <div>
-                <a href="{{ route('transactions.deposito') }}" data-icon="octicon-star" data-size="large"
-                    data-show-count="true" aria-label="Deposito">
-                    <i class="bx bx-money"></i>
-                </a>
-                <span>Disponível para Jogar: R$ {{ number_format(auth()->user()->game_credit, 2, ',', '.') }}</span>
+            -->
+            <div class="text-center">
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <a href="{{ route('transactions.deposito') }}" aria-label="Deposito">
+                        <i class="bx bx-money fs-3"></i>
+                    </a>
+                    <span class="fs-4">R$ {{ number_format(auth()->user()->game_credit, 2, ',', '.') }}</span>
+                </div>
+                <div class="fs-6 text-muted mt-1">
+                    {{ auth()->user()->name }}
+                </div>
             </div>
+
         </li>
 
 

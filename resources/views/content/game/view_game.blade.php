@@ -17,10 +17,12 @@
 
 
 @section('content')
-    <div class="container-fluid">
+    <div>
         <?php $tab = session('tab') ?? (old('tab') ?? 'tab-details');
         ?>
-        <h1 class="my-4">Detalhes do Jogo</h1>
+        <div class="mx-4">
+            <h1 class="my-4">Detalhes do Jogo</h1>
+        </div>
 
         @if ($errors->has('error'))
             <div class="alert alert-danger">{{ $errors->first('error') }}</div>

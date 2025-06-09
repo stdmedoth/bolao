@@ -88,28 +88,24 @@ class GameController extends Controller
       ->where('type', 'ADDING_NUMBER')
       ->where('round', $round);
 
-    $gameHistories = $gameHistoriesBuilder->paginate(20);
+    $gameHistories = $gameHistoriesBuilder->paginate(20, ['*'], 'game_histories_page');
 
     // Reunir todos os números adicionados desde a última abertura
-    $allAddedNumbers = $gameHistories->pluck('numbers')
+    $allAddedNumbers = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER')
+      ->where('round', $round)->get()->pluck('numbers')
       ->flatMap(fn($numbers) => explode(" ", $numbers))
       ->toArray();
 
     $uniqueNumbers = array_unique($allAddedNumbers);
 
-    $user_awards = $user_awards_builder->where('round', $round)->orderBy('created_at', 'DESC')->paginate(20);
+    $user_awards = $user_awards_builder->where('round', $round)
+      ->orderBy('created_at', 'DESC')
+      ->paginate(20, ['*'], 'user_awards_page');
 
     foreach ($user_awards as $user_award) {
 
-      // Obter todas as compras relacionadas ao jogo
-      $purchasesBuilder = Purchase::where('game_id', $game->id)
-        ->whereIn('status', ['PAID'])
-        ->where('user_id', $user_award->user_id)
-        ->where('round', $round);
-
-      $_purchases = $purchasesBuilder->get();
-      $usersPoints = $this->calculateUsersPoints($_purchases, $uniqueNumbers);
-
+      $purchase = Purchase::find($user_award->purchase_id);
       $user = User::find($user_award->user_id);
       $game_award = GameAward::find($user_award->game_award_id);
       $winners[] = (object)[
@@ -117,16 +113,16 @@ class GameController extends Controller
         'user' => $user,
         'status' => $user_award->status,
         'game_award' => $game_award,
-        'purchase' => $usersPoints[$user->id]['purchase'],
-        'userPoint' => $usersPoints[$user->id]['points'],
+        'user_award' => $user_award,
+        'purchase' => $purchase,
+        'userPoint' => $user_award->points,
         'result_numbers' => $allAddedNumbers
       ];
     }
 
-
     $builder = new Purchase();
 
-    if (Auth::user()->role->level_id == 'gumbler') {
+    if (Auth::user()->role->level_id == 'gambler') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
 
@@ -163,7 +159,11 @@ class GameController extends Controller
     //$builder = $builder->orderBy('created_at', 'desc');
     $builder = $builder->orderBy('gambler_name', 'asc');
 
-    $purchases = $builder->paginate(20);
+    if ($request->has('seller') && $request->seller != '') {
+      $builder = $builder->where('seller_id', $request->seller);
+    }
+
+    $purchases = $builder->paginate(20, ['*'], 'purchases_page');
 
     foreach ($purchases as $key => $purchase) {
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
@@ -173,7 +173,7 @@ class GameController extends Controller
     }
 
 
-    $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
+    $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->whereNotIn('id', [$game->id])->get();
 
     return view('content.game.view_game', [
       'game' => $game,

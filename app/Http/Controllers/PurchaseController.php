@@ -20,7 +20,7 @@ class PurchaseController extends Controller
     $builder = new Purchase();
     $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->get();
 
-    if (Auth::user()->role->level_id == 'gumbler') {
+    if (Auth::user()->role->level_id == 'gambler') {
       $builder = $builder->where('user_id', Auth::user()->id);
     }
 
@@ -370,7 +370,9 @@ class PurchaseController extends Controller
     $newPurchase = $old_purchase->replicate();
     $newPurchase->status = "PENDING";
     $newPurchase->identifier = generate_identifier();
+    $repeat_game = Game::find($request->repeat_game_id);
     $newPurchase->game_id = $request->repeat_game_id;
+    $newPurchase->round = $repeat_game->round;
 
     $user = User::find(Auth::user()->id);
     $role_level_id = $user->role->level_id;

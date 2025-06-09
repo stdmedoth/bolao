@@ -1,4 +1,19 @@
-<ul class="nav nav-tabs flex-wrap" id="gameTabs" role="tablist">
+<ul class="nav nav-tabs flex-nowrap overflow-auto hide-scrollbar" id="gameTabs" role="tablist">
+
+    <style>
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            /* IE e Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Opera */
+            scroll-behavior: smooth;
+        }
+    </style>
     @php
         $tabs = [
             'tab-details' => 'Detalhes',

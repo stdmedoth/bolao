@@ -16,7 +16,7 @@
 
 @section('content')
 
-    <div class="container-fluid">
+    <div>
         @if (!in_array(auth()->user()->role->level_id, ['admin', 'seller']))
             <h1 class="my-4">Minhas Compras</h1>
         @else

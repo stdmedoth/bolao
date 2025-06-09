@@ -13,7 +13,7 @@
     $navbarDetached = 'navbar-detached';
 
     /* Content classes */
-    $container = $container ?? 'container-fluid px-4 px-lg-5';
+    $container = $container ?? 'container-fluid p-3 flex-grow-1';
 
 @endphp
 

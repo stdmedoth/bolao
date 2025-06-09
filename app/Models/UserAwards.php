@@ -11,6 +11,9 @@ class UserAwards extends Model
 
   protected $fillable = [
     'game_id',
+    'purchase_id',
+    'game_history_id',
+    'points',
     'user_id',
     'game_award_id',
     'amount',
@@ -27,6 +30,11 @@ class UserAwards extends Model
   public function game_award()
   {
     return $this->belongsTo(GameAward::class, 'game_award_id', 'id');
+  }
+
+  public function purchase()
+  {
+    return $this->belongsTo(Purchase::class, 'purchase_id', 'id');
   }
 
   public function user()

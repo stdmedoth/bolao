@@ -38,9 +38,7 @@
     {
       "url": "/minhas_compras",
       "name": "Compras",
-      "user_roles_level": [
-        "admin"
-      ],
+      "user_roles_level": [],
       "icon": "menu-icon tf-icons bx bx-shopping-bag",
       "slug": "app-email",
       "target": "_blank"
@@ -48,11 +46,7 @@
     {
       "url": "/meus_premios",
       "name": "Prêmios",
-      "user_roles_level": [
-        "seller",
-        "admin",
-        "gambler"
-      ],
+      "user_roles_level": [],
       "icon": "menu-icon tf-icons bx bx-medal",
       "slug": "awards",
       "target": "_blank"

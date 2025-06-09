@@ -291,57 +291,82 @@ class AdminController extends Controller
 
   private function calculateUserPoints($purchases, $uniqueNumbers)
   {
-    $usersPoints = [];
+    $purchasePoints = [];
     foreach ($purchases as $purchase) {
+
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
-      if (isset($userPoints[$purchase->user_id])) {
-        $usersPoints[$purchase->user_id] = (count($matchedNumbers) > $usersPoints[$purchase->user_id]) ?  count($matchedNumbers) : $usersPoints[$purchase->user_id];
+      if (isset($purchasePoints[$purchase->id])) {
+        $purchasePoints[$purchase->id] = (count($matchedNumbers) > $purchasePoints[$purchase->id]) ?  count($matchedNumbers) : $purchasePoints[$purchase->id];
       } else {
-        $usersPoints[$purchase->user_id] = count($matchedNumbers);
+        $purchasePoints[$purchase->id] = count($matchedNumbers);
       }
     }
-    return $usersPoints;
+    return $purchasePoints;
   }
 
-  protected function handleAwards($gameId, $userPoints, $awards, $round)
+  protected function handleAwards($gameId, $purchasePoints, $awards, $round, $gameHistoryId)
   {
 
+
     foreach ($awards as $award) {
+      $exists = UserAwards::where('game_id', $gameId)
+        ->where('game_award_id', $award->id)
+        ->where('round', $round)->exists();
+
+      if ($exists) {
+        // Se o prêmio já foi concedido neste round, não faz nada
+        continue;
+      }
+
       // Filtrar usuários que atendem às condições do prêmio
-      $eligibleUsers = [];
-      foreach ($userPoints as $userId => $totalPoints) {
-        if ((($award->condition_type === 'EXACT_POINT') && ($totalPoints >= $award->exact_point_value)) ||
-          (($award->condition_type === 'WINNER') && ($totalPoints >= $award->winner_point_value))
-        ) {
-          $eligibleUsers[] = $userId;
+      $eligiblePurchases = [];
+      $needyPoint = 0;
+      foreach ($purchasePoints as $purchaseId => $totalPoints) {
+        if (($award->condition_type === 'EXACT_POINT')) {
+          $needyPoint = $award->exact_point_value;
+        } elseif ($award->condition_type === 'WINNER') {
+          $needyPoint = $award->winner_point_value;
+        }
+
+        if ($needyPoint && ($totalPoints >= $needyPoint)) {
+          $eligiblePurchases[] = $purchaseId;
         }
       }
 
+
       // Se houver usuários elegíveis
-      $numWinners = count($eligibleUsers);
+      $numWinners = count($eligiblePurchases);
       if ($numWinners > 0) {
         // Dividir o valor do prêmio igualmente entre os ganhadores
         $awardAmountPerUser = $award->amount / $numWinners;
 
 
-        foreach ($eligibleUsers as $userId) {
+        var_dump($eligiblePurchases);
+        foreach ($eligiblePurchases as $purchaseId) {
+
+          $purchase = Purchase::find($purchaseId);
+          $userId = $purchase->user_id;
+
           // Verificar se o prêmio já foi concedido para este usuário
           $builder = UserAwards::where('game_id', $gameId)
             ->where('game_award_id', $award->id)
+            ->where('purchase_id', $purchaseId)
             ->where('user_id', $userId)
             ->where('round', $round);
 
           $awardExists = $builder->exists();
-          //dd($userId, $awardAmountPerUser, $award, $awardExists);
 
           // Criar o prêmio para o usuário, se ainda não foi concedido
           if (!$awardExists) {
             UserAwards::create([
               'user_id' => $userId,
               'game_id' => $gameId,
+              'purchase_id' => $purchaseId,
+              'game_history_id' => $gameHistoryId,
               'round' => $round,
+              'points' => $needyPoint,
               'game_award_id' => $award->id,
               'amount' => $awardAmountPerUser,
               'status' => 'PENDING',
@@ -387,7 +412,7 @@ class AdminController extends Controller
       $numbers = array_map(fn($num) => intval(substr($num, -2)), $rawNumbers);
 
       // Cria novo registro no histórico
-      GameHistory::create([
+      $gameHistory = GameHistory::create([
         "description" => $request->description,
         "type" => 'ADDING_NUMBER',
         "result_numbers" => implode(" ", $rawNumbers),
@@ -415,7 +440,7 @@ class AdminController extends Controller
     $awards = GameAward::where('game_id', $game->id)->get();
 
     // Distribui os prêmios conforme os pontos
-    $this->handleAwards($game->id, $userPoints, $awards, $game->round);
+    $this->handleAwards($game->id, $userPoints, $awards, $game->round, $gameHistory->id);
 
     return redirect(route('show-game', ['id' => $game->id]))->with(['tab' => 'tab-results']);
   }
@@ -440,6 +465,11 @@ class AdminController extends Controller
     $game_id = $game_history->game_id;
     $round = $game_history->round;
 
+    UserAwards::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('game_history_id', $game_history_id)
+      ->delete();
+
     // Validação
     $validatedData = $request->validate([
       "description" => "string",
@@ -451,11 +481,6 @@ class AdminController extends Controller
       $game_history->update($validatedData);
       return redirect(route('show-game', ['id' => $game_id]));
     }
-
-    // Apaga os prêmios dos usuários deste round
-    UserAwards::where('game_id', $game_id)
-      ->where('round', $round)
-      ->delete();
 
     // Processa os novos números
     $resultNumbers = explode(" ", $request->result_numbers);
@@ -486,7 +511,7 @@ class AdminController extends Controller
 
     // Reatribui os prêmios com base nos novos pontos
     $awards = GameAward::where('game_id', $game_id)->get();
-    $this->handleAwards($game_id, $userPoints, $awards, $round);
+    $this->handleAwards($game_id, $userPoints, $awards, $round, $game_history_id);
 
     return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }
@@ -503,6 +528,7 @@ class AdminController extends Controller
 
     UserAwards::where('game_id', $game_id)
       ->where('round', $round)
+      ->where('game_history_id', $game_history_id)
       ->delete();
 
     // Recalcular os pontos com base nos históricos restantes desse round
@@ -526,7 +552,7 @@ class AdminController extends Controller
 
     // Reatribuir prêmios com base nos novos pontos
     $awards = GameAward::where('game_id', $game_id)->get();
-    $this->handleAwards($game_id, $userPoints, $awards, $round);
+    $this->handleAwards($game_id, $userPoints, $awards, $round, $game_history_id);
 
     return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
   }

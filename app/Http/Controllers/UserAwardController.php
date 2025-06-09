@@ -52,7 +52,7 @@ class UserAwardController extends Controller
       ]
     );
 
-    return redirect()->route('meus_premios')->with('success', 'Prêmio pago com sucesso!');
+    return redirect(route("show-game", $user_award->game_id))->with('success', 'Prêmio atualizados com sucesso!');
   }
 
 
@@ -80,7 +80,7 @@ class UserAwardController extends Controller
       ]
     );
 
-    return redirect()->route('meus_premios')->with('success', 'Prêmio pago com sucesso!');
+    return redirect(route("show-game", $user_award->game_id))->with('success', 'Prêmio atualizados com sucesso!');
   }
 
   /**
@@ -121,6 +121,10 @@ class UserAwardController extends Controller
   public function update(Request $request, $id)
   {
     //
+    $user_award = UserAwards::find($id);
+    $user_award->status = $request->status;
+    $user_award->amount = $request->amount;
+    $user_award->save();
   }
 
 
