@@ -84,10 +84,28 @@
                                     required>
                                     <option {{ $award->type == 'EXACT_POINT' ? '' : 'selected' }} value="EXACT_POINT">Ponto
                                         Exato</option>
-                                    <option {{ $award->type == 'LOWEST_POINT' ? '' : 'selected' }} value="LOWEST_POINT">Pé
-                                        Frio</option>
                                     <option {{ $award->type == 'WINNER' ? '' : 'selected' }} value="WINNER">Vencedor
                                     </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="awards[0][only_when_finish_round_div]">
+                                <label for="awards[0][only_when_finish_round]">Ganham os que fizerem os pontos
+                                    primeiro?:</label>
+                                <select class="form-select" name="awards[0][only_when_finish_round]">
+                                    <option {{ $award->only_when_finish_round == '0' ? '' : 'selected' }} value="1">
+                                        Não
+                                    </option>
+                                    <option {{ $award->only_when_finish_round == '1' ? '' : 'selected' }} value="0">
+                                        Sim</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="awards[0][only_on_first_round_div]">
+                                <label for="awards[0][only_on_first_round]">Apenas primeiro sorteio?:</label>
+                                <select class="form-select" name="awards[0][only_on_first_round]">
+                                    <option value="0">Não</option>
+                                    <option value="1">Sim</option>
                                 </select>
                             </div>
 
@@ -96,6 +114,7 @@
                                 <input type="number" name="awards[0][exact_point_value]" class="form-control"
                                     value="{{ $award->exact_point_value }}">
                             </div>
+
 
                             <div class="form-group" id="awards[0][winner_point_div]">
                                 <label for="awards[0][winner_point_value]">Quantos Pontos para ser vencedor (se

@@ -112,6 +112,9 @@ class GameAwardController extends Controller
         $award->update([
           'condition_type' => $awardData['condition_type'],
           'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'exact_point_value' => $awardData['exact_point_value'] ?? null,
+          'winner_point_value' => $awardData['winner_point_value'] ?? null,
+          'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,
           'amount' => $awardData['amount'],
         ]);
       } else {
@@ -119,6 +122,9 @@ class GameAwardController extends Controller
         $game->awards()->create([
           'condition_type' => $awardData['condition_type'],
           'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'exact_point_value' => $awardData['exact_point_value'] ?? null,
+          'winner_point_value' => $awardData['winner_point_value'] ?? null,
+          'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,
           'amount' => $awardData['amount'],
         ]);
       }

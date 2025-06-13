@@ -212,8 +212,10 @@ class GameController extends Controller
       'close_at' => 'required|date|after_or_equal:open_at',
       'status' => 'required|in:OPENED,CLOSED,FINISHED',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT',
+      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT,WINNER',
       'awards.*.minimum_point_value' => 'nullable|integer',
+      'awards.*.only_when_finish_round' => 'boolean',
+      'awards.*.only_on_first_round' => 'boolean',
       'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
@@ -261,6 +263,7 @@ class GameController extends Controller
         $award->update([
           'condition_type' => $awardData['condition_type'],
           'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
           'amount' => $awardData['amount'],
         ]);
       } else {
@@ -268,6 +271,7 @@ class GameController extends Controller
         $game->awards()->create([
           'condition_type' => $awardData['condition_type'],
           'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
+          'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
           'amount' => $awardData['amount'],
         ]);
       }

@@ -15,10 +15,14 @@ return new class extends Migration
       $table->id();
 
       $table->string("name");
-      $table->enum('condition_type', ['EXACT_POINT', 'LOWEST_POINT', 'WINNER']);
+      $table->enum('condition_type', ['EXACT_POINT', 'WINNER', 'SECOND_WINNER']);
 
       $table->integer('exact_point_value')->nullable();
       $table->integer('winner_point_value')->nullable();
+
+      $table->boolean('only_when_finish_round')->default(false);
+
+      $table->boolean('only_on_first_round')->default(false);
 
       $table->float('amount')->nullable();
 
