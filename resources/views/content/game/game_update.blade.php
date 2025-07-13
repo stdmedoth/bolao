@@ -90,7 +90,7 @@
                             </div>
 
                             <div class="form-group" id="awards[0][only_when_finish_round_div]">
-                                <label for="awards[0][only_when_finish_round]">Ganham os que fizerem os pontos
+                                <label for="awards[0][only_when_finish_round]">Ganham quem fizer os pontos
                                     primeiro?:</label>
                                 <select class="form-select" name="awards[0][only_when_finish_round]">
                                     <option {{ $award->only_when_finish_round == '0' ? '' : 'selected' }} value="1">

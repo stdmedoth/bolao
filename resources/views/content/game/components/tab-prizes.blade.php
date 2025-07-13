@@ -33,16 +33,19 @@
 
                             <h4>{{ $award->name }}</h4>
                             @if ($award->condition_type === 'EXACT_POINT')
-                                Quem fizer <strong>{{ $award->exact_point_value }}</strong> pontos
-                                <strong>{{ $award->only_when_finish_round == 0 ? 'primeiro' : '' }}</strong> ganha<br>
+                                Quem fizer
+                                <strong>{{ $award->exact_point_value ? $award->exact_point_value : 'menos' }} pontos
+                                    {{ !$award->only_when_finish_round ? 'primeiro' : '' }}</strong> ganha o prêmio<br>
                             @endif
                             @if ($award->condition_type === 'WINNER')
                                 Quem fizer <strong>{{ $award->winner_point_value }}</strong> pontos vence o torneio em
-                                primeiro<br>
+                                <strong>primeiro</strong><br>
                             @endif
-                            @if ($award->condition_type === 'EXACT_POINT' && $award->exact_point_value == 0)
-                                Quem fizer <strong>menos</strong> pontos ganha<br>
+                            @if ($award->condition_type === 'SECONDARY_WINNER')
+                                Quem fizer <strong>mais pontos depois do vencedor</strong> vence o torneio em
+                                <strong>segundo</strong><br>
                             @endif
+
                             @if ($award->only_on_first_round)
                                 <strong>Apenas no primeiro sorteio</strong><br>
                             @endif

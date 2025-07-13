@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Awards;
+use App\Models\Purchase;
 use App\Models\Transactions;
 use App\Models\User;
 use App\Models\UserAwards;
@@ -31,8 +32,9 @@ class UserAwardController extends Controller
   public function pay(Request $request, $id)
   {
     $user_award = UserAwards::find($id);
+    $purchase = Purchase::find($user_award->purchase_id);
 
-    $user = User::find($user_award->user_id);
+    $user = User::find($purchase->paid_by_user_id);
 
     $user->balance += $user_award->amount;
     $user->save();
@@ -48,7 +50,7 @@ class UserAwardController extends Controller
         "game_id" => $user_award->game_id,
 
         "amount" => $user_award->amount,
-        "user_id" => $user_award->user_id,
+        "user_id" => $user->id,
       ]
     );
 
@@ -60,7 +62,8 @@ class UserAwardController extends Controller
   {
     $user_award = UserAwards::find($id);
 
-    $user = User::find($user_award->user_id);
+    $purchase = Purchase::find($user_award->purchase_id);
+    $user = User::find($purchase->paid_by_user_id);
 
     $user->balance -= $user_award->amount;
     $user->save();
@@ -76,7 +79,7 @@ class UserAwardController extends Controller
         "game_id" => $user_award->game_id,
 
         "amount" => $user_award->amount,
-        "user_id" => $user_award->user_id,
+        "user_id" => $user->id,
       ]
     );
 

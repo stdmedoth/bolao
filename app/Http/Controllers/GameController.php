@@ -100,7 +100,8 @@ class GameController extends Controller
     $uniqueNumbers = array_unique($allAddedNumbers);
 
     $user_awards = $user_awards_builder->where('round', $round)
-      ->orderBy('created_at', 'DESC')
+      ->orderBy('points', 'DESC')
+      ->orderBy('id', 'ASC') // Adicione esta linha!
       ->paginate(20, ['*'], 'user_awards_page');
 
     foreach ($user_awards as $user_award) {
@@ -163,17 +164,37 @@ class GameController extends Controller
       $builder = $builder->where('seller_id', $request->seller);
     }
 
+    if ($request->has('points') && $request->points != '') {
+      $desiredPoints = intval($request->points); // Renomeei para maior clareza
+
+      $builder = $builder->whereIn('id', function ($query) use ($desiredPoints, $game) {
+        $query->select('purchase_id')
+          ->from('user_awards')
+          ->where('game_id', $game->id)
+          ->where('round', $game->round)
+          ->groupBy('purchase_id')
+          ->havingRaw('MAX(points) = ?', [$desiredPoints]); // AQUI está a mudança!
+      });
+    }
+
     $purchases = $builder->paginate(20, ['*'], 'purchases_page');
+
 
     foreach ($purchases as $key => $purchase) {
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
       $points = count($matchedNumbers);
+
       $purchases[$key]['points'] = $points;
     }
 
 
+
+
     $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->whereNotIn('id', [$game->id])->get();
+
+    $winner_award = $game->awards()->where('condition_type', 'WINNER')
+      ->first();
 
     return view('content.game.view_game', [
       'game' => $game,
@@ -182,6 +203,7 @@ class GameController extends Controller
       'histories' => $gameHistories,
       'winners' => $winners,
       'user_awards' => $user_awards,
+      'winner_award' => $winner_award,
       'sellers' => $sellers
     ]);
   }
@@ -212,8 +234,7 @@ class GameController extends Controller
       'close_at' => 'required|date|after_or_equal:open_at',
       'status' => 'required|in:OPENED,CLOSED,FINISHED',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT,WINNER',
-      'awards.*.minimum_point_value' => 'nullable|integer',
+      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER',
       'awards.*.only_when_finish_round' => 'boolean',
       'awards.*.only_on_first_round' => 'boolean',
       'awards.*.amount' => 'required|numeric|min:0',
@@ -262,16 +283,20 @@ class GameController extends Controller
         $award = GameAward::findOrFail($awardData['id']);
         $award->update([
           'condition_type' => $awardData['condition_type'],
-          'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
           'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
+          'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,
+          'exact_point_value' => $awardData['exact_point_value'] ?? null,
+          'winner_point_value' => $awardData['winner_point_value'] ?? null,
           'amount' => $awardData['amount'],
         ]);
       } else {
         // Criar novo prêmio
         $game->awards()->create([
           'condition_type' => $awardData['condition_type'],
-          'minimum_point_value' => $awardData['minimum_point_value'] ?? null,
           'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
+          'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,
+          'exact_point_value' => $awardData['exact_point_value'] ?? null,
+          'winner_point_value' => $awardData['winner_point_value'] ?? null,
           'amount' => $awardData['amount'],
         ]);
       }

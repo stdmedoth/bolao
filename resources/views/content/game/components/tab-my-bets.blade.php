@@ -181,6 +181,38 @@
     @endif
 
 
+    @if (in_array(Auth::user()->role->level_id, ['admin']))
+        <div class="modal fade" id="filtroPointsModal" tabindex="-1" aria-labelledby="filtroPointsModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="GET">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="filtroPointsModalLabel">Filtrar por Pontuação</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select name="points" class="form-select">
+                                <option value="">Todos</option>
+                                @foreach (range(0, 11, 1) as $point)
+                                    <option value="{{ $point }}"
+                                        {{ request('points') == $point ? 'selected' : '' }}>
+                                        {{ $point }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+
 
     <!-- Tabela de Compras -->
     <div class="card">
@@ -202,7 +234,15 @@
                             </th>
                         @endif
 
-                        <th>Pontuação</th>
+                        <th>Pontuação
+                            @if (in_array(Auth::user()->role->level_id, ['admin']))
+                                <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal"
+                                    data-bs-target="#filtroPointsModal">
+                                    <i class="bx bx-filter-alt"></i>
+                                </button>
+                            @endif
+                        </th>
+
                         <th>Números</th>
                         <th>Status</th>
                         <th>Pago por</th>

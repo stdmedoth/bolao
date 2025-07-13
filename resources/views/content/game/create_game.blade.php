@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="form-group" id="awards[0][only_when_finish_round_div]">
-                        <label for="awards[0][only_when_finish_round]">Ganham os que fizerem os pontos primeiro?:</label>
+                        <label for="awards[0][only_when_finish_round]">Ganham quem fizer os pontos primeiro?:</label>
                         <select class="form-select" name="awards[0][only_when_finish_round]">
                             <option value="1">Não</option>
                             <option value="0">Sim</option>

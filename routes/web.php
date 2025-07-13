@@ -47,7 +47,9 @@ use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\GameAwardController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\PurchaseBatchController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PurchaseImportController;
 use App\Http\Controllers\ReferEarnController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\TransactionsController;
@@ -117,6 +119,13 @@ Route::middleware('auth:web')->group(function () {
 
   Route::post('/purchase/repeat', [PurchaseController::class, 'repeat'])->name('purchase-repeat');
   Route::post('/purchase/delete', [PurchaseController::class, 'delete'])->name('purchase-delete');
+
+  // Formulário para upload do CSV
+  Route::get('/purchases/import/{game_id}', [PurchaseBatchController::class, 'importForm'])->name('purchases.import.form');
+  // Processar o upload do CSV e exibir a pré-visualização/erros
+  Route::post('/purchases/import/upload', [PurchaseBatchController::class, 'storeBatch'])->name('purchases.import.store');
+  Route::get('/purchases/import/details/{id}', [PurchaseBatchController::class, 'show'])->name('purchases.import.show');
+  Route::get('/purchases/import/approve/{id}', [PurchaseBatchController::class, 'approve'])->name('purchases.import.approve');
 
   Route::post('/purchase/{id}', [PurchaseController::class, 'store'])->name('purchase-store');
   Route::get('/purchase/pay/{id}', [PurchaseController::class, 'pay'])->name('purchase-pay');

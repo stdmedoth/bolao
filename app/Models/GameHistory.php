@@ -15,5 +15,6 @@ class GameHistory extends Model
     "round",
     "result_numbers",
     "numbers",
+    "created_at"
   ];
 }

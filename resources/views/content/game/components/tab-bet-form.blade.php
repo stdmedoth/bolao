@@ -33,6 +33,7 @@
                         <div class="form-group">
                             <label for="seller_id">Local do jogo</label>
                             <select class="form-control" name="seller_id">
+                                <option value="">Selecionar um Local</option>
                                 <option value="{{ auth()->user()->id }}"
                                     {{ old('seller_id') == auth()->user()->id ? 'selected' : '' }}>Banca Central
                                 </option>
@@ -108,6 +109,11 @@
                     <input type="hidden" id="numbers" name="numbers" value="">
 
                     <button type="submit" class="btn btn-primary">Comprar Dezenas</button>
+
+                    @if (auth()->user()->role->level_id == 'admin')
+                        <a href="{{ route('purchases.import.form', $game->id) }}" class="btn btn-secondary">Ir para
+                            importação em Lote</a>
+                    @endif
                 </form>
             </div>
         </div>

@@ -135,7 +135,8 @@
                             <td style="border: 3px solid blue;">
                                 <div style="border: 3px solid #D80000; background-color: #dddddd; border-radius: 50px;">
                                     <p><strong>Início do jogo:</strong>
-                                        {{ Carbon\Carbon::parse($lastClosedHistory->created_at)->format('d/m/Y') }}</p>
+                                        {{ $lastClosedHistory ? Carbon\Carbon::parse($lastClosedHistory->created_at)->format('d/m/Y') : '' }}
+                                    </p>
 
                                 </div>
                             </td>

@@ -27,6 +27,11 @@
         @if ($errors->has('error'))
             <div class="alert alert-danger">{{ $errors->first('error') }}</div>
         @endif
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
 
         @include('content.game.components.tab-menu', ['tab' => $tab])
         <div class="tab-content mt-4" id="gameTabsContent">

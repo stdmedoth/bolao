@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="mb-3" id="only_when_finish_round_div">
-                        <label for="only_when_finish_round" class="form-label">Ganham os que fizerem os pontos
+                        <label for="only_when_finish_round" class="form-label">Ganham quem fizer os pontos
                             primeiro?</label>
                         <select class="form-select" id="only_when_finish_round" name="only_when_finish_round">
                             <option value="1">Não</option>

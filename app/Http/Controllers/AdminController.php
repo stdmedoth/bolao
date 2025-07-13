@@ -212,7 +212,7 @@ class AdminController extends Controller
       'open_at' => 'required|date',
       'close_at' => 'required|date|after:open_at',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:MINIMUM_POINT,EXACT_POINT,WINNER',
+      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER',
       'awards.*.exact_point_value' => 'nullable|integer',
       'awards.*.winner_point_value' => 'nullable|integer',
       'awards.*.only_on_first_round' => 'boolean',
@@ -309,6 +309,7 @@ class AdminController extends Controller
   {
 
     $hasWinner = false;
+    $winners = [];
     $only_when_finish_round_awards = [];
     foreach ($awards as $award) {
       // Verifica se o prêmio já foi concedido nesta rodada para evitar duplicação.
@@ -337,11 +338,17 @@ class AdminController extends Controller
       // Filtra as compras que atingiram a pontuação necessária.
       foreach ($purchasePoints as $purchaseId => $totalPoints) {
         if ($needyPoint && ($totalPoints >= $needyPoint)) {
-          $eligiblePurchases[] = $purchaseId;
+
+          if (($award->only_when_finish_round !== 0) && in_array($purchaseId, $winners)) {
+            continue; // Se o prêmio é concedido apenas quando o jogo termina, e já é um vencedor do torneio, pula.
+          }
 
           if ($award->condition_type === 'WINNER') {
             $hasWinner = true; // Marca que há pelo menos um vencedor
+            $winners[] = $purchaseId; // Armazena o ID da compra do vencedor
           }
+
+          $eligiblePurchases[] = $purchaseId;
         }
       }
 
@@ -369,9 +376,11 @@ class AdminController extends Controller
               'user_id' => $userId,
               'game_id' => $gameId,
               'purchase_id' => $purchaseId,
+              'condition_type' => $award->condition_type,
+              'exact_point_value' => $award->exact_point_value,
               'game_history_id' => $gameHistoryId,
               'round' => $round,
-              'points' => $purchasePoints[$purchaseId],
+              'points' => $needyPoint,
               'game_award_id' => $award->id,
               'amount' => $awardAmountPerUser,
               'status' => 'PENDING',
@@ -394,18 +403,131 @@ class AdminController extends Controller
       if ($game && $game->status !== 'FINISHED') {
         $game->status = 'FINISHED';
         $game->save();
+        $game_history = GameHistory::create([
+          "description" => "JOGO FECHADO",
+          "numbers" => "",
+          "type" => "FINISHED",
+          'game_id' => $game->id,
+        ]);
       }
-      $game_history = GameHistory::create([
-        "description" => "JOGO FECHADO",
-        "numbers" => "",
-        "type" => "FINISHED",
-        'game_id' => $game->id,
-      ]);
 
       // Processa os prêmios que são concedidos apenas quando o jogo termina.
       foreach ($only_when_finish_round_awards as $awardData) {
+
+        if (($awardData['condition_type'] != "WINNER") && in_array($awardData['purchase_id'], $winners)) {
+          continue; // Evita duplicação de prêmios para vencedores
+        }
+
+        if (($awardData['condition_type'] == "EXACT_POINT") && ($awardData['exact_point_value'] == 0)) {
+          continue; // Evita conceder prêmios de 0 pontos
+        }
+
         UserAwards::create($awardData);
         $this->updateReferEarn($awardData['user_id']);
+      }
+
+      // Procura se há algum premio que deve ser concedido para quem fez menos pontos
+      $minPointsAward = GameAward::where('game_id', $gameId)
+        ->where('condition_type', 'EXACT_POINT')
+        ->where('exact_point_value', 0)
+        ->where('only_when_finish_round', true)
+        ->first();
+
+      if ($minPointsAward && !empty($purchasePoints)) {
+        $lowestScore = min(array_values($purchasePoints)); // Encontra a menor pontuação
+        $eligibleLosers = [];
+
+        foreach ($purchasePoints as $purchaseId => $totalPoints) {
+          if ($totalPoints === $lowestScore) { // Pega todos que tiveram a menor pontuação
+            $eligibleLosers[] = $purchaseId;
+          }
+        }
+
+        $numLosers = count($eligibleLosers);
+        if ($numLosers > 0) {
+          $loserAwardAmountPerUser = $minPointsAward->amount / $numLosers;
+
+          foreach ($eligibleLosers as $purchaseId) {
+            $purchase = Purchase::find($purchaseId);
+            $userId = $purchase->user_id;
+
+            $awardExists = UserAwards::where('game_id', $gameId)
+              ->where('game_award_id', $minPointsAward->id)
+              ->where('purchase_id', $purchaseId)
+              ->where('round', '>=', $round)
+              ->exists();
+
+            if (!$awardExists) {
+              UserAwards::create([
+                'user_id' => $userId,
+                'game_id' => $gameId,
+                'purchase_id' => $purchaseId,
+                'game_history_id' => $gameHistoryId,
+                'round' => $round,
+                'points' => $purchasePoints[$purchaseId],
+                'game_award_id' => $minPointsAward->id,
+                'amount' => $loserAwardAmountPerUser,
+                'status' => 'PENDING',
+              ]);
+              $this->updateReferEarn($userId);
+            }
+          }
+        }
+      }
+
+      // Procura se há algum premio que deve ser concedido para quem ganhou em segundo lugar
+      $maxPointsAward = GameAward::where('game_id', $gameId)
+        ->where('condition_type', 'SECONDARY_WINNER')
+        ->where('only_when_finish_round', true)
+        ->first();
+
+      if ($maxPointsAward && !empty($purchasePoints)) {
+        $highestScore = max(array_values($purchasePoints)); // Encontra a segunda maior pontuação
+        $purchasePointsWithoutMax = array_filter(array_values($purchasePoints), function ($value) use ($highestScore) {
+          return intval($value) !== intval($highestScore);
+        });
+        $secondHighestScore = max($purchasePointsWithoutMax); // Encontra a segunda maior pontuação
+
+
+        $eligibleWinners = [];
+
+        foreach ($purchasePoints as $purchaseId => $totalPoints) {
+
+          if ($totalPoints === $secondHighestScore) { // Pega todos que tiveram a menor pontuação
+            $eligibleWinners[] = $purchaseId;
+          }
+        }
+
+        $numWinners = count($eligibleWinners);
+        if ($numWinners > 0) {
+          $winnerAwardAmountPerUser = $maxPointsAward->amount / $numWinners;
+
+          foreach ($eligibleWinners as $purchaseId) {
+            $purchase = Purchase::find($purchaseId);
+            $userId = $purchase->user_id;
+
+            $awardExists = UserAwards::where('game_id', $gameId)
+              ->where('game_award_id', $maxPointsAward->id)
+              ->where('purchase_id', $purchaseId)
+              ->where('round', '>=', $round)
+              ->exists();
+
+            if (!$awardExists) {
+              UserAwards::create([
+                'user_id' => $userId,
+                'game_id' => $gameId,
+                'purchase_id' => $purchaseId,
+                'game_history_id' => $gameHistoryId,
+                'round' => $round,
+                'points' => $purchasePoints[$purchaseId],
+                'game_award_id' => $maxPointsAward->id,
+                'amount' => $winnerAwardAmountPerUser,
+                'status' => 'PENDING',
+              ]);
+              $this->updateReferEarn($userId);
+            }
+          }
+        }
       }
     }
   }
@@ -415,7 +537,7 @@ class AdminController extends Controller
     $game = Game::findOrFail($id);
 
     if ($game->status !== 'CLOSED') {
-      return redirect()->back()->withErrors(['error' => ["Jogo ainda está aberto"]]);
+      return redirect()->back()->withErrors(['error' => ["Jogo não está disponível para adicionar histórico."]]);
     }
 
     $resultNumbersArray = explode(", ", $request->result_numbers);
@@ -446,24 +568,26 @@ class AdminController extends Controller
       ]);
 
       $allAddedNumbers = array_merge($allAddedNumbers, $numbers);
+
+      $uniqueNumbers = array_unique($allAddedNumbers);
+
+      $purchases = Purchase::where('game_id', $game->id)
+        ->where('round', $game->round)
+        ->where('status', 'PAID')
+        ->get();
+
+      $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
+
+      $awards = GameAward::where('game_id', $game->id)->get();
+
+      if ($gameHistory) {
+        $this->handleAwards($game->id, $purchasePoints, $awards, $game->round, $gameHistory->id, $gameHistoryQnt);
+      }
+      $gameHistoryQnt++;
     }
 
-    $uniqueNumbers = array_unique($allAddedNumbers);
 
-    $purchases = Purchase::where('game_id', $game->id)
-      ->where('round', $game->round)
-      ->where('status', 'PAID')
-      ->get();
-
-    $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
-
-    $awards = GameAward::where('game_id', $game->id)->get();
-
-    if ($gameHistory) {
-      $this->handleAwards($game->id, $purchasePoints, $awards, $game->round, $gameHistory->id, $gameHistoryQnt);
-    }
-
-    return redirect(route('show-game', ['id' => $game->id]))->with(['tab' => 'tab-results']);
+    return redirect(route('show-game', ['id' => $game->id]))->with(['tab' => 'tab-results', 'success' => 'Histórico adicionado com sucesso!']);
   }
 
 
@@ -472,7 +596,7 @@ class AdminController extends Controller
   public function editGameHistory(Request $request, $game_history_id)
   {
     if (Auth::user()->role->level_id !== 'admin') {
-      redirect('/auth/logout');
+      return redirect('/auth/logout');
     }
 
     $gameHistory = GameHistory::find($game_history_id);
@@ -483,84 +607,306 @@ class AdminController extends Controller
 
   public function updateGameHistory(Request $request, $game_history_id)
   {
+    if (Auth::user()->role->level_id !== 'admin') {
+      // Como você me pediu para ter opiniões e corrigir, sugiro um `abort(403)`
+      // ou um redirecionamento para o login, se a intenção for sempre deslogar.
+      // O `redirect('/auth/logout')` é válido, mas `abort(403)` é mais direto para "não autorizado".
+      abort(403, 'Você não tem permissão para realizar esta ação.');
+    }
+
     $game_history = GameHistory::findOrFail($game_history_id);
     $game_id = $game_history->game_id;
     $round = $game_history->round;
 
-    UserAwards::where('game_id', $game_id)
-      ->where('round', $round)
-      ->where('game_history_id', $game_history_id)
-      ->delete();
-
     // Validação
     $validatedData = $request->validate([
-      "description" => "string",
-      "result_numbers" => "string",
+      "description" => "string|nullable", // Ajustei para nullable se não for obrigatório
+      "result_numbers" => "string|nullable", // Ajustei para nullable
     ]);
 
-    // Se não tiver novos números, só atualiza os dados e retorna
-    if (!$request->filled('result_numbers')) {
-      $game_history->update($validatedData);
-      return redirect(route('show-game', ['id' => $game_id]));
+    // Pega os números antigos do histórico para comparação
+    $oldNumbersRaw = $game_history->result_numbers;
+    $oldNumbersProcessed = $game_history->numbers; // Estes são os números inteiros do jogo (ex: 05, 12)
+
+    // Prepara os novos números, se forem fornecidos
+    $newNumbersRaw = $request->filled('result_numbers') ? $request->result_numbers : $oldNumbersRaw;
+    $newNumbersProcessed = '';
+    if ($request->filled('result_numbers')) {
+      $resultNumbersArray = explode(" ", $newNumbersRaw);
+      $newNumbersProcessed = implode(" ", array_map(fn($num) => intval(substr($num, -2)), $resultNumbersArray));
+    } else {
+      $newNumbersProcessed = $oldNumbersProcessed; // Mantém os números antigos se não foram fornecidos novos
     }
 
-    $addedNumberHistories = GameHistory::where('game_id', $game_id)
+    // Verifica se houve mudança relevante nos números para justificar reprocessamento completo
+    $numbersChanged = ($newNumbersProcessed !== $oldNumbersProcessed);
+
+    // Se a descrição mudou mas os números não, apenas atualiza e retorna.
+    if (!$numbersChanged && $request->description === $game_history->description) {
+      $game_history->update($validatedData);
+      return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results', 'success' => 'Histórico atualizado com sucesso (apenas descrição).']);
+    }
+
+    // --- Lógica de Reprocessamento (similar à remoção) ---
+
+    // 1. Encontrar todos os históricos a partir do histórico editado (inclusive ele),
+    // ordenados para reprocessamento na ordem original.
+    $historiesToReprocessData = [];
+    $historiesToDeleteIds = []; // IDs para deletar e recriar
+
+    $originalAndSubsequentHistories = GameHistory::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('created_at', '>=', $game_history->created_at) // Pega ele e todos os posteriores
       ->where('type', 'ADDING_NUMBER')
-      ->where('round', $round)
+      ->orderBy('created_at', 'asc')
       ->get();
 
-    $gameHistoryQnt = $addedNumberHistories->count();
+    foreach ($originalAndSubsequentHistories as $history) {
+      // Para o histórico que está sendo editado, usamos os novos dados
+      if ($history->id === $game_history->id) {
+        $historiesToReprocessData[] = [
+          'id' => $history->id, // Mantém o ID para identificação
+          'description' => $validatedData['description'] ?? $history->description,
+          'result_numbers' => $newNumbersRaw,
+          'numbers' => $newNumbersProcessed,
+          'type' => $history->type,
+          'game_id' => $history->game_id,
+          'round' => $history->round,
+          'created_at' => $history->created_at, // Mantém a data de criação original
+        ];
+      } else {
+        // Para os históricos subsequentes, pegamos os dados originais deles
+        $historiesToReprocessData[] = [
+          'id' => $history->id, // Mantém o ID para identificação
+          'description' => $history->description,
+          'result_numbers' => $history->result_numbers,
+          'numbers' => $history->numbers,
+          'type' => $history->type,
+          'game_id' => $history->game_id,
+          'round' => $history->round,
+          'created_at' => $history->created_at, // Mantém a data de criação original
+        ];
+      }
+      $historiesToDeleteIds[] = $history->id;
+    }
 
-    // Processa os novos números
-    $resultNumbers = explode(" ", $request->result_numbers);
-    $numbers = array_map(fn($num) => intval($num), $resultNumbers);
-
-    $validatedData['result_numbers'] = implode(" ", $resultNumbers);
-    $validatedData['numbers'] = implode(" ", $numbers);
-    $game_history->update($validatedData);
-
-    // Recalcular os pontos com base nos históricos deste round
-    $gameHistories = GameHistory::where('game_id', $game_id)
+    // 2. Apagar todos os prêmios associados aos históricos que serão reprocessados.
+    UserAwards::where('game_id', $game_id)
       ->where('round', $round)
-      ->where('type', 'ADDING_NUMBER')
-      ->get();
+      ->whereIn('game_history_id', $historiesToDeleteIds)
+      ->delete();
 
-    $allAddedNumbers = $gameHistories->pluck('numbers')
-      ->flatMap(fn($numbers) => explode(" ", $numbers))
-      ->toArray();
+    // 3. Deletar os históricos afetados (o editado e os posteriores) do banco de dados.
+    // Isso garante que serão recriados com os dados corretos e a lógica de reprocessamento.
+    GameHistory::whereIn('id', $historiesToDeleteIds)->delete();
 
-    // Obtém as compras pagas para esse round
-    $purchases = Purchase::where('game_id', $game_id)
-      ->where('round', $round)
-      ->where('status', 'PAID')
-      ->get();
 
-    // Calcula pontos
-    $userPoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
+    // 4. Reprocessar os históricos em ordem cronológica
+    $allAddedNumbers = []; // Acumula os números de todos os históricos já processados neste loop
 
-    // Reatribui os prêmios com base nos novos pontos
-    $awards = GameAward::where('game_id', $game_id)->get();
-    $this->handleAwards($game_id, $userPoints, $awards, $round, $game_history_id, $gameHistoryQnt);
+    foreach ($historiesToReprocessData as $historyData) {
+      $game = Game::findOrFail($game_id); // Pega o jogo novamente para garantir dados frescos
 
-    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
+      // Adiciona os números deste histórico aos números totais da rodada
+      $currentHistoryNumbers = array_map('intval', explode(" ", $historyData['numbers']));
+      $allAddedNumbers = array_merge($allAddedNumbers, $currentHistoryNumbers);
+      $uniqueNumbers = array_unique($allAddedNumbers);
+
+      // Recria o histórico com os dados atualizados (para o editado) ou originais (para os subsequentes)
+      // e com a data de criação original
+      $newGameHistory = GameHistory::create([
+        "description" => $historyData['description'],
+        "type" => $historyData['type'],
+        "result_numbers" => $historyData['result_numbers'],
+        "numbers" => $historyData['numbers'],
+        "game_id" => $historyData['game_id'],
+        "round" => $historyData['round'],
+        "created_at" => $historyData['created_at'], // Define a data de criação original
+      ]);
+
+      // Consulta novamente os históricos para obter a quantidade de históricos até o momento
+      // para o cálculo do `only_on_first_round` (se aplicável no `handleAwards`).
+      $gameHistoryQnt = GameHistory::where('game_id', $game->id)
+        ->where('type', 'ADDING_NUMBER')
+        ->where('round', $game->round)
+        ->count();
+
+
+      $purchases = Purchase::where('game_id', $game->id)
+        ->where('round', $game->round)
+        ->where('status', 'PAID')
+        ->get();
+
+      $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
+
+      $awards = GameAward::where('game_id', $game->id)->get();
+
+      // Chama o handler de prêmios para o histórico recém-criado
+      $this->handleAwards($game->id, $purchasePoints, $awards, $game->round, $newGameHistory->id, $gameHistoryQnt);
+    }
+    // Se o jogo estava fechado e não houve vencedor, atualiza o status para 'CLOSED' após o reprocessamento
+    $game = Game::findOrFail($game_id);
+    if ($game->status === 'FINISHED') {
+      $winnerAward = GameAward::where('game_id', $game_id)
+        ->where('condition_type', 'WINNER')
+        ->where('only_when_finish_round', true)
+        ->first();
+      if (
+        $winnerAward || UserAwards::where('game_id', $game_id)
+        ->where('game_award_id', $winnerAward->id)
+        ->where('round', $game->round)
+        ->exists()
+      ) {
+        // Se não há prêmio de vencedor ou já foi concedido, mantém o status 'CLOSED'
+        $game->status = 'CLOSED';
+        $game->save();
+        GameHistory::create([
+          "description" => "JOGO EM ANDAMENTO NOVAMENTE",
+          "numbers" => "",
+          "type" => "CLOSED",
+          'game_id' => $game->id,
+        ]);
+      }
+    }
+
+
+
+    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results', 'success' => 'Histórico atualizado e reprocessado com sucesso!']);
   }
+
 
 
   public function removeGameHistory(Request $request, $game_history_id)
   {
-    $game_history = GameHistory::findOrFail($game_history_id);
-    $game_id = $game_history->game_id;
-    $round = $game_history->round;
+    $historyToRemove = GameHistory::findOrFail($game_history_id);
+    $game_id = $historyToRemove->game_id;
+    $round = $historyToRemove->round;
 
-    // Deleta o histórico e os prêmios do round correspondente
-    $game_history->delete();
-
-    UserAwards::where('game_id', $game_id)
+    // 1. Encontrar todos os históricos a partir DO PRÓXIMO histórico (não incluindo o que será removido),
+    // ordenados para reprocessamento na ordem original.
+    $subsequentHistories = GameHistory::where('game_id', $game_id)
       ->where('round', $round)
-      ->where('game_history_id', $game_history_id)
+      ->where('created_at', '>', $historyToRemove->created_at) // <--- Mudei para '>' (maior que)
+      ->where('type', 'ADDING_NUMBER')
+      ->orderBy('created_at', 'asc')
+      ->get();
+
+    // 2. Coletar os dados dos históricos subsequentes para reprocessamento
+    $historiesToReprocessData = [];
+    foreach ($subsequentHistories as $history) {
+      $historiesToReprocessData[] = [
+        'description' => $history->description,
+        'result_numbers' => $history->result_numbers,
+        'type' => $history->type,
+        'game_id' => $history->game_id,
+        'round' => $history->round,
+        'numbers' => $history->numbers,
+        'created_at' => $history->created_at,
+      ];
+    }
+
+    // 3. Apagar o histórico que o usuário quer remover e todos os prêmios relacionados a ele.
+    // Primeiro o registro de histórico que será deletado
+    $historyToRemove->delete();
+
+    // Remove os prêmios vinculados ESPECIFICAMENTE ao histórico que foi removido
+    UserAwards::where('game_history_id', $game_history_id)
+      ->where('game_id', $game_id)
+      ->where('round', $round)
       ->delete();
 
-    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results']);
+    // E também os prêmios dos históricos subsequentes, pois eles serão recriados
+    if (!$subsequentHistories->isEmpty()) {
+      UserAwards::where('game_id', $game_id)
+        ->where('round', $round)
+        ->whereIn('game_history_id', $subsequentHistories->pluck('id'))
+        ->delete();
+
+      // Deleta fisicamente os históricos subsequentes para que possam ser recriados
+      GameHistory::whereIn('id', $subsequentHistories->pluck('id'))->delete();
+    }
+
+
+    // 4. Reprocessar os históricos subsequentes em ordem cronológica
+    $allAddedNumbers = []; // Acumula os números de todos os históricos já processados neste loop
+
+    // Precisamos recarregar todos os históricos *anteriores* ao que foi removido
+    // para que a base de $allAddedNumbers esteja correta para o reprocessamento.
+    $precedingHistories = GameHistory::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('created_at', '<', $historyToRemove->created_at) // Menor que a data do removido
+      ->where('type', 'ADDING_NUMBER')
+      ->orderBy('created_at', 'asc')
+      ->get();
+
+    foreach ($precedingHistories as $history) {
+      $allAddedNumbers = array_merge($allAddedNumbers, array_map('intval', explode(" ", $history->numbers)));
+    }
+
+
+    foreach ($historiesToReprocessData as $historyData) {
+      // Os números deste histórico são adicionados ao conjunto total de números sorteados
+      $currentHistoryNumbers = array_map('intval', explode(" ", $historyData['numbers']));
+      $allAddedNumbers = array_merge($allAddedNumbers, $currentHistoryNumbers);
+      $uniqueNumbers = array_unique($allAddedNumbers);
+      $game = Game::findOrFail($game_id);
+
+      // Recria o histórico
+      $newGameHistory = GameHistory::create([
+        "description" => $historyData['description'],
+        "type" => $historyData['type'],
+        "result_numbers" => $historyData['result_numbers'],
+        "numbers" => $historyData['numbers'],
+        "game_id" => $historyData['game_id'],
+        "round" => $historyData['round'],
+        "created_at" => $historyData['created_at'],
+      ]);
+
+      // Consulta novamente os históricos para obter a quantidade de históricos até o momento
+      $gameHistoryQnt = GameHistory::where('game_id', $game_id)
+        ->where('type', 'ADDING_NUMBER')
+        ->where('round', $game->round)
+        ->count();
+
+
+      $purchases = Purchase::where('game_id', $game_id)
+        ->where('round', $game->round)
+        ->where('status', 'PAID')
+        ->get();
+
+      $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
+
+      $awards = GameAward::where('game_id', $game_id)->get();
+
+      $this->handleAwards($game_id, $purchasePoints, $awards, $game->round, $newGameHistory->id, $gameHistoryQnt);
+    }
+
+    // Se o jogo estava fechado e não houve vencedor, atualiza o status para 'CLOSED' após o reprocessamento
+    $game = Game::findOrFail($game_id);
+    if ($game->status === 'FINISHED') {
+      $winnerAward = GameAward::where('game_id', $game_id)
+        ->where('condition_type', 'WINNER')
+        ->where('only_when_finish_round', true)
+        ->first();
+      if (
+        $winnerAward || UserAwards::where('game_id', $game_id)
+        ->where('game_award_id', $winnerAward->id)
+        ->where('round', $game->round)
+        ->exists()
+      ) {
+        // Se não há prêmio de vencedor ou já foi concedido, mantém o status 'CLOSED'
+        $game->status = 'CLOSED';
+        $game->save();
+        GameHistory::create([
+          "description" => "JOGO EM ANDAMENTO NOVAMENTE",
+          "numbers" => "",
+          "type" => "CLOSED",
+          'game_id' => $game->id,
+        ]);
+      }
+    }
+
+    return redirect(route('show-game', ['id' => $game_id]))->with(['tab' => 'tab-results', 'success' => 'Histórico removido e subsequentes reprocessados com sucesso!']);
   }
 
 
@@ -582,7 +928,7 @@ class AdminController extends Controller
   public function user_limit_credit_restart(Request $request, $user_id)
   {
     if (Auth::user()->role->level_id !== 'admin') {
-      redirect('/auth/logout');
+      return redirect('/auth/logout');
     }
     $user = User::find($user_id);
 

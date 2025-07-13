@@ -15,7 +15,7 @@ return new class extends Migration
       $table->id();
 
       $table->string("name");
-      $table->enum('condition_type', ['EXACT_POINT', 'WINNER', 'SECOND_WINNER']);
+      $table->enum('condition_type', ['EXACT_POINT', 'WINNER', 'SECONDARY_WINNER']);
 
       $table->integer('exact_point_value')->nullable();
       $table->integer('winner_point_value')->nullable();

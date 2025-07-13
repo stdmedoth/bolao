@@ -19,7 +19,10 @@
                 </thead>
                 <tbody>
                     @foreach ($winners as $index => $winner)
-                        <tr>
+                        <tr {{ $winner->game_award->condition_type == 'WINNER' ? 'class=table-primary' : '' }}
+                            {{ $winner->game_award->condition_type == 'SECONDARY_WINNER' ? 'class=table-info' : '' }}
+                            {{ $winner->game_award->condition_type == 'EXACT_POINT' && $winner->game_award->exact_point_value == 0 ? 'class=table-danger' : '' }}>
+
                             <td>{{ $winner->purchase->identifier }}</td>
                             <td>{{ $winner->purchase->gambler_name }}</td>
                             <td><span>R$
@@ -75,7 +78,7 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-center mt-4">
-                {{ $user_awards->links('pagination::bootstrap-5') }}
+                {{ $user_awards->appends(request()->all())->links('pagination::bootstrap-5') }}
             </div>
         </div>
     @endif
