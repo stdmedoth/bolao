@@ -13,6 +13,9 @@
                         <th>Vlr. Prêmio</th>
                         <th>Pontuação</th>
                         <th>Vendedor</th>
+                        @if (auth()->user()->role->level_id == 'admin')
+                            <th>Pago Por</th>
+                        @endif
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -30,6 +33,9 @@
                             <td><span class="fw-bold text-primary">{{ $winner->userPoint }}</span></td>
                             <td>{{ in_array($winner->purchase->seller->role->level_id, ['seller']) ? $winner->purchase->seller->name : 'Banca Central' }}
                             </td>
+                            @if (auth()->user()->role->level_id == 'admin')
+                                <td>{{ __($winner->purchase->paid_by_user->name) }} </td>
+                            @endif
                             <td><span class="badge bg-label-primary me-1">{{ __($winner->status) }}</span></td>
                             <td>
                                 <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse"

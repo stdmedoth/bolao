@@ -235,12 +235,12 @@
                         @endif
 
                         <th>Pontuação
-                            @if (in_array(Auth::user()->role->level_id, ['admin']))
-                                <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal"
-                                    data-bs-target="#filtroPointsModal">
-                                    <i class="bx bx-filter-alt"></i>
-                                </button>
-                            @endif
+                            {{-- @if (in_array(Auth::user()->role->level_id, ['admin'])) --}}
+                            <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal"
+                                data-bs-target="#filtroPointsModal">
+                                <i class="bx bx-filter-alt"></i>
+                            </button>
+                            {{-- @endif --}}
                         </th>
 
                         <th>Números</th>

@@ -32,7 +32,7 @@
                     @if (auth()->user()->role->level_id == 'admin')
                         <div class="form-group">
                             <label for="seller_id">Local do jogo</label>
-                            <select class="form-control" name="seller_id">
+                            <select class="form-control" name="seller_id" required>
                                 <option value="">Selecionar um Local</option>
                                 <option value="{{ auth()->user()->id }}"
                                     {{ old('seller_id') == auth()->user()->id ? 'selected' : '' }}>Banca Central

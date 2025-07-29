@@ -64,7 +64,9 @@ class PurchaseBatchController extends Controller
     $filePath = $file->getRealPath();
 
     // 2. Leitura e parse do arquivo CSV
-    $data = array_map('str_getcsv', file($filePath));
+    //$data = array_map('str_getcsv', file($filePath));
+    $data = array_map(fn($line) => str_getcsv($line, ';'), file($filePath));
+    $data[0][0] = str_replace("\u{FEFF}", '', $data[0][0]);
 
     // Pega a primeira linha como cabeçalho e remove-a dos dados
     $header = array_shift($data);

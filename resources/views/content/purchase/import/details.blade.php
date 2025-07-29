@@ -161,7 +161,8 @@
                                             <div class="p-3 bg-light border rounded">
                                                 <h6>Mensagens:</h6>
                                                 @if ($item->messages->isEmpty())
-                                                    <p class="text-muted">Nenhuma mensagem para este item.</p>
+                                                    <p class="text-muted">Não há nenhum erro para esse item, aguardando
+                                                        aprovação.</p>
                                                 @else
                                                     <ul>
                                                         @foreach ($item->messages as $message)
