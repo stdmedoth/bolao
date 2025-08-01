@@ -72,6 +72,7 @@ class AdminController extends Controller
       'comission_percent' => 'required',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:6',
+      'active_refer_earn' => 'boolean',
       'role_user_id' => 'required|exists:role_users,id',
       'invited_by_id' => 'exists:users,id',
     ]);
@@ -124,6 +125,7 @@ class AdminController extends Controller
       'comission_percent' => 'required',
       'phone' => 'string|max:255',
       'role_user_id' => 'exists:role_users,id',
+      'active_refer_earn' => 'boolean',
       'invited_by_id' => 'exists:users,id',
     ]);
 

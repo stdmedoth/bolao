@@ -21,6 +21,17 @@
                 @continue;
             @endif
 
+            @php
+                // Check if user has the required attributes
+                // Skip to the next menu item if attribute is not present
+                if (isset($menu->user_attribs)) {
+                    foreach ($menu->user_attribs as $attrib) {
+                        if (auth()->user()->role->level_id != 'admin' && auth()->user()->{$attrib} == 0) {
+                            continue 2; // Skip to the next menu item
+                        }
+                    }
+                }
+            @endphp
             {{-- adding active and open class if child is active --}}
 
             {{-- menu headers --}}

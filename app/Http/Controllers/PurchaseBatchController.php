@@ -27,10 +27,16 @@ class PurchaseBatchController extends Controller
     // Busca todos os jogos disponíveis para o select box
     $game = Game::find($game_id);
 
-    $purchaseBatches = PurchaseBatch::where('user_id', Auth::user()->id)->paginate(10);
+    $purchaseBatches = PurchaseBatch::where('user_id', Auth::user()->id)->paginate(10, ['*'], 'purchaseBatchesPage');
     // Define a aba ativa para 'tab-import-batch'
-    session()->flash('tab', 'tab-import-batch');
-    $tab = 'tab-import-batch';
+
+    if ($request->has('purchaseBatchesPage')) {
+      session()->flash('tab', 'tab-batch-list');
+      $tab = 'tab-batch-list';
+    }else{
+      session()->flash('tab', 'tab-import-batch');
+      $tab = 'tab-import-batch';
+    }
 
     // Retorna a view com os dados necessários
     return view('content.purchase.import.view_batch', compact('game', 'tab', 'purchaseBatches'));
@@ -141,7 +147,7 @@ class PurchaseBatchController extends Controller
         $itemValidator = Validator::make($itemData, [
           'gambler_name' => 'required|string|max:255',
           'gambler_phone' => 'nullable|string|max:20',
-          'numbers' => 'required|string|max:255', // Ex: "11 22 33"
+          'numbers' => 'required|string|size:32', // Ex: "11 22 33"
           'price' => 'required|numeric|min:0',
           'seller_id' => 'required|exists:users,id', // Verifica se o vendedor existe
           //'status' => 'nullable|string|max:50', // Ex: 'pending', 'paid'
@@ -150,6 +156,7 @@ class PurchaseBatchController extends Controller
         ], [
           'gambler_name.required' => "Nome do apostador é obrigatório.",
           'numbers.required' => "Números são obrigatórios.",
+          'numbers.size' => "Números devem ter exatamente 11 dezenas.",
           'price.required' => "Preço é obrigatório.",
           'price.numeric' => "Preço deve ser um valor numérico.",
           'price.min' => "Preço deve ser maior ou igual a 0.",

@@ -36,6 +36,7 @@ class User extends Authenticatable
 
     'role_user_id',
     'invited_by_id',
+    'active_refer_earn',
 
     'cc_name',
     'cc_number',

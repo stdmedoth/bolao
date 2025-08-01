@@ -127,9 +127,12 @@
       "url": "/indique_ganhe",
       "name": "Indique e ganhe",
       "user_roles_level": [
-        "seller",
         "admin",
+        "seller",
         "gambler"
+      ],
+      "user_attribs": [
+        "active_refer_earn"
       ],
       "icon": "menu-icon tf-icons bx bx-wallet",
       "slug": "app-email",

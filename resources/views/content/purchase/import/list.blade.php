@@ -52,6 +52,10 @@
                             @endforeach
                         </tbody>
                     </table>
+                    <!-- Controles de paginação -->
+                    <div class="d-flex justify-content-center mt-4">
+                        {{ $purchaseBatches->appends(request()->all())->links('pagination::bootstrap-5') }}
+                    </div>
                 </div>
             @endif
         </div>
