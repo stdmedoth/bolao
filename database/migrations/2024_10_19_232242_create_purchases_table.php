@@ -26,7 +26,11 @@ return new class extends Migration
 
       $table->integer('round')->default(1);
 
+      $table->integer('points')->default(0);
+
       $table->string('identifier')->unique()->nullable();
+
+      $table->boolean('imported')->default(false);
 
       $table->unsignedBigInteger('game_id');
       $table->unsignedBigInteger('user_id');

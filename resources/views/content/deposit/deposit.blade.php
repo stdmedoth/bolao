@@ -65,7 +65,8 @@
                             <div class="form-group">
                                 <label for="amount" class="form-label">Valor do Depósito</label>
                                 <input type="text" class="form-control" id="amount" name="amount"
-                                    placeholder="Digite o valor" value="{{ session('amount', old('amount')) }}" required>
+                                    placeholder="Digite o valor" value="{{ session('amount', old('amount')) ?? '0,00' }}"
+                                    required>
                                 <small class="text-danger" id="error-message" style="display: none;">O valor deve ser no
                                     mínimo R$ 5,00.</small>
                             </div>
@@ -76,6 +77,11 @@
 
                                 // Função para aplicar a máscara de Real
                                 function formatToBRL(value) {
+                                    // Uma pequena melhoria: se o valor estiver vazio, retorne uma string vazia.
+                                    if (!value) {
+                                        return '';
+                                    }
+
                                     let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
                                     let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
                                         style: 'currency',
@@ -86,10 +92,11 @@
 
                                 // Evento de input para aplicar a máscara ao digitar
                                 amountInput.addEventListener('input', () => {
-                                    let cursorPosition = amountInput.selectionStart;
                                     let formattedValue = formatToBRL(amountInput.value);
                                     amountInput.value = formattedValue;
-                                    amountInput.setSelectionRange(cursorPosition, cursorPosition);
+
+                                    // CORREÇÃO: Mova o cursor para o final do novo valor formatado
+                                    amountInput.setSelectionRange(formattedValue.length, formattedValue.length);
                                 });
 
                                 // Evento de blur para validar o valor

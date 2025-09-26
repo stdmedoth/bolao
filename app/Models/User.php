@@ -36,6 +36,7 @@ class User extends Authenticatable
 
     'role_user_id',
     'invited_by_id',
+    'seller_id',
     'active_refer_earn',
 
     'cc_name',
@@ -88,5 +89,10 @@ class User extends Authenticatable
   public function invited_by()
   {
     return $this->belongsTo(User::class, 'invited_by_id', 'id');
+  }
+
+  public function seller()
+  {
+    return $this->belongsTo(User::class, 'seller_id', 'id');
   }
 }

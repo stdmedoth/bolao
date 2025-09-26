@@ -165,16 +165,7 @@ class GameController extends Controller
     }
 
     if ($request->has('points') && $request->points != '') {
-      $desiredPoints = intval($request->points); // Renomeei para maior clareza
-
-      $builder = $builder->whereIn('id', function ($query) use ($desiredPoints, $game) {
-        $query->select('purchase_id')
-          ->from('user_awards')
-          ->where('game_id', $game->id)
-          ->where('round', $game->round)
-          ->groupBy('purchase_id')
-          ->havingRaw('MAX(points) = ?', [$desiredPoints]); // AQUI está a mudança!
-      });
+      $builder = $builder->where('points', $request->points);
     }
 
     $purchases = $builder->paginate(20, ['*'], 'purchases_page');
@@ -184,7 +175,15 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
       $points = count($matchedNumbers);
+      if (!in_array($purchase->status, ["PAID", "FINISHED"])) {
+        // Se a compra não está paga ou finalizada, não deve ter números correspondentes
+        // e pontos zerados.
+        // Isso é útil para compras que estão pendentes ou canceladas.
+        $matchedNumbers = [];
+        $points = 0;
+      }
 
+      $purchases[$key]['matched_numbers'] = $matchedNumbers;
       $purchases[$key]['points'] = $points;
     }
 

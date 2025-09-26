@@ -138,6 +138,8 @@
       "slug": "app-email",
       "target": "_blank"
     },
+	
+	
     {
       "name": "Comunidade",
       "user_roles_level": [
@@ -147,7 +149,38 @@
       ],
       "icon": "menu-icon tf-icons bx bx-group",
       "slug": "app-email",
-      "target": "https://api.whatsapp.com/send?phone=19997655946"
+      "target": "https://chat.whatsapp.com/ECZ2DJ8TNkmK9aNNBOwNUp?mode=ems_wa_t"
+    },
+	
+	
+    {
+      "name": "Suporte",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon fab fa-whatsapp",
+      "slug": "whatsapp-support",
+      "target": "https://api.whatsapp.com/send/?phone=5511979894075&text&type=phone_number&app_absent=0",
+      "style": "color: #25D366; font-weight: 500;",
+      "icon_style": "color: #25D366; font-size: 1.2em;"
+    },
+	
+	
+	
+	 {
+      "name": "Baixe  o APP (Android)",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon fab fa-android",
+      "slug": "android",
+      "target": "https://APP.bolaoentreamigosvip.com/apk/bolao_vip_19111227.apk",
+      "style": "color: #25D366; font-weight: 500;",
+      "icon_style": "color: #25D366; font-size: 1.2em;"
     }
   ]
 }

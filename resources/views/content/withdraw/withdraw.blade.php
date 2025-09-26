@@ -27,6 +27,51 @@
             </div>
         @endif
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const amountInput = document.getElementById('amount');
+                const errorMessage = document.getElementById('error-message');
+
+                // Função para aplicar a máscara de Real
+                function formatToBRL(value) {
+                    // Uma pequena melhoria: se o valor estiver vazio, retorne uma string vazia.
+                    if (!value) {
+                        return '';
+                    }
+
+                    let cleanValue = value.replace(/\D/g, ''); // Remove caracteres não numéricos
+                    let formattedValue = (cleanValue / 100).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                    });
+                    return formattedValue.replace('R$', '').trim();
+                }
+
+                // Evento de input para aplicar a máscara ao digitar
+                amountInput.addEventListener('input', () => {
+                    let formattedValue = formatToBRL(amountInput.value);
+                    amountInput.value = formattedValue;
+
+                    // CORREÇÃO: Mova o cursor para o final do novo valor formatado
+                    amountInput.setSelectionRange(formattedValue.length, formattedValue.length);
+                });
+
+                // Evento de blur para validar o valor
+                amountInput.addEventListener('blur', () => {
+                    let numericValue = parseFloat(amountInput.value.replace('.', '').replace(',', '.')) || 0;
+                    if (numericValue < 5) {
+                        errorMessage.style.display = 'block';
+                    } else {
+                        errorMessage.style.display = 'none';
+                    }
+                });
+
+                document.querySelector('form').addEventListener('submit', (e) => {
+                    const rawValue = amountInput.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+                    amountInput.value = rawValue; // Envia como float-friendly (e.g., "1234.56")
+                });
+            });
+        </script>
         <!-- Basic Bootstrap Table -->
         <div class="card">
             <div class="card-body">
@@ -34,8 +79,10 @@
                     @csrf
                     <div class="form-group">
                         <label for="amount" class="form-label">Valor do Saque</label>
-                        <input type="number" class="form-control" id="amount" name="amount"
-                            placeholder="Digite o valor" required>
+                        <input class="form-control" id="amount" name="amount" type="text"
+                            placeholder="Digite o valor" value="{{ session('amount', old('amount')) ?? '0,00' }}" required>
+                        <small class="text-danger" id="error-message" style="display: none;">O valor deve ser no
+                            mínimo R$ 5,00.</small>
                     </div>
                     @error('amount')
                         <small class="text-danger">{{ $message }}</small>

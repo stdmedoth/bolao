@@ -54,6 +54,7 @@ use App\Http\Controllers\ReferEarnController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\WithdrawalController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 use Illuminate\Support\Facades\Artisan;
@@ -67,6 +68,13 @@ Route::get('/auth/logout', [LoginBasic::class, 'logout'])->name('logout');
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('register');
 Route::post('/auth/register-basic', [RegisterBasic::class, 'validate'])->name('register-validate');
 Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('reset-password');
+Route::post('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'validate'])->name('reset-password-validate');
+
+Route::get('/auth/reset-password/{token}', function (Request $request, string $token) {
+  return view('content.authentications.auth-forgot-password-reset-basic', ['token' => $token, 'email' => $request->input('email')]);
+})->middleware('guest')->name('password.reset');
+
+Route::post('/auth/reset-password', [ForgotPasswordBasic::class, 'reset'])->middleware('guest')->name('password.reset-post');
 
 
 Route::middleware('auth:web')->group(function () {
@@ -122,6 +130,8 @@ Route::middleware('auth:web')->group(function () {
 
   // Formulário para upload do CSV
   Route::get('/purchases/import/{game_id}', [PurchaseBatchController::class, 'importForm'])->name('purchases.import.form');
+  Route::get('/purchases/delete/{game_id}', [PurchaseBatchController::class, 'delete'])->name('purchases.import.delete');
+
   // Processar o upload do CSV e exibir a pré-visualização/erros
   Route::post('/purchases/import/upload', [PurchaseBatchController::class, 'storeBatch'])->name('purchases.import.store');
   Route::get('/purchases/import/details/{id}', [PurchaseBatchController::class, 'show'])->name('purchases.import.show');
@@ -152,6 +162,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
   Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');
+  Route::get('/indique_ganhe/delete/{id}', [ReferEarnController::class, 'delete'])->name('refer_earns_delete');
   Route::get('/indique_ganhe', [ReferEarnController::class, 'index'])->name('refer_earn-view');
 });
 

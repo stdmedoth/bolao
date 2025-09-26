@@ -45,6 +45,13 @@
                                             class="btn btn-sm btn-info" title="Ver Detalhes">
                                             <i class="fas fa-eye"></i> Ver
                                         </a>
+                                        {{-- Exemplo de botão para excluir o lote --}}
+                                        <a href="{{ route('purchases.import.delete', $batch->id) }}"
+                                            class="btn btn-sm btn-danger" title="Excluir Lote"
+                                            onclick="return confirm('Tem certeza que deseja excluir este lote?')">
+                                            <i class="fas fa-trash"></i> Excluir
+                                        </a>
+
                                         {{-- Exemplo de botão para aprovar/processar o lote --}}
                                         {{-- <button type="button" class="btn btn-sm btn-success" title="Processar Lote">Processar</button> --}}
                                     </td>

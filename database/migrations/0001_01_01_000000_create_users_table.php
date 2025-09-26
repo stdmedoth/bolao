@@ -55,6 +55,8 @@ return new class extends Migration
 
       $table->unsignedBigInteger('invited_by_id')->nullable();
 
+      $table->unsignedBigInteger('seller_id')->nullable();
+
       $table->boolean('active_refer_earn')->default(false);
 
       $table->timestamp('email_verified_at')->nullable();

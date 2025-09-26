@@ -27,15 +27,24 @@
                         </div>
                         <!-- /Logo -->
                         <h4 class="mb-1">Esqueceu sua senha? 🔒</h4>
-                        <p class="mb-6">Insira seu e-mail e enviaremos instruções para redefinir sua senha</p>
-                        <form id="formAuthentication" class="mb-6" action="{{ url('/auth/forgot-password-basic') }}"
+                        <form id="formAuthentication" class="mb-6" action="{{ url('/auth/reset-password') }}"
                             method="POST">
+                            <input type="hidden" value="{{ $token }}" name="token">
                             <div class="mb-6">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="text" class="form-control" id="email" name="email"
-                                    placeholder="Insira seu e-mail" autofocus>
+                                <input readonly type="text" class="form-control" id="email" name="email"
+                                    placeholder="Email" value="{{ $email }}" autofocus>
                             </div>
-
+                            <div class="mb-6">
+                                <label for="password" class="form-label">Senha</label>
+                                <input type="text" class="form-control" id="password" name="password"
+                                    placeholder="Insira sua senha" autofocus>
+                            </div>
+                            <div class="mb-6">
+                                <label for="password_confirmation" class="form-label">Confirme a Senha</label>
+                                <input type="text" class="form-control" id="password_confirmation"
+                                    name="password_confirmation" placeholder="Insira sua senha" autofocus>
+                            </div>
                             @if (isset($errors) && count($errors) > 0)
                                 @foreach ($errors->all() as $message)
                                     <div class="alert alert-danger display-hide">
@@ -43,17 +52,16 @@
                                     </div>
                                 @endforeach
                             @endif
-
+                            <!-- Exibição da mensagem de erro geral -->
                             @if (session('success'))
                                 <div class="alert alert-success">
                                     {{ session('success') }}
                                 </div>
                             @endif
-
                             <input type="hidden" name="_token" value="{{ csrf_token() }}" />
-                            <button class="btn btn-primary d-grid w-100">Enviar link no email</button>
-                        </form>
+                            <button class="btn btn-primary d-grid w-100">Recuperar senha</button>
 
+                        </form>
                         <div class="text-center">
                             <a href="{{ url('auth/login-basic') }}" class="d-flex justify-content-center">
                                 <i class="bx bx-chevron-left scaleX-n1-rtl me-1"></i>

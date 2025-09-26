@@ -9,6 +9,7 @@ use App\Models\PurchaseBatchItems;
 use App\Models\PurchaseBatchItemMessage; // Importe a nova Model
 use App\Models\Transactions;
 use App\Models\User;
+use App\Rules\ValidDezenas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,16 +31,8 @@ class PurchaseBatchController extends Controller
     $purchaseBatches = PurchaseBatch::where('user_id', Auth::user()->id)->paginate(10, ['*'], 'purchaseBatchesPage');
     // Define a aba ativa para 'tab-import-batch'
 
-    if ($request->has('purchaseBatchesPage')) {
-      session()->flash('tab', 'tab-batch-list');
-      $tab = 'tab-batch-list';
-    }else{
-      session()->flash('tab', 'tab-import-batch');
-      $tab = 'tab-import-batch';
-    }
-
     // Retorna a view com os dados necessários
-    return view('content.purchase.import.view_batch', compact('game', 'tab', 'purchaseBatches'));
+    return view('content.purchase.import.view_batch', compact('game',  'purchaseBatches'));
   }
 
   /**
@@ -115,6 +108,8 @@ class PurchaseBatchController extends Controller
 
     // Inicia uma transação de banco de dados para garantir atomicidade
     DB::beginTransaction();
+
+    $seller_amounts = []; // Array para armazenar os saldos dos vendedores
     try {
       // 3. Criação do registro PurchaseBatch (o lote principal)
       $game = Game::find($request->input('game_id'));
@@ -147,7 +142,7 @@ class PurchaseBatchController extends Controller
         $itemValidator = Validator::make($itemData, [
           'gambler_name' => 'required|string|max:255',
           'gambler_phone' => 'nullable|string|max:20',
-          'numbers' => 'required|string|size:32', // Ex: "11 22 33"
+          'numbers' => ['required', 'string', new ValidDezenas],
           'price' => 'required|numeric|min:0',
           'seller_id' => 'required|exists:users,id', // Verifica se o vendedor existe
           //'status' => 'nullable|string|max:50', // Ex: 'pending', 'paid'
@@ -156,7 +151,6 @@ class PurchaseBatchController extends Controller
         ], [
           'gambler_name.required' => "Nome do apostador é obrigatório.",
           'numbers.required' => "Números são obrigatórios.",
-          'numbers.size' => "Números devem ter exatamente 11 dezenas.",
           'price.required' => "Preço é obrigatório.",
           'price.numeric' => "Preço deve ser um valor numérico.",
           'price.min' => "Preço deve ser maior ou igual a 0.",
@@ -189,7 +183,7 @@ class PurchaseBatchController extends Controller
             'message' => $errorMessage,
           ];
         } else {
-          $validItems[] = [
+          $validItem = [
             'purchase_batch_id' => $purchaseBatch->id,
             'gambler_name' => $itemData['gambler_name'],
             'gambler_phone' => $itemData['gambler_phone'] ?? null,
@@ -206,6 +200,13 @@ class PurchaseBatchController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
           ];
+
+          $seller = User::find($itemData['seller_id']);
+          if ($seller->game_credit < $itemData['price']) {
+            $validItem['paid_by_user_id'] = NULL;
+          }
+
+          $validItems[] = $validItem; // Adiciona o item válido ao array
         }
       }
 
@@ -231,7 +232,7 @@ class PurchaseBatchController extends Controller
           'game_id' => $game->id,
           'identifier' => "BATCH_{$purchaseBatch->id}_ERROR_" . generate_identifier(),
           'round' => $originalData['round'] ?? ($purchaseBatch->round ?? 1),
-          'paid_by_user_id' => $itemData['seller_id'],
+          'paid_by_user_id' => NULL,
           'user_id' => $purchaseBatch->user_id,
           'seller_id' => $itemData['seller_id'],
         ]);
@@ -288,7 +289,7 @@ class PurchaseBatchController extends Controller
         continue;
       }
 
-      $purchase = Purchase::create([
+      $data = [
         'gambler_name' => $item->gambler_name,
         'gambler_phone' => $item->gambler_phone,
         'numbers' => $item->numbers,
@@ -298,13 +299,28 @@ class PurchaseBatchController extends Controller
         'game_id' => $purchaseBatch->game_id,
         'identifier' => $item->identifier,
         'round' => $purchaseBatch->round,
+        'imported' => true,
         'paid_by_user_id' => $item->paid_by_user_id,
         'user_id' => $purchaseBatch->user_id,
         'seller_id' => $item->seller_id,
-      ]);
-
+      ];
       $seller = User::find($item->seller_id);
-      if ($seller->role->level_id == 'seller') {
+
+      // Se o vendedor não tiver crédito suficiente, marca como PENDING
+      // e não define paid_by_user_id
+      if ($seller->game_credit < $item->price) {
+        $data['paid_by_user_id'] = NULL;
+        $data['status'] = "PENDING";
+      }
+
+      $purchase = Purchase::create($data);
+      // Se o vendedor tem crédito suficiente, processa o pagamento
+      if ($seller->game_credit >= $item->price) {
+
+        $seller->game_credit = $seller->game_credit - $item->price;
+        $seller->save();
+
+        // Paga a comissão do vendedor, se aplicável
         $comission = $purchase->price * $seller->comission_percent;
         Transactions::create(
           [
@@ -317,18 +333,17 @@ class PurchaseBatchController extends Controller
         );
         $seller->game_credit = $seller->game_credit + $comission;
         $seller->save();
+
+        Transactions::create(
+          [
+            "type" => 'PAY_PURCHASE',
+            "game_id" => $purchase->game_id,
+            "purchase_id" => $purchase->id,
+            "amount" => $purchase->price,
+            "user_id" => $item->paid_by_user_id,
+          ]
+        );
       }
-
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE',
-          "game_id" => $purchase->game_id,
-          "purchase_id" => $purchase->id,
-          "amount" => $purchase->price,
-          "user_id" => $item->paid_by_user_id,
-        ]
-      );
-
 
       $item->status = 'imported'; // Marca o item como pago
       $item->save();
@@ -386,9 +401,28 @@ class PurchaseBatchController extends Controller
     ];
     // Carrega os itens associados ao lote, e os relacionamentos do lote
     // E agora, carrega também as mensagens de cada item
-    $purchaseBatch = PurchaseBatch::with(['game', 'user', 'seller', 'paid_by_user'])->find($purchaseBatchId);
+    $purchaseBatch = PurchaseBatch::with(['game', 'user', 'paid_by_user'])->find($purchaseBatchId);
     $items = $purchaseBatch->items()->with(['seller', 'messages'])->paginate(10);
 
     return view('content.purchase.import.details', compact('purchaseBatch', 'status_translate', 'items'));
+  }
+
+  public function delete(Request $request, $purchaseBatchId)
+  {
+    // Busca o lote de compras pelo ID
+    $purchaseBatch = PurchaseBatch::findOrFail($purchaseBatchId);
+
+    // Verifica se o usuário autenticado é o dono do lote ou um administrador
+    if (Auth::user()->id != $purchaseBatch->user_id) {
+      return redirect()->back()->with('error', 'Você não tem permissão para excluir este lote.');
+    }
+
+    // Exclui o lote e seus itens associados
+    $purchaseBatch->items()->delete();
+    $purchaseBatch->delete();
+
+    return redirect()->route('purchases.import.form', ['game_id' => $purchaseBatch->game_id])
+      ->with('success', 'Lote excluído com sucesso!')
+      ->with('tab', 'tab-batch-list');
   }
 }

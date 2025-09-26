@@ -11,6 +11,28 @@
 @endsection
 
 @section('page-script')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let savedTab = localStorage.getItem('activeBatchTab');
+            let initialTab = savedTab || 'import-batch';
+
+            const triggerEl = document.querySelector(`[data-bs-toggle="tab"][href="#${initialTab}"]`);
+            console.log('Initial Tab:', initialTab); // Debugging line to check the initial tab
+            console.log('Trigger Element:', triggerEl); // Debugging line to check if the trigger
+            if (triggerEl) {
+                new bootstrap.Tab(triggerEl).show();
+                localStorage.setItem('activeBatchTab', initialTab);
+            }
+
+            // Atualiza o localStorage quando uma aba for clicada
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    const target = event.target.getAttribute('href').replace('#', '');
+                    localStorage.setItem('activeBatchTab', target);
+                });
+            });
+        });
+    </script>
 @endsection
 
 
@@ -31,6 +53,10 @@
             'purchaseBatches' => $purchaseBatches,
         ])
     </div>
+
+    <script>
+        window.backendSelectedTab = @json(session('tab'));
+    </script>
 
 
 @endsection

@@ -40,10 +40,17 @@
                 <div class="input-group">
                     <select class="form-control" name="game_id">
                         @if (auth()->user()->role->level_id == 'admin')
-                            <option value="">Todos</option>
+                            <option value="all">Todos</option>
                         @endif
+                        @php
+                            if (!request('game_id')) {
+                                $selected_game = $games->first()->id ?? null;
+                            } else {
+                                $selected_game = request('game_id');
+                            }
+                        @endphp
                         @foreach ($games as $game)
-                            <option value="{{ $game->id }}" {{ request('game_id') == $game->id ? 'selected' : '' }}>
+                            <option value="{{ $game->id }}" {{ $selected_game == $game->id ? 'selected' : '' }}>
                                 {{ $game->name }}</option>
                         @endforeach
                     </select>

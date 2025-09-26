@@ -144,7 +144,7 @@
                             <label for="game_credit" class="form-label">Limite atual de Credito (para Jogar)</label>
                             <input type="text" class="form-control" id="game_credit" inputmode="numeric"
                                 name="game_credit" placeholder="Digite o valor"
-                                value="{{ number_format($user->game_credit, 2, ',', '.') }}" required>
+                                value="{{ number_format($user->game_credit, 2, '.', '') }}" required>
                         </div>
                     </div>
 
@@ -166,7 +166,7 @@
                             let cursorPosition = gameCreditInput.selectionStart;
                             let formattedValue = formatToBRL(gameCreditInput.value);
                             gameCreditInput.value = formattedValue;
-                            gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+                            gameCreditInput.setSelectionRange(formattedValue.length, formattedValue.length);
                         });
                     </script>
 
@@ -176,7 +176,7 @@
                             <i id="edit_limit" class="bx bx-edit-alt me-1"></i>
                             <input type="text" class="form-control" disabled id="game_credit_limit" inputmode="numeric"
                                 name="game_credit_limit" placeholder="Digite o valor"
-                                value="{{ number_format($user->game_credit_limit, 2, ',', '.') }}" required>
+                                value="{{ number_format($user->game_credit_limit, 2, '.', '') }}" required>
                         </div>
 
                         <script>
@@ -202,7 +202,7 @@
                                 let cursorPosition = gameCreditLimitInput.selectionStart;
                                 let formattedValue = formatToBRL(gameCreditLimitInput.value);
                                 gameCreditLimitInput.value = formattedValue;
-                                gameCreditLimitInput.setSelectionRange(cursorPosition, cursorPosition);
+                                gameCreditLimitInput.setSelectionRange(formattedValue.length, formattedValue.length);
                             });
                         </script>
                     </div>
@@ -218,7 +218,7 @@
                     <div class="form-group">
                         <label for="balance" class="form-label">Saldo para sacar</label>
                         <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance"
-                            placeholder="Digite o valor" value="{{ number_format($user->balance, 2, ',', '.') }}"
+                            placeholder="Digite o valor" value="{{ number_format($user->balance, 2, '.', '') }}"
                             required>
                     </div>
 
@@ -233,7 +233,7 @@
                             let cursorPosition = balanceInput.selectionStart;
                             let formattedValue = formatToBRL(balanceInput.value);
                             balanceInput.value = formattedValue;
-                            balanceInput.setSelectionRange(cursorPosition, cursorPosition);
+                            balanceInput.setSelectionRange(formattedValue.length, formattedValue.length);
                         });
                     </script>
 
@@ -241,7 +241,7 @@
                         <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
                         <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent"
                             name="comission_percent" placeholder="Digite o valor"
-                            value="{{ number_format($user->comission_percent, 2, ',', '.') }}" required>
+                            value="{{ number_format($user->comission_percent, 2, '.', '') }}" required>
                     </div>
 
                     <script>
@@ -252,7 +252,7 @@
                             let cursorPosition = comissionPercentInput.selectionStart;
                             let formattedValue = formatToBRL(comissionPercentInput.value);
                             comissionPercentInput.value = formattedValue;
-                            comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
+                            comissionPercentInput.setSelectionRange(formattedValue.length, formattedValue.length);
                         });
 
 

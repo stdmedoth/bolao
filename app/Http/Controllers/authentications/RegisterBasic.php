@@ -5,6 +5,7 @@ namespace App\Http\Controllers\authentications;
 use App\Http\Controllers\Controller;
 use App\Models\ReferEarn;
 use App\Models\User;
+use App\Rules\Cpf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
@@ -20,14 +21,31 @@ class RegisterBasic extends Controller
   public function validate(Request $request)
   {
     // Validação dos dados de entrada
-    $validatedData = $request->validate([
-      'name' => 'required|string|max:255',
-      'document' => 'string|max:255|unique:users',
-      'email' => 'required|string|email|max:255|unique:users',
-      'phone' => 'required|string|max:255',
-      'password' => 'required|string|min:8',
-      'refered_by_id' => 'exists:users,id'
-    ]);
+    $validatedData = $request->validate(
+      [
+        'name' => 'required|string|max:255',
+        'document' => ['required', 'string', new Cpf, 'max:14', 'unique:users'],
+        'email' => 'required|string|email|max:255|unique:users',
+        'phone' => 'required|string|max:255',
+        'password' => 'required|string|min:8',
+        'refered_by_id' => 'exists:users,id'
+      ],
+      [
+        'name.required' => 'O campo nome é obrigatório.',
+        'document.required' => 'O campo CPF é obrigatório.',
+        'document.unique' => 'Este CPF já está em uso.',
+        'email.required' => 'O campo email é obrigatório.',
+        'email.email' => 'O campo email deve ser um endereço de email válido.',
+        'email.unique' => 'Este email já está em uso.',
+        'phone.required' => 'O campo telefone é obrigatório.',
+        'password.required' => 'O campo senha é obrigatório.',
+        'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
+        'refered_by_id.exists' => 'O usuário referenciador não existe.'
+      ]
+    );
+
+    $refered_by_user = $request->input('refered_by_id') ? User::find($request->input('refered_by_id')) : null;
+    $seller = $refered_by_user && $refered_by_user->role->level_id == 'seller' ? $refered_by_user : null;
 
     try {
       // Criação do usuário com os dados validados
@@ -38,6 +56,7 @@ class RegisterBasic extends Controller
         'phone' => $validatedData['phone'],
         'password' => Hash::make($validatedData['password']),
         'invited_by_id' => $request->input('refered_by_id'),
+        'seller_id' => $seller ? $seller->id : null,
         'role_user_id' => 3,
       ]);
 
@@ -46,6 +65,8 @@ class RegisterBasic extends Controller
           'refer_user_id' =>  $request->input('refered_by_id'),
           'invited_user_id' => $user->id,
           'invited_user_bought' => FALSE,
+
+          // TODO: Criar uma configuração para o valor da indicação
           'amount' => 10,
           'earn_paid' => FALSE,
         ]);

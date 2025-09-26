@@ -34,7 +34,9 @@ class TransactionsController extends Controller
       $builder = $builder->whereDate('created_at', '<=', $request->end_date);
     }
 
-    if ($request->has('game_id') && ($request->game_id) != '') {
+    $users = User::without(['invited_by'])->get();
+    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
+    if ($request->has('game_id') && ($request->game_id) != 'all') {
       $builder = $builder->where('game_id', $request->game_id);
 
       // If the date wasnt specified, so we should get the date of last opened game for game_id
@@ -50,11 +52,9 @@ class TransactionsController extends Controller
           $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
         }
       }
+    } elseif (Auth::user()->role->level_id !== 'admin' && $games->last()) {
+      $builder = $builder->where('game_id', $games->first()->id);
     }
-
-
-    $users = User::without(['invited_by'])->get();
-    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
 
     $builder = $builder->orderBy('created_at', 'DESC');
     $transactions = $builder->paginate(20);
@@ -103,7 +103,10 @@ class TransactionsController extends Controller
       $builder = $builder->whereDate('created_at', '<=', $request->end_date);
     }
 
-    if ($request->has('game_id') && ($request->game_id) != '') {
+    $users = User::without(['invited_by'])->get();
+    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
+
+    if ($request->has('game_id') && ($request->game_id) != 'all') {
       $builder = $builder->where('game_id', $request->game_id);
 
 
@@ -120,10 +123,9 @@ class TransactionsController extends Controller
           $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
         }
       }
+    } elseif (Auth::user()->role->level_id !== 'admin' && $games->last()) {
+      $builder = $builder->where('game_id', $games->first()->id);
     }
-
-    $users = User::without(['invited_by'])->get();
-    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
 
     // Get all transactions for summary
     $transactions = $builder->orderBy('created_at', 'DESC')->get();

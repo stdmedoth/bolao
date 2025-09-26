@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\Purchase;
+use App\Models\ReferEarn;
 use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -79,6 +80,10 @@ class PurchaseController extends Controller
 
     $purchase = Purchase::find($id);
 
+    if ($purchase->status == "PAID") {
+      return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta já estava paga!');
+    }
+
     $user = User::find($purchase->user_id);
 
     $role_level_id = Auth::user()->role->level_id;
@@ -99,23 +104,47 @@ class PurchaseController extends Controller
       $user->game_credit -= $purchase->price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+      // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha uma porcentagem em cima da venda
       if ($role_level_id == 'gambler') {
         if ($user->invited_by_id) {
-          $invited_by = User::find($user->invited_by_id);
 
-          $comission = $purchase->price * $invited_by->comission_percent;
+          //verifica se é a primeira aposta do apostador
+          $has_first_purchase = Purchase::where('user_id', $user->id)
+            ->where('status', 'PAID')
+            ->exists();
+          if (!$has_first_purchase) {
+            $refer = ReferEarn::where(
+              'refer_user_id',
+              $user->invited_by_id
+            )->where(
+              'invited_user_id',
+              $user->id
+            )->where(
+              'earn_paid',
+              FALSE
+            )->first();
+            if ($refer) {
+              $refer->invited_user_bought = TRUE;
+              $refer->save();
+            }
+          }
+        }
+
+        // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+        if ($user->seller_id) {
+          $seller = User::find($user->seller_id);
+          $comission = $purchase->price * $seller->comission_percent;
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
               "game_id" => $purchase->game_id,
               "purchase_id" => $purchase->id,
               "amount" => $comission,
-              "user_id" => $user->invited_by_id,
+              "user_id" => $user->seller_id,
             ]
           );
-          $invited_by->game_credit = $invited_by->game_credit + $comission;
-          $invited_by->save();
+          $seller->game_credit = $seller->game_credit + $comission;
+          $seller->save();
         }
       }
     }
@@ -159,9 +188,13 @@ class PurchaseController extends Controller
   {
     $purchase = Purchase::find($id);
 
+    if ($purchase->status == "PENDING") {
+      return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta já estava pendente!');
+    }
+
     $user = User::find($purchase->paid_by_user_id);
 
-    $role_level_id = Auth::user()->role->level_id;
+    $role_level_id = $user->role->level_id;
 
     if (!in_array($role_level_id, ['admin'])) {
 
@@ -169,23 +202,45 @@ class PurchaseController extends Controller
       $user->save();
 
       // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
-      if ($role_level_id == 'gambler') {
-        if ($user->invited_by_id) {
-          $invited_by = User::find($user->invited_by_id);
-          if ($invited_by->role->level_id == 'seller') {
-            $comission = $purchase->price * $invited_by->comission_percent;
-            Transactions::create(
-              [
-                "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
-                "game_id" => $purchase->game_id,
-                "purchase_id" => $purchase->id,
-                "amount" => $comission,
-                "user_id" => $user->invited_by_id,
-              ]
-            );
-            $invited_by->game_credit = $invited_by->game_credit - $comission;
-            $invited_by->save();
+      if (in_array($role_level_id, ['gambler'])) {
+
+        //verifica se é a primeira aposta do apostador
+        $purchase_qnt = Purchase::where('user_id', $user->id)
+          ->where('status', 'PAID')
+          ->count();
+        if ($purchase_qnt > 1) {
+          if ($user->invited_by_id) {
+            $refer = ReferEarn::where(
+              'refer_user_id',
+              $user->invited_by_id
+            )->where(
+              'invited_user_id',
+              $user->id
+            )->where(
+              'earn_paid',
+              FALSE
+            )->first();
+            if ($refer) {
+              $refer->invited_user_bought = FALSE;
+              $refer->save();
+            }
           }
+        }
+
+        if ($user->seller_id) {
+          $seller = User::find($user->seller_id);
+          $comission = $purchase->price * $seller->comission_percent;
+          Transactions::create(
+            [
+              "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+              "game_id" => $purchase->game_id,
+              "purchase_id" => $purchase->id,
+              "amount" => $comission,
+              "user_id" => $user->seller_id,
+            ]
+          );
+          $seller->game_credit = $seller->game_credit - $comission;
+          $seller->save();
         }
       }
     }
@@ -195,7 +250,7 @@ class PurchaseController extends Controller
     $purchase->paid_by_user_id = NULL;
     $purchase->save();
 
-    if ($role_level_id == 'seller') {
+    if (in_array($role_level_id, ['seller'])) {
       $comission = $purchase->price * $user->comission_percent;
       Transactions::create(
         [
@@ -299,11 +354,11 @@ class PurchaseController extends Controller
       $user->game_credit -= $price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
+      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
       if ($role_level_id == 'gambler') {
         if ($request->seller_id) {
-          $invited_by = User::find($request->seller_id);
-          $comission = $purchase->price * $invited_by->comission_percent;
+          $seller = User::find($request->seller_id);
+          $comission = $purchase->price * $seller->comission_percent;
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
@@ -313,8 +368,33 @@ class PurchaseController extends Controller
               "user_id" => $request->seller_id,
             ]
           );
-          $invited_by->game_credit = $invited_by->game_credit + $comission;
-          $invited_by->save();
+          $seller->game_credit = $seller->game_credit + $comission;
+          $seller->save();
+        }
+
+        // adiciona o bonus de indicação
+        if ($user->invited_by_id) {
+
+          //verifica se é a primeira aposta do apostador
+          $has_first_purchase = Purchase::where('user_id', $user->id)
+            ->where('status', 'PAID')
+            ->exists();
+          if (!$has_first_purchase) {
+            $refer = ReferEarn::where(
+              'refer_user_id',
+              $user->invited_by_id
+            )->where(
+              'invited_user_id',
+              $user->id
+            )->where(
+              'earn_paid',
+              FALSE
+            )->first();
+            if ($refer) {
+              $refer->invited_user_bought = TRUE;
+              $refer->save();
+            }
+          }
         }
       }
     }
@@ -373,6 +453,7 @@ class PurchaseController extends Controller
     $repeat_game = Game::find($request->repeat_game_id);
     $newPurchase->game_id = $request->repeat_game_id;
     $newPurchase->round = $repeat_game->round;
+    $newPurchase->imported = false;
 
     $user = User::find(Auth::user()->id);
     $role_level_id = $user->role->level_id;
@@ -419,6 +500,32 @@ class PurchaseController extends Controller
           );
           $invited_by->game_credit = $invited_by->game_credit + $comission;
           $invited_by->save();
+        }
+
+        // adiciona o bonus de indicação
+        if ($user->invited_by_id) {
+
+          //verifica se é a primeira aposta do apostador
+          $has_first_purchase = Purchase::where('user_id', $user->id)
+            ->where('status', 'PAID')
+            ->exists();
+          if (!$has_first_purchase) {
+
+            $refer = ReferEarn::where(
+              'refer_user_id',
+              $user->invited_by_id
+            )->where(
+              'invited_user_id',
+              $user->id
+            )->where(
+              'earn_paid',
+              FALSE
+            )->first();
+            if ($refer) {
+              $refer->invited_user_bought = TRUE;
+              $refer->save();
+            }
+          }
         }
       }
     }

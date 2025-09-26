@@ -38,4 +38,9 @@ class PurchaseBatch extends Model
   {
     return $this->hasMany(PurchaseBatchItems::class, 'purchase_batch_id', 'id');
   }
+
+  public function paid_by_user()
+  {
+    return $this->belongsTo(User::class, 'paid_by_user_id', 'id');
+  }
 }

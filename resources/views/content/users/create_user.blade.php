@@ -187,7 +187,7 @@
                                 let cursorPosition = gameCreditInput.selectionStart;
                                 let formattedValue = formatToBRL(gameCreditInput.value);
                                 gameCreditInput.value = formattedValue;
-                                gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+                                gameCreditInput.setSelectionRange(formattedValue.length, formattedValue.length);
                                 gameCreditInput.setAttribute('edited', 'true');
                             });
                         </script>
@@ -218,13 +218,13 @@
                                 let cursorPosition = gameCreditLimitInput.selectionStart;
                                 let formattedValue = formatToBRL(gameCreditLimitInput.value);
                                 gameCreditLimitInput.value = formattedValue;
-                                gameCreditLimitInput.setSelectionRange(cursorPosition, cursorPosition);
+                                gameCreditLimitInput.setSelectionRange(formattedValue.length, formattedValue.length);
 
                                 const editedCredit = gameCreditInput.getAttribute('edited');
                                 console.log(editedCredit);
                                 if (editedCredit == 'false') {
                                     gameCreditInput.value = formattedValue;
-                                    gameCreditInput.setSelectionRange(cursorPosition, cursorPosition);
+                                    gameCreditInput.setSelectionRange(formattedValue.length, formattedValue.length);
                                 }
                             });
                         </script>
@@ -246,7 +246,7 @@
                         let cursorPosition = balanceInput.selectionStart;
                         let formattedValue = formatToBRL(balanceInput.value);
                         balanceInput.value = formattedValue;
-                        balanceInput.setSelectionRange(cursorPosition, cursorPosition);
+                        balanceInput.setSelectionRange(formattedValue.length, formattedValue.length);
                     });
                 </script>
 
@@ -265,7 +265,7 @@
                         let cursorPosition = comissionPercentInput.selectionStart;
                         let formattedValue = formatToBRL(comissionPercentInput.value);
                         comissionPercentInput.value = formattedValue;
-                        comissionPercentInput.setSelectionRange(cursorPosition, cursorPosition);
+                        comissionPercentInput.setSelectionRange(formattedValue.length, formattedValue.length);
                     });
                 </script>
             @endif

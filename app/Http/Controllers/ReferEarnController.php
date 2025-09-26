@@ -118,7 +118,7 @@ class ReferEarnController extends Controller
     $refer = ReferEarn::find($id);
 
     $user = User::find($refer->refer_user_id);
-    $user->balance +=  $refer->amount;
+    $user->game_credit +=  $refer->amount;
     $user->save();
 
     $refer->earn_paid = true;
@@ -142,7 +142,7 @@ class ReferEarnController extends Controller
     $refer = ReferEarn::find($id);
 
     $user = User::find($refer->refer_user_id);
-    $user->balance -=  $refer->amount;
+    $user->game_credit -=  $refer->amount;
     $user->save();
 
     $refer->earn_paid = false;
@@ -155,6 +155,14 @@ class ReferEarnController extends Controller
         "user_id" => $user->id,
       ]
     );
+
+    return redirect(route('refer_earn-view'));
+  }
+  public function delete(Request $request, $id)
+  {
+
+    $refer = ReferEarn::find($id);
+    $refer->delete();
 
     return redirect(route('refer_earn-view'));
   }

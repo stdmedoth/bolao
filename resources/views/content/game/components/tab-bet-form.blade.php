@@ -47,9 +47,9 @@
                     @endif
 
                     @if (auth()->user()->role->level_id == 'gambler')
-                        @if (auth()->user()->invited_by_id)
+                        @if (auth()->user()->seller_id)
                             <input type="hidden" name="seller_id"
-                                value="{{ \App\Models\User::find(auth()->user()->invited_by_id)->id }}">
+                                value="{{ \App\Models\User::find(auth()->user()->seller_id)->id }}">
                         @else
                             <input type="hidden" name="seller_id"
                                 value="{{ \App\Models\User::where('role_user_id', 1)->first()->id }}">

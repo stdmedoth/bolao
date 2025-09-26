@@ -1,6 +1,29 @@
 <div class="tab-pane fade {{ $tab == 'tab-mybets' ? 'show active' : '' }}" id="mybets" role="tabpanel"
     aria-labelledby="mybets-tab">
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleciona todos os botões de pagar na página
+            const loadOnClickButtons = document.querySelectorAll('.btn-loadonclick');
+
+            loadOnClickButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    // Verifica se o botão já está desabilitado pela lógica do Blade
+                    if (this.classList.contains('disabled')) {
+                        event.preventDefault(); // Impede a navegação se já estiver desabilitado
+                        return;
+                    }
+
+                    // Desabilita o botão imediatamente para evitar clique duplo
+                    this.classList.add('disabled');
+                    this.textContent = 'Processando...';
+
+                    // O navegador continuará com a navegação para o href normalmente.
+                    // Não precisamos de setTimeout ou reativar o botão, pois a página vai recarregar.
+                });
+            });
+        });
+    </script>
     <!-- Formulário de Pesquisa e Filtro -->
     <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
         <div class="row">
@@ -181,7 +204,7 @@
     @endif
 
 
-    @if (in_array(Auth::user()->role->level_id, ['admin']))
+    @if (in_array(Auth::user()->role->level_id, ['admin', 'seller', 'gambler']))
         <div class="modal fade" id="filtroPointsModal" tabindex="-1" aria-labelledby="filtroPointsModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
@@ -284,8 +307,33 @@
                                 <td><span
                                         class="fw-bold text-primary">{{ $purchase->status == 'PAID' ? $purchase->points : '' }}</span>
                                 </td>
+                                <td>
+                                    @php
+                                        // Prepare the arrays once to avoid calling them in the loop repeatedly
+                                        $displayNumbers = explode(' ', $purchase->numbers);
+                                        $matchedNumbers = $purchase->matched_numbers ?? []; // Ensure it's an array
+                                    @endphp
 
-                                <td> {{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}
+                                    {{-- Loop through the numbers to display them --}}
+                                    @foreach ($displayNumbers as $number)
+                                        @php
+                                            $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
+                                        @endphp
+
+                                        {{-- Check if the current number is in the matched array --}}
+                                        @if (in_array($number, $matchedNumbers) && $purchase->status == 'PAID')
+                                            {{-- If it matched, wrap it in a span --}}
+                                            <span class="text-success fw-bold">{{ $paddedNumber }}</span>
+                                        @else
+                                            {{-- Otherwise, just display the number --}}
+                                            {{ $paddedNumber }}
+                                        @endif
+
+                                        {{-- Add a space after each number, but not the last one --}}
+                                        @if (!$loop->last)
+                                            &nbsp; {{-- Using &nbsp; for a non-breaking space --}}
+                                        @endif
+                                    @endforeach
                                 </td>
 
 
@@ -301,16 +349,27 @@
                                 @endif
                                 <!-- -->
 
+                                @php
+                                    $is_imported = $purchase->imported;
+                                    $is_admin = auth()->user()->role->level_id == 'admin';
+                                @endphp
                                 <td>
                                     <a href="{{ route('purchase-pay', array_merge([$purchase->id], request()->query())) }}"
-                                        class="btn btn-success {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
+                                        class="btn btn-success btn-loadonclick {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
                                         Pagar
                                     </a>
 
-                                    <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                        class="btn btn-warning {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
-                                        Estornar
-                                    </a>
+                                    @if ($is_imported)
+                                        <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                                            class="btn btn-warning btn-loadonclick {{ !$is_admin || ($purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED') ? 'disabled' : '' }}">
+                                            Estornar
+                                        </a>
+                                    @else
+                                        <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                                            class="btn btn-warning btn-loadonclick {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
+                                            Estornar
+                                        </a>
+                                    @endif
 
                                     <a href="#" data-purchase_id="{{ $purchase->id }}"
                                         data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
@@ -329,7 +388,6 @@
                                         Repetir
                                     </a>
                                 </td>
-
 
                                 @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
                                     <!-- Usuario de quem Comprou -->

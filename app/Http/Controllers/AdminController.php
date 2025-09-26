@@ -74,7 +74,8 @@ class AdminController extends Controller
       'password' => 'required|string|min:6',
       'active_refer_earn' => 'boolean',
       'role_user_id' => 'required|exists:role_users,id',
-      'invited_by_id' => 'exists:users,id',
+      //'invited_by_id' => 'exists:users,id',
+      'seller_id' => 'exists:users,id', // Adiciona a validação para seller_id
     ]);
 
     $formatFloatInputs = [
@@ -110,24 +111,40 @@ class AdminController extends Controller
   public function update(Request $request, $id)
   {
     $user = User::findOrFail($id);
-    $validatedData = $request->validate([
-      'name' => 'string|max:255',
-      'email' => [
-        'string',
-        'email',
-        'max:255',
-        Rule::unique('users')->ignore($user->id),
+    $validatedData = $request->validate(
+      [
+        'name' => 'string|max:255',
+        'email' => [
+          'string',
+          'email',
+          'max:255',
+          Rule::unique('users')->ignore($user->id),
+        ],
+        'document' => 'string|max:255',
+        'balance' => 'required',
+        'game_credit' => 'required',
+        'game_credit_limit' => 'string',
+        'comission_percent' => 'required',
+        'phone' => 'string|max:255',
+        'role_user_id' => 'exists:role_users,id',
+        'active_refer_earn' => 'boolean',
+        'invited_by_id' => 'exists:users,id',
+        'seller_id' => 'exists:users,id', // Adiciona a validação para seller_id
       ],
-      'document' => 'string|max:255',
-      'balance' => 'required',
-      'game_credit' => 'required',
-      'game_credit_limit' => 'string',
-      'comission_percent' => 'required',
-      'phone' => 'string|max:255',
-      'role_user_id' => 'exists:role_users,id',
-      'active_refer_earn' => 'boolean',
-      'invited_by_id' => 'exists:users,id',
-    ]);
+      [
+        'name.string' => 'O nome deve ser uma string.',
+        'email.email' => 'O email deve ser um endereço de email válido.',
+        'email.unique' => 'Este email já está em uso.',
+        'document.string' => 'O documento deve ser uma string.',
+        'balance.required' => 'O campo saldo é obrigatório.',
+        'game_credit.required' => 'O campo crédito do jogo é obrigatório.',
+        'game_credit_limit.string' => 'O limite de crédito do jogo deve ser uma string.',
+        'comission_percent.required' => 'A porcentagem de comissão é obrigatória.',
+        'phone.string' => 'O telefone deve ser uma string.',
+        'role_user_id.exists' => 'O papel do usuário selecionado não existe.',
+        'invited_by_id.exists' => 'O usuário referenciador não existe.',
+      ]
+    );
 
     $formatFloatInputs = [
       'balance',
@@ -140,6 +157,14 @@ class AdminController extends Controller
         $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
         $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
       }
+    }
+
+    // if invited by so fill seller_id
+    if (isset($validatedData['invited_by_id']) && $validatedData['invited_by_id'] != null) {
+      $refered_by_user = User::find($validatedData['invited_by_id']);
+      $validatedData['seller_id'] = ($refered_by_user && $refered_by_user->role->level_id == 'seller') ? $refered_by_user->id : null;
+    } else {
+      $validatedData['seller_id'] = null; // Se não houver convidado, seller_id deve ser nulo
     }
 
     $user->update($validatedData);
@@ -163,6 +188,10 @@ class AdminController extends Controller
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('invited_by_id', Auth::user()->id);
     }
+    if (Auth::user()->role->level_id == 'seller') {
+      $builder = $builder->where('seller_id', Auth::user()->id);
+    }
+
 
     if ($request->has('search') && $request->search != '') {
       $builder = $builder->where(function ($q) use ($request) {
@@ -580,6 +609,14 @@ class AdminController extends Controller
 
       $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
 
+      // Atualiza os pontos de cada compra
+      foreach ($purchases as $purchase) {
+        $points = $purchasePoints[$purchase->id] ?? 0;
+        $purchase->points = $points;
+        $purchase->save();
+      }
+
+
       $awards = GameAward::where('game_id', $game->id)->get();
 
       if ($gameHistory) {
@@ -740,6 +777,12 @@ class AdminController extends Controller
         ->get();
 
       $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
+      // Atualiza os pontos de cada compra
+      foreach ($purchases as $purchase) {
+        $points = $purchasePoints[$purchase->id] ?? 0;
+        $purchase->points = $points;
+        $purchase->save();
+      }
 
       $awards = GameAward::where('game_id', $game->id)->get();
 
@@ -877,6 +920,12 @@ class AdminController extends Controller
         ->get();
 
       $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
+      // Atualiza os pontos de cada compra
+      foreach ($purchases as $purchase) {
+        $points = $purchasePoints[$purchase->id] ?? 0;
+        $purchase->points = $points;
+        $purchase->save();
+      }
 
       $awards = GameAward::where('game_id', $game_id)->get();
 

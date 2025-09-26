@@ -2,22 +2,23 @@
 $containerFooter = !empty($containerNav) ? $containerNav : 'container-fluid';
 @endphp
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <!-- Footer-->
-<footer class="content-footer footer bg-footer-theme">
-  <div class="{{ $containerFooter }}">
-    <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
-      <div class="text-body">
-        © <script>document.write(new Date().getFullYear())</script>, {{config('variables.creatorName')}}</>
-      </div>
-      <div class="d-none d-lg-inline-block">
-        <!-- <a href="{{ config('variables.licenseUrl') ? config('variables.licenseUrl') : '#' }}" class="footer-link me-4" target="_blank">License</a> -->
-        <!-- <a href="{{ config('variables.moreThemes') ? config('variables.moreThemes') : '#' }}" target="_blank" class="footer-link me-4">More Themes</a> -->
-        <!-- <a href="{{ config('variables.documentation') ? config('variables.documentation').'/laravel-introduction.html' : '#' }}" target="_blank" class="footer-link me-4">Documentation</a> -->
-        <!-- <a href="{{ config('variables.support') ? config('variables.supportNumber') : '#' }}" target="_blank" class="footer-link d-none d-sm-inline-block">Contato</a> -->
-        <p class="footer-link me-4">WhatsApp: (11) 9 9999-9999</p>
-        <p class="footer-link me-4">E-mail: suporte@bolaovip.online</p>
-      </div>
-    </div>
-  </div>
-</footer>
-<!--/ Footer-->
+    <footer class="content-footer footer bg-footer-theme">
+        <div class="container-fluid">
+            <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+                <div class="text-body">
+                    © <script>document.write(new Date().getFullYear())</script>, Bolão Vip 
+                </div>
+                <div class="d-none d-lg-inline-block">
+                    <p class="footer-link me-4">
+                        <a href="https://wa.me/5511979894075" target="_blank" class="whatsapp-link">
+                            <i class="fab fa-whatsapp fa-lg"></i> (11) 97989-4075
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!--/ Footer-->

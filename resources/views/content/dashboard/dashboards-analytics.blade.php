@@ -15,30 +15,201 @@
 @endsection
 
 @section('content')
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
+  
+  body, html {
+    overflow-x: hidden;
+  }
+
+  .welcome-card {
+    background-image: url('{{ asset("assets/img/illustrations/bg-xx.png") }}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
+    font-family: Public+Sans, sans-serif;
+  }
+
+  .welcome-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0);
+  }
+
+  .welcome-card .card-body {
+    position: relative;
+    z-index: 1;
+  }
+
+  .welcome-card h1,
+  .welcome-card h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+  }
+
+  .welcome-card p,
+  .welcome-card b {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+  }
+
+  .welcome-card b {
+    font-weight: 600;
+  }
+
+  .welcome-card .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    min-width: 200px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .btn-group-custom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .announcement-board {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .announcement-board h1 {
+    color: #384551;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+  
+  .announcement-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+  }
+  
+  .announcement-list li {
+    margin-bottom: 12px;
+    padding-left: 5px;
+    font-size: 1rem;
+  }
+  
+  .announcement-list a {
+    color: #3173A8;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .announcement-list a:hover {
+    text-decoration: underline;
+  }
+  
+  .banner-image {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 15px;
+  }
+  
+  .banner-image img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Layout para Desktop */
+  @media (min-width: 992px) {
+    .desktop-order-1 {
+      order: 1;
+    }
+    
+    .desktop-order-2 {
+      order: 2;
+    }
+  }
+  
+  /* Layout para Mobile */
+  @media (max-width: 991px) {
+    .mobile-order-1 {
+      order: 1;
+    }
+    
+    .mobile-order-2 {
+      order: 2;
+    }
+  }
+<style>
+  .banner-image img {
+    display: block;         /* remove espaçamentos automáticos */
+    width: 100%;            /* ocupa toda a largura do container */
+    height: auto;           /* mantém a proporção da imagem */
+    margin: 0;              /* remove margens extras */
+    padding: 0;             /* remove paddings extras */
+  }
+
+  .banner-image {
+    margin: 0;
+    padding: 0;
+  }
+</style>
+
 <div class="row">
   <div class="col-12 mb-6 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
+    <div class="card welcome-card">
+      <div class="row align-items-start">
+        
+        <!-- Coluna do Quadro de Avisos -->
+        <div class="col-lg-5 desktop-order-2 mobile-order-2">
           <div class="card-body">
-            <h1 class="card-title mb-3">Seja bem-vindo(a), <br>{{auth()->user()->name}}! 🎉</h1>
-            <p class="mb-6">
-            Aqui, sua sorte é o destaque! Escolha suas dezenas, acompanhe os resultados e concorra a prêmios incríveis com base nas loterias PT, PTN e Federal. Quem acertar as 11 dezenas primeiro leva o grande prêmio, mas também há chances para quem chegar perto. Não se esqueça: mesmo quem tem menos sorte pode ser premiado! 🍀
-            Boa sorte e bons jogos! 🎯  
-            </p>
+            <div class="announcement-board">
+              <h1>QUADRO DE AVISOS:</h1>
+              <ul class="announcement-list">
+                <li>🎯 <b>Aviso 1:</b> Confira <b><a href="{{route('games')}}">Concursos Abertos!</a></b></li>
+                <li>🎯 <b>Aviso 2:</b> Entre na <a href="https://chat.whatsapp.com/ECZ2DJ8TNkmK9aNNBOwNUp?mode=r_c" target="_blank" rel="noopener noreferrer"><b>Nossa Comunidade!</b></a></li>
+                <li>🎯 <b>Aviso 3:</b> Dúvidas consulte <b><a href="https://api.whatsapp.com/send/?phone=5511979894075&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer">Nosso Suporte!</a></b></li>
+                <li>🎯 <b>Dica:</b> Para repetir um jogo, procure o concurso finalizado!</li></br>
+					 <li>🤖  <b>NOSSO APP OFICIAL: </b></br> Faça o download para Android <a href="https://app.bolaoentreamigosvip.com/apk/bolao_vip_19111227.apk" target="_blank" rel="noopener noreferrer"><b>Clique Aqui</b></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Coluna Saudação + Banner -->
+        <div class="col-lg-7 desktop-order-1 mobile-order-1">
+          <div class="card-body">
+            <h4 style="color: #3173A8; font-size: 1.5rem; margin-bottom: 20px;">Olá, {{auth()->user()->name}}</h4>
+            
+			<div class="btn-group-custom">
+			<a style="margin-bottom: 20px;" href="/concursos" class="btn btn-sm btn-outline-primary">Ver os Concursos</a>
+		</div>
 
-            <a href="{{route('games')}}" class="btn btn-sm btn-outline-primary">Visualizar jogos</a>
+            
+            <!-- Banner/Imagem -->
+            <div class="banner-image">
+              <img src="https://dev.bolaoentreamigosvip.com/assets/img/illustrations/slide-01h.png" alt="Banner do sistema">
+            </div>
           </div>
         </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="{{asset('assets/img/illustrations/man-with-laptop.png')}}" height="175" class="scaleX-n1-rtl" alt="View Badge User">
-          </div>
-        </div>
+        
       </div>
     </div>
   </div>
-  <!--
+</div>
+
+
+<!-- Resto do seu código (seções comentadas) -->
+<!--
   <div class="col-lg-4 col-md-4 order-1">
     <div class="row">
       <div class="col-lg-6 col-md-12 col-6 mb-6">
@@ -49,7 +220,7 @@
                 <img src="{{asset('assets/img/icons/unicons/chart-success.png')}}" alt="chart success" class="rounded">
               </div>
               <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true, aria-expanded="false">
                   <i class="bx bx-dots-vertical-rounded text-muted"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
@@ -72,7 +243,7 @@
                 <img src="{{asset('assets/img/icons/unicons/wallet-info.png')}}" alt="wallet info" class="rounded">
               </div>
               <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt6" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button class="btn p-0, type="button" id="cardOpt6" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <i class="bx bx-dots-vertical-rounded text-muted"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt6">
@@ -167,7 +338,7 @@
                 </div>
               </div>
             </div>
-          </div>
+            </div>
         </div>
       </div>
     </div>
@@ -384,7 +555,7 @@
                 <small>$39k less than last week</small>
               </div>
             </div>
-          </div>
+            </div>
         </div>
       </div>
     </div>
