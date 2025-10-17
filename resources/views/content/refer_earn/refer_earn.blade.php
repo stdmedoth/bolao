@@ -17,7 +17,7 @@
 @section('content')
 
     <div class="container">
-        <h1 class="my-4">Indique e Ganhe</h1>
+        <h1 class="my-4">Ganhe <font color="#008000"> <b>R$10,00</b></font> por indicação</h1>
 
         <div class="card shadow-sm mb-4">
             <div class="card-body">
