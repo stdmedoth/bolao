@@ -35,7 +35,7 @@
 
         @include('content.game.components.tab-menu', ['tab' => $tab])
         <div class="tab-content mt-4" id="gameTabsContent">
-            @include('content.game.components.tab-details', ['tab' => $tab, 'game' => $game])
+            {{-- @include('content.game.components.tab-details', ['tab' => $tab, 'game' => $game]) --}}
             @include('content.game.components.tab-bet-form', [
                 'tab' => $tab,
                 'game' => $game,

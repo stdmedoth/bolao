@@ -66,15 +66,14 @@
 
 
                     <div class="mb-3" id="only_when_finish_round_div">
-                        <label for="only_when_finish_round" class="form-label">Ganham quem fizer os pontos
-                            primeiro?</label>
+                        <label for="only_when_finish_round" class="form-label">Prêmio só é concedido quando o jogo terminar?</label>
                         <select class="form-select" id="only_when_finish_round" name="only_when_finish_round">
                             <option value="0"
                                 {{ old('only_when_finish_round', $gameAward->only_when_finish_round == '0') ? 'selected' : '' }}>
-                                Sim</option>
+                                Não (prêmio imediato)</option>
                             <option value="1"
                                 {{ old('only_when_finish_round', $gameAward->only_when_finish_round == '1') ? 'selected' : '' }}>
-                                Não</option>
+                                Sim (prêmio só no final)</option>
                         </select>
                     </div>
 

@@ -104,15 +104,16 @@ class PurchaseController extends Controller
       $user->game_credit -= $purchase->price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha uma porcentagem em cima da venda
+      // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha indicação apenas na PRIMEIRA compra
       if ($role_level_id == 'gambler') {
         if ($user->invited_by_id) {
-
-          //verifica se é a primeira aposta do apostador
-          $has_first_purchase = Purchase::where('user_id', $user->id)
+          // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
+          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
             ->where('status', 'PAID')
             ->exists();
-          if (!$has_first_purchase) {
+          
+          // Se NÃO tem compras pagas anteriores, esta é a primeira
+          if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
               'refer_user_id',
               $user->invited_by_id
@@ -201,29 +202,28 @@ class PurchaseController extends Controller
       $user->game_credit += $purchase->price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+      // Se estiver sendo cancelado pelo apostador, remove indicação apenas se esta era a primeira compra
       if (in_array($role_level_id, ['gambler'])) {
-
-        //verifica se é a primeira aposta do apostador
+        // Verifica se esta é a primeira compra paga do apostador (ANTES de marcar como PENDING)
         $purchase_qnt = Purchase::where('user_id', $user->id)
           ->where('status', 'PAID')
           ->count();
-        if ($purchase_qnt > 1) {
-          if ($user->invited_by_id) {
-            $refer = ReferEarn::where(
-              'refer_user_id',
-              $user->invited_by_id
-            )->where(
-              'invited_user_id',
-              $user->id
-            )->where(
-              'earn_paid',
-              FALSE
-            )->first();
-            if ($refer) {
-              $refer->invited_user_bought = FALSE;
-              $refer->save();
-            }
+        
+        // Se esta é a primeira compra (count = 1), remove a indicação
+        if ($purchase_qnt == 1 && $user->invited_by_id) {
+          $refer = ReferEarn::where(
+            'refer_user_id',
+            $user->invited_by_id
+          )->where(
+            'invited_user_id',
+            $user->id
+          )->where(
+            'earn_paid',
+            FALSE
+          )->first();
+          if ($refer) {
+            $refer->invited_user_bought = FALSE;
+            $refer->save();
           }
         }
 
@@ -354,10 +354,12 @@ class PurchaseController extends Controller
       $user->game_credit -= $price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
+      // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
       if ($role_level_id == 'gambler') {
-        if ($request->seller_id) {
-          $seller = User::find($request->seller_id);
+        // Usa o seller_id do request (enviado pelo formulário) ou do usuário
+        $sellerId = $request->seller_id ?? $user->seller_id;
+        if ($sellerId) {
+          $seller = User::find($sellerId);
           $comission = $purchase->price * $seller->comission_percent;
           Transactions::create(
             [
@@ -365,21 +367,22 @@ class PurchaseController extends Controller
               "game_id" => $purchase->game_id,
               "purchase_id" => $purchase->id,
               "amount" => $comission,
-              "user_id" => $request->seller_id,
+              "user_id" => $sellerId,
             ]
           );
           $seller->game_credit = $seller->game_credit + $comission;
           $seller->save();
         }
 
-        // adiciona o bonus de indicação
-        if ($user->invited_by_id) {
-
-          //verifica se é a primeira aposta do apostador
-          $has_first_purchase = Purchase::where('user_id', $user->id)
+        // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
+        if ($user->invited_by_id && $purchase->price >= 10.00) {
+          // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
+          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
             ->where('status', 'PAID')
             ->exists();
-          if (!$has_first_purchase) {
+          
+          // Se NÃO tem compras pagas anteriores, esta é a primeira
+          if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
               'refer_user_id',
               $user->invited_by_id
@@ -483,34 +486,34 @@ class PurchaseController extends Controller
       $user->game_credit -= $price;
       $user->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostado ganha uma porcentagem em cima da venda
+      // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
       if ($role_level_id == 'gambler') {
-        if ($request->seller_id) {
-          $invited_by = User::find($request->seller_id);
+        if ($user->seller_id) {
+          $seller = User::find($user->seller_id);
 
-          $comission = $newPurchase->price * $invited_by->comission_percent;
+          $comission = $newPurchase->price * $seller->comission_percent;
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
               "game_id" => $newPurchase->game_id,
               "purchase_id" => $newPurchase->id,
               "amount" => $comission,
-              "user_id" => $request->seller_id,
+              "user_id" => $user->seller_id,
             ]
           );
-          $invited_by->game_credit = $invited_by->game_credit + $comission;
-          $invited_by->save();
+          $seller->game_credit = $seller->game_credit + $comission;
+          $seller->save();
         }
 
-        // adiciona o bonus de indicação
-        if ($user->invited_by_id) {
-
-          //verifica se é a primeira aposta do apostador
-          $has_first_purchase = Purchase::where('user_id', $user->id)
+        // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
+        if ($user->invited_by_id && $purchase->price >= 10.00) {
+          // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
+          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
             ->where('status', 'PAID')
             ->exists();
-          if (!$has_first_purchase) {
-
+          
+          // Se NÃO tem compras pagas anteriores, esta é a primeira
+          if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
               'refer_user_id',
               $user->invited_by_id

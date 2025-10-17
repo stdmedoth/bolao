@@ -46,6 +46,9 @@ class RegisterBasic extends Controller
 
     $refered_by_user = $request->input('refered_by_id') ? User::find($request->input('refered_by_id')) : null;
     $seller = $refered_by_user && $refered_by_user->role->level_id == 'seller' ? $refered_by_user : null;
+    
+    // Se não há vendedor específico, usa o admin como vendedor padrão
+    $defaultSeller = User::where('role_user_id', 1)->first(); // Admin
 
     try {
       // Criação do usuário com os dados validados
@@ -56,7 +59,7 @@ class RegisterBasic extends Controller
         'phone' => $validatedData['phone'],
         'password' => Hash::make($validatedData['password']),
         'invited_by_id' => $request->input('refered_by_id'),
-        'seller_id' => $seller ? $seller->id : null,
+        'seller_id' => $seller ? $seller->id : $defaultSeller->id,
         'role_user_id' => 3,
       ]);
 

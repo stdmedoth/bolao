@@ -59,10 +59,10 @@ class GameController extends Controller
       $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
       $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
 
-      // Caso userPoints[$purchase->user_id] ainda não esteja definido (Seja o primeiro ponto desse usuario)
+      // Caso usersPoints[$purchase->user_id] ainda não esteja definido (Seja o primeiro ponto desse usuario)
       // Então definir ele, o primeiro ponto é o mais alto.
-      if (isset($userPoints[$purchase->user_id])) {
-        $usersPoints[$purchase->user_id] = ['points' => (count($matchedNumbers) > $usersPoints[$purchase->user_id]) ?  count($matchedNumbers) : $usersPoints[$purchase->user_id], 'purchase' => $purchase];
+      if (isset($usersPoints[$purchase->user_id])) {
+        $usersPoints[$purchase->user_id] = ['points' => (count($matchedNumbers) > $usersPoints[$purchase->user_id]['points']) ?  count($matchedNumbers) : $usersPoints[$purchase->user_id]['points'], 'purchase' => $purchase];
       } else {
         $usersPoints[$purchase->user_id] = ['points' => count($matchedNumbers), 'purchase' => $purchase];
       }
@@ -100,22 +100,19 @@ class GameController extends Controller
     $uniqueNumbers = array_unique($allAddedNumbers);
 
     $user_awards = $user_awards_builder->where('round', $round)
+      ->with(['user', 'game_award', 'purchase']) // Eager loading para evitar N+1 queries
       ->orderBy('points', 'DESC')
-      ->orderBy('id', 'ASC') // Adicione esta linha!
+      ->orderBy('id', 'ASC')
       ->paginate(20, ['*'], 'user_awards_page');
 
     foreach ($user_awards as $user_award) {
-
-      $purchase = Purchase::find($user_award->purchase_id);
-      $user = User::find($user_award->user_id);
-      $game_award = GameAward::find($user_award->game_award_id);
       $winners[] = (object)[
         'id' => $user_award->id,
-        'user' => $user,
+        'user' => $user_award->user,
         'status' => $user_award->status,
-        'game_award' => $game_award,
+        'game_award' => $user_award->game_award,
         'user_award' => $user_award,
-        'purchase' => $purchase,
+        'purchase' => $user_award->purchase,
         'userPoint' => $user_award->points,
         'result_numbers' => $allAddedNumbers
       ];
@@ -172,15 +169,14 @@ class GameController extends Controller
 
 
     foreach ($purchases as $key => $purchase) {
-      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
-      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
-      $points = count($matchedNumbers);
-      if (!in_array($purchase->status, ["PAID", "FINISHED"])) {
-        // Se a compra não está paga ou finalizada, não deve ter números correspondentes
-        // e pontos zerados.
-        // Isso é útil para compras que estão pendentes ou canceladas.
-        $matchedNumbers = [];
-        $points = 0;
+      // Usa os pontos já calculados no banco de dados
+      $points = $purchase->points;
+      $matchedNumbers = [];
+      
+      // Só calcula matched_numbers se a compra está paga/finalizada
+      if (in_array($purchase->status, ["PAID", "FINISHED"])) {
+        $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+        $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
       }
 
       $purchases[$key]['matched_numbers'] = $matchedNumbers;

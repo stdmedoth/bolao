@@ -28,7 +28,7 @@
             <!-- Temporada -->
             <div class="form-group">
                 <label for="name">Temporada:</label>
-                <input type="text" name="round" class="form-control" value="{{ $game->round }}" required>
+                <input type="text" name="season" class="form-control" value="{{ $game->season }}" required>
             </div>
 
             <div class="form-group">
@@ -90,14 +90,13 @@
                             </div>
 
                             <div class="form-group" id="awards[0][only_when_finish_round_div]">
-                                <label for="awards[0][only_when_finish_round]">Ganham quem fizer os pontos
-                                    primeiro?:</label>
+                                <label for="awards[0][only_when_finish_round]">Prêmio só é concedido quando o jogo terminar?:</label>
                                 <select class="form-select" name="awards[0][only_when_finish_round]">
-                                    <option {{ $award->only_when_finish_round == '0' ? '' : 'selected' }} value="1">
-                                        Não
+                                    <option {{ $award->only_when_finish_round == '0' ? 'selected' : '' }} value="0">
+                                        Não (prêmio imediato)
                                     </option>
-                                    <option {{ $award->only_when_finish_round == '1' ? '' : 'selected' }} value="0">
-                                        Sim</option>
+                                    <option {{ $award->only_when_finish_round == '1' ? 'selected' : '' }} value="1">
+                                        Sim (prêmio só no final)</option>
                                 </select>
                             </div>
 

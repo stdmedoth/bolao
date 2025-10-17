@@ -51,7 +51,7 @@
 
                     <div class="form-group" id="awards[0][condition_type_div]">
                         <label for="awards[0][condition_type]">Tipo de Condição:</label>
-                        <select name="awards[0][condition_type]" class="form-control awards[0][condition_type]" required>
+                        <select name="awards[0][type]" class="form-control awards[0][type]" required>
                             <option value="EXACT_POINT">Ponto Exato</option>
                             <option value="WINNER">Vencedor</option>
                         </select>
@@ -68,10 +68,10 @@
                     </div>
 
                     <div class="form-group" id="awards[0][only_when_finish_round_div]">
-                        <label for="awards[0][only_when_finish_round]">Ganham quem fizer os pontos primeiro?:</label>
+                        <label for="awards[0][only_when_finish_round]">Prêmio só é concedido quando o jogo terminar?:</label>
                         <select class="form-select" name="awards[0][only_when_finish_round]">
-                            <option value="1">Não</option>
-                            <option value="0">Sim</option>
+                            <option value="0">Não (prêmio imediato)</option>
+                            <option value="1">Sim (prêmio só no final)</option>
                         </select>
                     </div>
 
@@ -105,7 +105,7 @@
             // Função para atualizar a visibilidade das divs
             function updateDivVisibility(awardIndex) {
                 const conditionTypeSelect = document.querySelector(
-                    `[name="awards[${awardIndex}][condition_type]"]`);
+                    `[name="awards[${awardIndex}][type]"]`);
                 const exactPointDiv = document.querySelector(`#awards\\[${awardIndex}\\]\\[exact_point_div\\]`);
                 const winnerPointDiv = document.querySelector(`#awards\\[${awardIndex}\\]\\[winner_point_div\\]`);
                 const onlyOnFirstRoundDiv = document.querySelector(
@@ -144,7 +144,7 @@
                 });
 
                 // Adiciona o evento de mudança para a nova seleção de tipo de condição
-                newAward.querySelector(`select[name="awards[${awardIndex}][condition_type]"]`)
+                newAward.querySelector(`select[name="awards[${awardIndex}][type]"]`)
                     .addEventListener('change', function() {
                         updateDivVisibility(awardIndex);
                     });
@@ -161,7 +161,7 @@
             });
 
             // Adiciona evento de mudança nos selects existentes (para o primeiro prêmio)
-            document.querySelectorAll('[name^="awards[0][condition_type]"]').forEach(function(select, index) {
+            document.querySelectorAll('[name^="awards[0][type]"]').forEach(function(select, index) {
                 select.addEventListener('change', function() {
                     updateDivVisibility(index);
                 });

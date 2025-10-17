@@ -16,10 +16,42 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Validator;
 
 
 class AdminController extends Controller
 {
+
+  /**
+   * Valida se o seller_id é realmente um vendedor
+   */
+  private function validateSellerId($sellerId)
+  {
+    if ($sellerId === null) {
+      return true; // seller_id pode ser null
+    }
+    
+    $seller = User::with('role')->find($sellerId);
+    return $seller && $seller->role && $seller->role->level_id === 'seller';
+  }
+
+  /**
+   * Verifica se o usuário tem permissão para gerenciar outros usuários
+   */
+  private function canManageUsers()
+  {
+    $user = Auth::user();
+    return $user && $user->role && in_array($user->role->level_id, ['admin', 'seller']);
+  }
+
+  /**
+   * Verifica se o usuário é admin
+   */
+  private function isAdmin()
+  {
+    $user = Auth::user();
+    return $user && $user->role && $user->role->level_id === 'admin';
+  }
 
   public function editMeForm(Request $request)
   {
@@ -43,7 +75,17 @@ class AdminController extends Controller
 
   public function delete($id)
   {
+    if (!$this->canManageUsers()) {
+      abort(403, 'Você não tem permissão para deletar usuários.');
+    }
+
     $user = User::findOrFail($id);
+    
+    // Vendedores só podem deletar seus próprios clientes
+    if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
+      abort(403, 'Você só pode deletar seus próprios clientes.');
+    }
+    
     $user->delete();
     return redirect()->route('list-user')->with('success', 'Usuário deletado com sucesso.');
   }
@@ -51,7 +93,17 @@ class AdminController extends Controller
 
   public function edit($id)
   {
+    if (!$this->canManageUsers()) {
+      abort(403, 'Você não tem permissão para editar usuários.');
+    }
+
     $user = User::findOrFail($id);
+    
+    // Vendedores só podem editar seus próprios clientes
+    if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
+      abort(403, 'Você só pode editar seus próprios clientes.');
+    }
+    
     $roles = RoleUser::get(); // Para preencher as opções de papel
     $sellers = User::where('role_user_id', 2)->get();
 
@@ -61,37 +113,51 @@ class AdminController extends Controller
   // Cria um usuário (vendedor ou apostador)
   public function createUser(Request $request)
   {
+    if (!$this->canManageUsers()) {
+      abort(403, 'Você não tem permissão para criar usuários.');
+    }
+
     // Validação dos dados de entrada
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
-      'document' => 'string|max:255|unique:users',
-      'balance' => 'required',
-      'game_credit' => 'required',
-      //'game_credit_limit' => 'required',
-      'comission_percent' => 'required',
+      'document' => 'nullable|string|max:255|unique:users',
+      'balance' => 'required|numeric|min:0',
+      'game_credit' => 'required|numeric|min:0',
+      'game_credit_limit' => 'nullable|numeric|min:0',
+      'comission_percent' => 'required|numeric|min:0|max:100',
       'phone' => 'required|string|max:255',
       'password' => 'required|string|min:6',
       'active_refer_earn' => 'boolean',
       'role_user_id' => 'required|exists:role_users,id',
-      //'invited_by_id' => 'exists:users,id',
-      'seller_id' => 'exists:users,id', // Adiciona a validação para seller_id
+      'invited_by_id' => 'nullable|exists:users,id',
+      'seller_id' => 'nullable|exists:users,id',
     ]);
 
     $formatFloatInputs = [
       'balance',
       'game_credit',
-      'game_credit_limit',
       'comission_percent'
     ];
     foreach ($formatFloatInputs as $formatFloatInput) {
-      if (isset($validatedData[$formatFloatInput])) {
+      if (isset($validatedData[$formatFloatInput]) && is_string($validatedData[$formatFloatInput])) {
         $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
         $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
       }
     }
+    
+    // Formata game_credit_limit apenas se estiver presente
+    if (isset($validatedData['game_credit_limit']) && is_string($validatedData['game_credit_limit'])) {
+      $validatedData['game_credit_limit'] = str_replace(".", "", $validatedData['game_credit_limit']);
+      $validatedData['game_credit_limit'] = str_replace(",", ".", $validatedData['game_credit_limit']);
+    }
 
     $validatedData['game_credit_limit'] = $validatedData['game_credit'];
+
+    // Validação customizada para seller_id
+    if (!$this->validateSellerId($validatedData['seller_id'] ?? null)) {
+      return back()->withErrors(['seller_id' => 'O vendedor selecionado não é um vendedor válido.']);
+    }
 
     try {
       // Criação do usuário com os dados validados
@@ -110,26 +176,41 @@ class AdminController extends Controller
   // AdminController.php
   public function update(Request $request, $id)
   {
+    if (!$this->canManageUsers()) {
+      abort(403, 'Você não tem permissão para atualizar usuários.');
+    }
+
     $user = User::findOrFail($id);
+    
+    // Vendedores só podem atualizar seus próprios clientes
+    if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
+      abort(403, 'Você só pode atualizar seus próprios clientes.');
+    }
     $validatedData = $request->validate(
       [
-        'name' => 'string|max:255',
+        'name' => 'nullable|string|max:255',
         'email' => [
+          'nullable',
           'string',
           'email',
           'max:255',
           Rule::unique('users')->ignore($user->id),
         ],
-        'document' => 'string|max:255',
-        'balance' => 'required',
-        'game_credit' => 'required',
-        'game_credit_limit' => 'string',
-        'comission_percent' => 'required',
-        'phone' => 'string|max:255',
-        'role_user_id' => 'exists:role_users,id',
+        'document' => [
+          'nullable',
+          'string',
+          'max:255',
+          Rule::unique('users')->ignore($user->id),
+        ],
+        'balance' => 'required|numeric|min:0',
+        'game_credit' => 'required|numeric|min:0',
+        'game_credit_limit' => 'nullable|numeric|min:0',
+        'comission_percent' => 'required|numeric|min:0|max:100',
+        'phone' => 'nullable|string|max:255',
+        'role_user_id' => 'nullable|exists:role_users,id',
         'active_refer_earn' => 'boolean',
-        'invited_by_id' => 'exists:users,id',
-        'seller_id' => 'exists:users,id', // Adiciona a validação para seller_id
+        'invited_by_id' => 'nullable|exists:users,id',
+        'seller_id' => 'nullable|exists:users,id',
       ],
       [
         'name.string' => 'O nome deve ser uma string.',
@@ -149,23 +230,37 @@ class AdminController extends Controller
     $formatFloatInputs = [
       'balance',
       'game_credit',
-      'game_credit_limit',
       'comission_percent'
     ];
     foreach ($formatFloatInputs as $formatFloatInput) {
-      if (isset($validatedData[$formatFloatInput])) {
+      if (isset($validatedData[$formatFloatInput]) && is_string($validatedData[$formatFloatInput])) {
         $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
         $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
       }
     }
-
-    // if invited by so fill seller_id
-    if (isset($validatedData['invited_by_id']) && $validatedData['invited_by_id'] != null) {
-      $refered_by_user = User::find($validatedData['invited_by_id']);
-      $validatedData['seller_id'] = ($refered_by_user && $refered_by_user->role->level_id == 'seller') ? $refered_by_user->id : null;
-    } else {
-      $validatedData['seller_id'] = null; // Se não houver convidado, seller_id deve ser nulo
+    
+    // Formata game_credit_limit apenas se estiver presente
+    if (isset($validatedData['game_credit_limit']) && is_string($validatedData['game_credit_limit'])) {
+      $validatedData['game_credit_limit'] = str_replace(".", "", $validatedData['game_credit_limit']);
+      $validatedData['game_credit_limit'] = str_replace(",", ".", $validatedData['game_credit_limit']);
     }
+
+    // Validação customizada para seller_id
+    if (!$this->validateSellerId($validatedData['seller_id'] ?? null)) {
+      return back()->withErrors(['seller_id' => 'O vendedor selecionado não é um vendedor válido.']);
+    }
+
+    // Se invited_by_id foi fornecido, verifica se é um vendedor e define como seller_id
+    if (isset($validatedData['invited_by_id']) && $validatedData['invited_by_id'] != null) {
+      $refered_by_user = User::with('role')->find($validatedData['invited_by_id']);
+      if ($refered_by_user && $refered_by_user->role && $refered_by_user->role->level_id == 'seller') {
+        $validatedData['seller_id'] = $refered_by_user->id;
+      } else {
+        // Se o convidado não é um vendedor, mantém o seller_id original ou null
+        $validatedData['seller_id'] = $validatedData['seller_id'] ?? null;
+      }
+    }
+    // Se não há invited_by_id, mantém o seller_id original ou null
 
     $user->update($validatedData);
 
@@ -231,12 +326,20 @@ class AdminController extends Controller
 
   public function create_game_form()
   {
+    if (!$this->isAdmin()) {
+      abort(403, 'Apenas administradores podem criar jogos.');
+    }
+    
     return view('content.game.create_game');
   }
 
   // Criar um jogo
   public function createGame(Request $request)
   {
+    if (!$this->isAdmin()) {
+      abort(403, 'Apenas administradores podem criar jogos.');
+    }
+
     $request->validate([
       'name' => 'required|string|max:255',
       'price' => 'required|numeric|min:0',
@@ -248,7 +351,7 @@ class AdminController extends Controller
       'awards.*.winner_point_value' => 'nullable|integer',
       'awards.*.only_on_first_round' => 'boolean',
       'awards.*.name' => 'required|string|max:255',
-      'awards.*.amount' => 'required|numeric|min:0',
+      'awards.*.amount' => 'required|numeric|min:5',
     ]);
 
     $game_id = NULL;
@@ -291,6 +394,10 @@ class AdminController extends Controller
 
   public function openGame(Request $request, $id)
   {
+    if (!$this->isAdmin()) {
+      abort(403, 'Apenas administradores podem abrir jogos.');
+    }
+
     $game = Game::findOrFail($id);
     // Fechar o jogo
     $game->status = 'OPENED';
@@ -308,19 +415,6 @@ class AdminController extends Controller
     return redirect(route('show-game', ['id' => $game->id]));
   }
 
-  /*
-  private function calculateUserPoints($purchases, $uniqueNumbers)
-  {
-    $userPoints = [];
-    foreach ($purchases as $purchase) {
-      $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
-      $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
-
-      $userPoints[$purchase->user_id] = ($userPoints[$purchase->user_id] ?? 0) + count($matchedNumbers);
-    }
-    return $userPoints;
-  }
-  */
 
   private function calculateUserPoints($purchases, $uniqueNumbers)
   {
@@ -338,226 +432,229 @@ class AdminController extends Controller
 
   protected function handleAwards($gameId, $purchasePoints, $awards, $round, $gameHistoryId, $gameHistoryQnt)
   {
-
     $hasWinner = false;
     $winners = [];
     $only_when_finish_round_awards = [];
+
     foreach ($awards as $award) {
-      // Verifica se o prêmio já foi concedido nesta rodada para evitar duplicação.
-      $exists = UserAwards::where('game_id', $gameId)
-        ->where('game_award_id', $award->id)
-        ->where('round', $round)->exists();
-
-      if ($exists) {
+      if ($this->shouldSkipAward($award, $gameId, $round, $gameHistoryQnt)) {
         continue;
       }
 
-      if ($award->only_on_first_round && $gameHistoryQnt > 0) {
-        // Se o prêmio é apenas para a primeira rodada e já existem históricos, pula este prêmio.
-        continue;
+      $eligiblePurchases = $this->getEligiblePurchases($award, $purchasePoints, $winners);
+      
+      if ($award->condition_type === 'WINNER' && !empty($eligiblePurchases)) {
+        $hasWinner = true;
+        $winners = array_merge($winners, $eligiblePurchases);
       }
 
-      $eligiblePurchases = [];
-      $needyPoint = 0;
+      $this->processAward($award, $eligiblePurchases, $gameId, $gameHistoryId, $round, $only_when_finish_round_awards);
+    }
 
-      if ($award->condition_type === 'EXACT_POINT') {
-        $needyPoint = $award->exact_point_value;
-      } elseif ($award->condition_type === 'WINNER') {
-        $needyPoint = $award->winner_point_value;
-      }
+    if ($hasWinner) {
+      $this->finishGame($gameId);
+      $this->processFinishRoundAwards($only_when_finish_round_awards, $winners);
+      $this->processMinPointsAward($gameId, $purchasePoints, $gameHistoryId, $round);
+      $this->processSecondaryWinnerAward($gameId, $purchasePoints, $gameHistoryId, $round);
+    }
+  }
 
-      // Filtra as compras que atingiram a pontuação necessária.
-      foreach ($purchasePoints as $purchaseId => $totalPoints) {
-        if ($needyPoint && ($totalPoints >= $needyPoint)) {
+  private function shouldSkipAward($award, $gameId, $round, $gameHistoryQnt)
+  {
+    // Verifica se o prêmio já foi concedido nesta rodada para evitar duplicação
+    $exists = UserAwards::where('game_id', $gameId)
+      ->where('game_award_id', $award->id)
+      ->where('round', $round)->exists();
 
-          if (($award->only_when_finish_round !== 0) && in_array($purchaseId, $winners)) {
-            continue; // Se o prêmio é concedido apenas quando o jogo termina, e já é um vencedor do torneio, pula.
-          }
+    if ($exists) {
+      return true;
+    }
 
-          if ($award->condition_type === 'WINNER') {
-            $hasWinner = true; // Marca que há pelo menos um vencedor
-            $winners[] = $purchaseId; // Armazena o ID da compra do vencedor
-          }
+    // Se o prêmio é apenas para a primeira rodada e já existem históricos, pula este prêmio
+    if ($award->only_on_first_round && $gameHistoryQnt > 0) {
+      return true;
+    }
 
-          $eligiblePurchases[] = $purchaseId;
+    return false;
+  }
+
+  private function getEligiblePurchases($award, $purchasePoints, $winners)
+  {
+    $eligiblePurchases = [];
+    $needyPoint = 0;
+
+    if ($award->condition_type === 'EXACT_POINT') {
+      $needyPoint = $award->exact_point_value;
+    } elseif ($award->condition_type === 'WINNER') {
+      $needyPoint = $award->winner_point_value;
+    }
+
+    // Filtra as compras que atingiram a pontuação necessária
+    foreach ($purchasePoints as $purchaseId => $totalPoints) {
+      if ($needyPoint && ($totalPoints >= $needyPoint)) {
+        if (($award->only_when_finish_round == 1) && in_array($purchaseId, $winners)) {
+          continue; // Se o prêmio é concedido apenas quando o jogo termina, e já é um vencedor do torneio, pula
         }
+        $eligiblePurchases[] = $purchaseId;
       }
+    }
 
-      $numWinners = count($eligiblePurchases);
+    return $eligiblePurchases;
+  }
 
-      if ($numWinners > 0) {
-        // Divide o prêmio igualmente entre os vencedores.
-        $awardAmountPerUser = $award->amount / $numWinners;
+  private function processAward($award, $eligiblePurchases, $gameId, $gameHistoryId, $round, &$only_when_finish_round_awards)
+  {
+    $numWinners = count($eligiblePurchases);
 
-        foreach ($eligiblePurchases as $purchaseId) {
-          $purchase = Purchase::find($purchaseId);
-          $userId = $purchase->user_id;
+    if ($numWinners > 0) {
+      $awardAmountPerUser = $award->amount / $numWinners;
 
-          // Garante que o prêmio não seja concedido duas vezes para a mesma compra.
-          $awardExists = UserAwards::where('game_id', $gameId)
-            ->where('game_award_id', $award->id)
-            ->where('purchase_id', $purchaseId)
-            ->where('round', '>=', $round) // Verifica a rodada atual e futuras
-            ->exists();
+      foreach ($eligiblePurchases as $purchaseId) {
+        $purchase = Purchase::find($purchaseId);
+        $userId = $purchase->user_id;
 
-          if (!$awardExists) {
+        // Garante que o prêmio não seja concedido duas vezes para a mesma compra
+        $awardExists = UserAwards::where('game_id', $gameId)
+          ->where('game_award_id', $award->id)
+          ->where('purchase_id', $purchaseId)
+          ->where('round', '>=', $round)
+          ->exists();
 
+        if (!$awardExists) {
+          $data = [
+            'user_id' => $userId,
+            'game_id' => $gameId,
+            'purchase_id' => $purchaseId,
+            'condition_type' => $award->condition_type,
+            'exact_point_value' => $award->exact_point_value,
+            'game_history_id' => $gameHistoryId,
+            'round' => $round,
+            'points' => $award->condition_type === 'EXACT_POINT' ? $award->exact_point_value : $award->winner_point_value,
+            'game_award_id' => $award->id,
+            'amount' => $awardAmountPerUser,
+            'status' => 'PENDING',
+          ];
 
-            $data = [
-              'user_id' => $userId,
-              'game_id' => $gameId,
-              'purchase_id' => $purchaseId,
-              'condition_type' => $award->condition_type,
-              'exact_point_value' => $award->exact_point_value,
-              'game_history_id' => $gameHistoryId,
-              'round' => $round,
-              'points' => $needyPoint,
-              'game_award_id' => $award->id,
-              'amount' => $awardAmountPerUser,
-              'status' => 'PENDING',
-            ];
-
-            if ($award->only_when_finish_round == 0) {
-              UserAwards::create($data);
-              $this->updateReferEarn($userId);
-            } else {
-              // Se o prêmio é concedido apenas quando o jogo termina, armazena para posterior processamento.
-              $only_when_finish_round_awards[] = $data;
-            }
+          if ($award->only_when_finish_round == 1) {
+            // Se o prêmio é concedido apenas quando o jogo termina, armazena para posterior processamento
+            $only_when_finish_round_awards[] = $data;
+          } else {
+            // Prêmio imediato - cria o prêmio agora
+            UserAwards::create($data);
+            $this->updateReferEarn($userId);
           }
         }
       }
     }
-    if ($hasWinner) {
-      // Atualiza o status do jogo para 'CLOSED' se houver pelo menos um vencedor.
-      $game = Game::find($gameId);
-      if ($game && $game->status !== 'FINISHED') {
-        $game->status = 'FINISHED';
-        $game->save();
-        $game_history = GameHistory::create([
-          "description" => "JOGO FECHADO",
-          "numbers" => "",
-          "type" => "FINISHED",
-          'game_id' => $game->id,
-        ]);
+  }
+
+  private function finishGame($gameId)
+  {
+    $game = Game::find($gameId);
+    if ($game && $game->status !== 'FINISHED') {
+      $game->status = 'FINISHED';
+      $game->save();
+      GameHistory::create([
+        "description" => "JOGO FECHADO",
+        "numbers" => "",
+        "type" => "FINISHED",
+        'game_id' => $game->id,
+      ]);
+    }
+  }
+
+  private function processFinishRoundAwards($only_when_finish_round_awards, $winners)
+  {
+    foreach ($only_when_finish_round_awards as $awardData) {
+      if (($awardData['condition_type'] != "WINNER") && in_array($awardData['purchase_id'], $winners)) {
+        continue; // Evita duplicação de prêmios para vencedores
       }
 
-      // Processa os prêmios que são concedidos apenas quando o jogo termina.
-      foreach ($only_when_finish_round_awards as $awardData) {
-
-        if (($awardData['condition_type'] != "WINNER") && in_array($awardData['purchase_id'], $winners)) {
-          continue; // Evita duplicação de prêmios para vencedores
-        }
-
-        if (($awardData['condition_type'] == "EXACT_POINT") && ($awardData['exact_point_value'] == 0)) {
-          continue; // Evita conceder prêmios de 0 pontos
-        }
-
-        UserAwards::create($awardData);
-        $this->updateReferEarn($awardData['user_id']);
+      if (($awardData['condition_type'] == "EXACT_POINT") && ($awardData['exact_point_value'] == 0)) {
+        continue; // Evita conceder prêmios de 0 pontos
       }
 
-      // Procura se há algum premio que deve ser concedido para quem fez menos pontos
-      $minPointsAward = GameAward::where('game_id', $gameId)
-        ->where('condition_type', 'EXACT_POINT')
-        ->where('exact_point_value', 0)
-        ->where('only_when_finish_round', true)
-        ->first();
+      UserAwards::create($awardData);
+      $this->updateReferEarn($awardData['user_id']);
+    }
+  }
 
-      if ($minPointsAward && !empty($purchasePoints)) {
-        $lowestScore = min(array_values($purchasePoints)); // Encontra a menor pontuação
-        $eligibleLosers = [];
+  private function processMinPointsAward($gameId, $purchasePoints, $gameHistoryId, $round)
+  {
+    $minPointsAward = GameAward::where('game_id', $gameId)
+      ->where('condition_type', 'EXACT_POINT')
+      ->where('exact_point_value', 0)
+      ->where('only_when_finish_round', 1)
+      ->first();
 
-        foreach ($purchasePoints as $purchaseId => $totalPoints) {
-          if ($totalPoints === $lowestScore) { // Pega todos que tiveram a menor pontuação
-            $eligibleLosers[] = $purchaseId;
-          }
-        }
+    if ($minPointsAward && !empty($purchasePoints)) {
+      $lowestScore = min(array_values($purchasePoints));
+      $eligibleLosers = [];
 
-        $numLosers = count($eligibleLosers);
-        if ($numLosers > 0) {
-          $loserAwardAmountPerUser = $minPointsAward->amount / $numLosers;
-
-          foreach ($eligibleLosers as $purchaseId) {
-            $purchase = Purchase::find($purchaseId);
-            $userId = $purchase->user_id;
-
-            $awardExists = UserAwards::where('game_id', $gameId)
-              ->where('game_award_id', $minPointsAward->id)
-              ->where('purchase_id', $purchaseId)
-              ->where('round', '>=', $round)
-              ->exists();
-
-            if (!$awardExists) {
-              UserAwards::create([
-                'user_id' => $userId,
-                'game_id' => $gameId,
-                'purchase_id' => $purchaseId,
-                'game_history_id' => $gameHistoryId,
-                'round' => $round,
-                'points' => $purchasePoints[$purchaseId],
-                'game_award_id' => $minPointsAward->id,
-                'amount' => $loserAwardAmountPerUser,
-                'status' => 'PENDING',
-              ]);
-              $this->updateReferEarn($userId);
-            }
-          }
+      foreach ($purchasePoints as $purchaseId => $totalPoints) {
+        if ($totalPoints === $lowestScore) {
+          $eligibleLosers[] = $purchaseId;
         }
       }
 
-      // Procura se há algum premio que deve ser concedido para quem ganhou em segundo lugar
-      $maxPointsAward = GameAward::where('game_id', $gameId)
-        ->where('condition_type', 'SECONDARY_WINNER')
-        ->where('only_when_finish_round', true)
-        ->first();
+      $this->createAwardsForPurchases($eligibleLosers, $minPointsAward, $gameId, $gameHistoryId, $round, $purchasePoints);
+    }
+  }
 
-      if ($maxPointsAward && !empty($purchasePoints)) {
-        $highestScore = max(array_values($purchasePoints)); // Encontra a segunda maior pontuação
-        $purchasePointsWithoutMax = array_filter(array_values($purchasePoints), function ($value) use ($highestScore) {
-          return intval($value) !== intval($highestScore);
-        });
-        $secondHighestScore = max($purchasePointsWithoutMax); // Encontra a segunda maior pontuação
+  private function processSecondaryWinnerAward($gameId, $purchasePoints, $gameHistoryId, $round)
+  {
+    $maxPointsAward = GameAward::where('game_id', $gameId)
+      ->where('condition_type', 'SECONDARY_WINNER')
+      ->where('only_when_finish_round', 1)
+      ->first();
 
+    if ($maxPointsAward && !empty($purchasePoints)) {
+      $highestScore = max(array_values($purchasePoints));
+      $purchasePointsWithoutMax = array_filter(array_values($purchasePoints), function ($value) use ($highestScore) {
+        return intval($value) !== intval($highestScore);
+      });
+      $secondHighestScore = max($purchasePointsWithoutMax);
 
-        $eligibleWinners = [];
-
-        foreach ($purchasePoints as $purchaseId => $totalPoints) {
-
-          if ($totalPoints === $secondHighestScore) { // Pega todos que tiveram a menor pontuação
-            $eligibleWinners[] = $purchaseId;
-          }
+      $eligibleWinners = [];
+      foreach ($purchasePoints as $purchaseId => $totalPoints) {
+        if ($totalPoints === $secondHighestScore) {
+          $eligibleWinners[] = $purchaseId;
         }
+      }
 
-        $numWinners = count($eligibleWinners);
-        if ($numWinners > 0) {
-          $winnerAwardAmountPerUser = $maxPointsAward->amount / $numWinners;
+      $this->createAwardsForPurchases($eligibleWinners, $maxPointsAward, $gameId, $gameHistoryId, $round, $purchasePoints);
+    }
+  }
 
-          foreach ($eligibleWinners as $purchaseId) {
-            $purchase = Purchase::find($purchaseId);
-            $userId = $purchase->user_id;
+  private function createAwardsForPurchases($purchaseIds, $award, $gameId, $gameHistoryId, $round, $purchasePoints)
+  {
+    $numWinners = count($purchaseIds);
+    if ($numWinners > 0) {
+      $awardAmountPerUser = $award->amount / $numWinners;
 
-            $awardExists = UserAwards::where('game_id', $gameId)
-              ->where('game_award_id', $maxPointsAward->id)
-              ->where('purchase_id', $purchaseId)
-              ->where('round', '>=', $round)
-              ->exists();
+      foreach ($purchaseIds as $purchaseId) {
+        $purchase = Purchase::find($purchaseId);
+        $userId = $purchase->user_id;
 
-            if (!$awardExists) {
-              UserAwards::create([
-                'user_id' => $userId,
-                'game_id' => $gameId,
-                'purchase_id' => $purchaseId,
-                'game_history_id' => $gameHistoryId,
-                'round' => $round,
-                'points' => $purchasePoints[$purchaseId],
-                'game_award_id' => $maxPointsAward->id,
-                'amount' => $winnerAwardAmountPerUser,
-                'status' => 'PENDING',
-              ]);
-              $this->updateReferEarn($userId);
-            }
-          }
+        $awardExists = UserAwards::where('game_id', $gameId)
+          ->where('game_award_id', $award->id)
+          ->where('purchase_id', $purchaseId)
+          ->where('round', '>=', $round)
+          ->exists();
+
+        if (!$awardExists) {
+          UserAwards::create([
+            'user_id' => $userId,
+            'game_id' => $gameId,
+            'purchase_id' => $purchaseId,
+            'game_history_id' => $gameHistoryId,
+            'round' => $round,
+            'points' => $purchasePoints[$purchaseId],
+            'game_award_id' => $award->id,
+            'amount' => $awardAmountPerUser,
+            'status' => 'PENDING',
+          ]);
+          $this->updateReferEarn($userId);
         }
       }
     }
@@ -565,6 +662,10 @@ class AdminController extends Controller
 
   public function addGameHistory(Request $request, $id)
   {
+    if (!$this->isAdmin()) {
+      abort(403, 'Apenas administradores podem adicionar histórico de jogos.');
+    }
+
     $game = Game::findOrFail($id);
 
     if ($game->status !== 'CLOSED') {
@@ -635,7 +736,7 @@ class AdminController extends Controller
   public function editGameHistory(Request $request, $game_history_id)
   {
     if (Auth::user()->role->level_id !== 'admin') {
-      return redirect('/auth/logout');
+      abort(403, 'Você não tem permissão para editar histórico de jogos.');
     }
 
     $gameHistory = GameHistory::find($game_history_id);
@@ -789,28 +890,31 @@ class AdminController extends Controller
       // Chama o handler de prêmios para o histórico recém-criado
       $this->handleAwards($game->id, $purchasePoints, $awards, $game->round, $newGameHistory->id, $gameHistoryQnt);
     }
+
     // Se o jogo estava fechado e não houve vencedor, atualiza o status para 'CLOSED' após o reprocessamento
     $game = Game::findOrFail($game_id);
     if ($game->status === 'FINISHED') {
       $winnerAward = GameAward::where('game_id', $game_id)
         ->where('condition_type', 'WINNER')
-        ->where('only_when_finish_round', true)
+        ->where('only_when_finish_round', 1)
         ->first();
-      if (
-        $winnerAward || UserAwards::where('game_id', $game_id)
-        ->where('game_award_id', $winnerAward->id)
-        ->where('round', $game->round)
-        ->exists()
-      ) {
-        // Se não há prêmio de vencedor ou já foi concedido, mantém o status 'CLOSED'
-        $game->status = 'CLOSED';
-        $game->save();
-        GameHistory::create([
-          "description" => "JOGO EM ANDAMENTO NOVAMENTE",
-          "numbers" => "",
-          "type" => "CLOSED",
-          'game_id' => $game->id,
-        ]);
+
+      if ($winnerAward) {
+        $hasWinner = UserAwards::where('game_id', $game_id)
+          ->where('game_award_id', $winnerAward->id)
+          ->where('round', $game->round)
+          ->exists();
+        if (!$hasWinner) {
+          // Se há prêmio de vencedor concedido, mantém o status 'CLOSED'
+          $game->status = 'CLOSED';
+          $game->save();
+          GameHistory::create([
+            "description" => "JOGO EM ANDAMENTO NOVAMENTE",
+            "numbers" => "",
+            "type" => "CLOSED",
+            'game_id' => $game->id,
+          ]);
+        }
       }
     }
 
@@ -823,6 +927,10 @@ class AdminController extends Controller
 
   public function removeGameHistory(Request $request, $game_history_id)
   {
+    if (!$this->isAdmin()) {
+      abort(403, 'Apenas administradores podem remover histórico de jogos.');
+    }
+
     $historyToRemove = GameHistory::findOrFail($game_history_id);
     $game_id = $historyToRemove->game_id;
     $round = $historyToRemove->round;
@@ -937,23 +1045,25 @@ class AdminController extends Controller
     if ($game->status === 'FINISHED') {
       $winnerAward = GameAward::where('game_id', $game_id)
         ->where('condition_type', 'WINNER')
-        ->where('only_when_finish_round', true)
+        ->where('only_when_finish_round', 1)
         ->first();
-      if (
-        $winnerAward || UserAwards::where('game_id', $game_id)
-        ->where('game_award_id', $winnerAward->id)
-        ->where('round', $game->round)
-        ->exists()
-      ) {
-        // Se não há prêmio de vencedor ou já foi concedido, mantém o status 'CLOSED'
-        $game->status = 'CLOSED';
-        $game->save();
-        GameHistory::create([
-          "description" => "JOGO EM ANDAMENTO NOVAMENTE",
-          "numbers" => "",
-          "type" => "CLOSED",
-          'game_id' => $game->id,
-        ]);
+
+      if ($winnerAward) {
+        $hasWinner = UserAwards::where('game_id', $game_id)
+          ->where('game_award_id', $winnerAward->id)
+          ->where('round', $game->round)
+          ->exists();
+        if (!$hasWinner) {
+          // Se há prêmio de vencedor concedido, mantém o status 'CLOSED'
+          $game->status = 'CLOSED';
+          $game->save();
+          GameHistory::create([
+            "description" => "JOGO EM ANDAMENTO NOVAMENTE",
+            "numbers" => "",
+            "type" => "CLOSED",
+            'game_id' => $game->id,
+          ]);
+        }
       }
     }
 
@@ -965,7 +1075,8 @@ class AdminController extends Controller
   // Atualizar indicação e ganhos de referência
   private function updateReferEarn($userId)
   {
-    $referEarn = ReferEarn::where('refer_user_id', $userId)
+    // Busca o registro de indicação onde o usuário foi indicado (invited_user_id)
+    $referEarn = ReferEarn::where('invited_user_id', $userId)
       ->where('invited_user_bought', false)
       ->first();
 
@@ -979,7 +1090,7 @@ class AdminController extends Controller
   public function user_limit_credit_restart(Request $request, $user_id)
   {
     if (Auth::user()->role->level_id !== 'admin') {
-      return redirect('/auth/logout');
+      abort(403, 'Você não tem permissão para reiniciar limite de crédito.');
     }
     $user = User::find($user_id);
 
