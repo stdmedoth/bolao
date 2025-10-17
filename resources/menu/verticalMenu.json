@@ -13,6 +13,26 @@
       "target": "_blank"
     },
     {
+      "url": "/admin/avisos",
+      "name": "Avisos",
+      "user_roles_level": [
+        "admin"
+      ],
+      "icon": "menu-icon tf-icons bx bx-bell",
+      "slug": "app-email",
+      "target": "_blank"
+    },
+    {
+      "url": "/admin/banners",
+      "name": "Banners",
+      "user_roles_level": [
+        "admin"
+      ],
+      "icon": "menu-icon tf-icons bx bx-image-alt",
+      "slug": "app-email",
+      "target": "_blank"
+    },
+    {
       "url": "/usuarios",
       "name": "Usuarios",
       "user_roles_level": [
@@ -138,8 +158,6 @@
       "slug": "app-email",
       "target": "_blank"
     },
-	
-	
     {
       "name": "Comunidade",
       "user_roles_level": [
@@ -151,8 +169,6 @@
       "slug": "app-email",
       "target": "https://chat.whatsapp.com/ECZ2DJ8TNkmK9aNNBOwNUp?mode=ems_wa_t"
     },
-	
-	
     {
       "name": "Suporte",
       "user_roles_level": [
@@ -166,11 +182,8 @@
       "style": "color: #25D366; font-weight: 500;",
       "icon_style": "color: #25D366; font-size: 1.2em;"
     },
-	
-	
-	
-	 {
-      "name": "Baixe  o APP (Android)",
+    {
+      "name": "NOVO APP (Android)",
       "user_roles_level": [
         "seller",
         "admin",
@@ -178,7 +191,7 @@
       ],
       "icon": "menu-icon fab fa-android",
       "slug": "android",
-      "target": "https://APP.bolaoentreamigosvip.com/apk/bolao_vip_19111227.apk",
+      "target": "https://bolaoentreamigosvip.com/apk/Bolao-Entre-Amigos-1.0.apk",
       "style": "color: #25D366; font-weight: 500;",
       "icon_style": "color: #25D366; font-size: 1.2em;"
     }

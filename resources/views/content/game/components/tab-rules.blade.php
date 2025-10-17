@@ -12,12 +12,12 @@
                 <li class="list-group-item">6. Não havendo ninguém com 10 dezenas, o segundo lugar será para quem
                     estiver na sequência.</li>
                 <li class="list-group-item">7. "Pé frio" será quem obtiver a menor pontuação.</li>
-                <li class="list-group-item">8. Premiação para quem acertar da 1ª à 10ª dezena.</li>
-                <li class="list-group-item">9. Em caso de empate nos prêmios, o valor será dividido entre os ganhadores.
-                </li>
-                <li class="list-group-item">10. Faça seu jogo em local de sua confiança. Prêmios pagos diretamente no
-                    local.</li>
-                <li class="list-group-item">11. Prêmios pagos em até 5 dias úteis.</li>
+                <li class="list-group-item">8. Premiação, paga quem acertar 1ª da 4ª a 10ª dezena primeiro.</li>
+                <li class="list-group-item">9. Em caso de empate nos prêmios, o valor será dividido entre os ganhadores.</li>
+                <li class="list-group-item">10. Faça seu jogo em local de sua confiança. Prêmios pagos diretamente no local.</li>
+                <li class="list-group-item">11. Prêmio do primeiro lugar pago em até 7 dias úteis.</li>
+                <li class="list-group-item">12. Todos os outros prêmios pagos em 24 horas.</li>
+                <li class="list-group-item">13. Quem realizar o jogo diretamente pelo administrador, via site ou app,  recebe o pagamento direto.</li>
             </ul>
         </div>
     </div>
