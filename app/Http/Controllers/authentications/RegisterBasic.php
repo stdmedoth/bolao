@@ -28,7 +28,7 @@ class RegisterBasic extends Controller
         'email' => 'required|string|email|max:255|unique:users',
         'phone' => 'required|string|max:255',
         'password' => 'required|string|min:8',
-        'refered_by_id' => 'exists:users,id'
+        'refered_by_id' => 'nullable|exists:users,id'
       ],
       [
         'name.required' => 'O campo nome é obrigatório.',
