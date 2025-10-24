@@ -1,5 +1,11 @@
 @extends('layouts/commonMaster')
 
+<style>
+  body, html {
+    overflow-x: hidden;
+  }
+</style>
+
 @php
     /* Display elements */
     $contentNavbar = true;
@@ -13,7 +19,7 @@
     $navbarDetached = 'navbar-detached';
 
     /* Content classes */
-    $container = $container ?? 'container-fluid p-3 flex-grow-1';
+    $container = $container ?? 'container-fluid p-0 flex-grow-1';
 
 @endphp
 

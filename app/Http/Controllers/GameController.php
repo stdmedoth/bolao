@@ -106,6 +106,13 @@ class GameController extends Controller
       ->paginate(20, ['*'], 'user_awards_page');
 
     foreach ($user_awards as $user_award) {
+      // Calcular números acertados para os vencedores
+      $matchedNumbers = [];
+      if ($user_award->purchase && in_array($user_award->purchase->status, ["PAID", "FINISHED"])) {
+        $purchaseNumbers = array_map('intval', explode(' ', $user_award->purchase->numbers));
+        $matchedNumbers = array_intersect($allAddedNumbers, $purchaseNumbers);
+      }
+
       $winners[] = (object)[
         'id' => $user_award->id,
         'user' => $user_award->user,
@@ -114,7 +121,8 @@ class GameController extends Controller
         'user_award' => $user_award,
         'purchase' => $user_award->purchase,
         'userPoint' => $user_award->points,
-        'result_numbers' => $allAddedNumbers
+        'result_numbers' => $allAddedNumbers,
+        'matched_numbers' => $matchedNumbers
       ];
     }
 
@@ -167,6 +175,27 @@ class GameController extends Controller
 
     $purchases = $builder->paginate(20, ['*'], 'purchases_page');
 
+    // Dados para classificação (todas as compras ordenadas por pontos)
+    $classificationsBuilder = Purchase::where('game_id', $id)
+      ->where('status', 'PAID')
+      ->with(['user', 'seller',])
+      ->where('round', $round)
+      ->orderBy('points', 'desc')
+      ->orderBy('created_at', 'asc');
+    
+
+    if ($request->has('search') && $request->search != '') {
+      $classificationsBuilder = $classificationsBuilder->where(function ($q) use ($request) {
+        $q->whereHas('game', function ($gameq) use ($request) {
+          $gameq->where('name', 'like', '%' . $request->search . '%');
+        })->orWhere('numbers', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
+          ->orWhere('identifier', 'like', '%' . $request->search . '%');
+      });
+    }
+      
+    $classifications = $classificationsBuilder->paginate(20, ['*'], 'classifications_page');
 
     foreach ($purchases as $key => $purchase) {
       // Usa os pontos já calculados no banco de dados
@@ -181,6 +210,21 @@ class GameController extends Controller
 
       $purchases[$key]['matched_numbers'] = $matchedNumbers;
       $purchases[$key]['points'] = $points;
+    }
+
+    // Processar dados de classificação
+    foreach ($classifications as $key => $classification) {
+      $points = $classification->points;
+      $matchedNumbers = [];
+      
+      // Só calcula matched_numbers se a compra está paga/finalizada
+      if (in_array($classification->status, ["PAID", "FINISHED"])) {
+        $purchaseNumbers = array_map('intval', explode(' ', $classification->numbers));
+        $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+      }
+
+      $classifications[$key]['matched_numbers'] = $matchedNumbers;
+      $classifications[$key]['points'] = $points;
     }
 
 
@@ -199,7 +243,9 @@ class GameController extends Controller
       'winners' => $winners,
       'user_awards' => $user_awards,
       'winner_award' => $winner_award,
-      'sellers' => $sellers
+      'sellers' => $sellers,
+      'classifications' => $classifications,
+      'uniqueNumbers' => $uniqueNumbers
     ]);
   }
 
@@ -462,6 +508,10 @@ class GameController extends Controller
     return Response::stream($callback, 200, $headers);
   }
 
+
+  /**
+   * Display the classification for a specific game.
+   */
 
   /**
    * Remove the specified resource from storage.
