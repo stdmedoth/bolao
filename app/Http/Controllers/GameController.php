@@ -181,7 +181,7 @@ class GameController extends Controller
       ->with(['user', 'seller',])
       ->where('round', $round)
       ->orderBy('points', 'desc')
-      ->orderBy('created_at', 'asc');
+      ->orderBy('created_at', 'desc');
     
 
     if ($request->has('search') && $request->search != '') {
@@ -191,7 +191,10 @@ class GameController extends Controller
         })->orWhere('numbers', 'like', '%' . $request->search . '%')
           ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
           ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
-          ->orWhere('identifier', 'like', '%' . $request->search . '%');
+          ->orWhere('identifier', 'like', '%' . $request->search . '%')
+          ->orWhereHas('seller', function ($sellerq) use ($request) {
+            $sellerq->where('name', 'like', '%' . $request->search . '%');
+          });
       });
     }
       

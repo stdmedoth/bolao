@@ -18,78 +18,50 @@
             max-width: 350px;
         }
 
-        /* Coluna do ticket - mínima absoluta */
+        /* Coluna de participantes - agora primeira coluna */
         .table-classifications th:nth-child(1),
         .table-classifications td:nth-child(1) {
-            width: 60px;
-            min-width: 60px;
-            max-width: 60px;
-            text-align: center;
-            font-size: 0.55rem;
-            word-break: keep-all;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            font-size: 0.6rem;
             vertical-align: middle;
             padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Coluna de participantes - mínima absoluta */
+        /* Coluna de números - agora segunda coluna */
         .table-classifications th:nth-child(2),
         .table-classifications td:nth-child(2) {
-            width: 60px;
-            min-width: 60px;
-            max-width: 60px;
-            font-size: 0.5rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Coluna de números - mínima absoluta */
-        .table-classifications th:nth-child(3),
-        .table-classifications td:nth-child(3) {
-            width: 60px;
-            min-width: 60px;
-            max-width: 60px;
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
             text-align: center;
             font-size: 0.5rem;
             vertical-align: middle;
             padding: 3px 8px 3px 8px;
         }
 
-        /* Coluna de pontos - mínima absoluta */
-        .table-classifications th:nth-child(4),
-        .table-classifications td:nth-child(4) {
-            width: 30px;
-            min-width: 30px;
-            max-width: 30px;
+        /* Coluna de pontos - agora terceira coluna */
+        .table-classifications th:nth-child(3),
+        .table-classifications td:nth-child(3) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
             text-align: center;
             font-size: 0.55rem;
             vertical-align: middle;
             padding: 3px 1px;
         }
 
-        /* Coluna de status - mínima absoluta */
-        .table-classifications th:nth-child(5),
-        .table-classifications td:nth-child(5) {
-            width: 40px;
-            min-width: 40px;
-            max-width: 40px;
-            text-align: center;
-            font-size: 0.5rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-        }
-
-        /* Coluna de ações - mínima absoluta */
-        .table-classifications th:nth-child(6),
-        .table-classifications td:nth-child(6) {
-            width: 30px;
-            min-width: 30px;
-            max-width: 30px;
+        /* Coluna de ações - agora quarta coluna */
+        .table-classifications th:nth-child(4),
+        .table-classifications td:nth-child(4) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
             text-align: center;
             font-size: 0.55rem;
             vertical-align: middle;
@@ -110,7 +82,7 @@
 
         /* Texto do vendedor ultra compacto */
         .table-classifications .text-muted {
-            font-size: 0.3rem;
+            font-size: 0.4rem;
             line-height: 0.8;
             margin-top: 0px;
         }
@@ -133,10 +105,10 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             border-radius: 100%;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             font-weight: 600;
             border: 1px solid;
             margin: 0;
@@ -163,28 +135,13 @@
                 height: 16px;
             }
             
-            /* Ticket no tablet */
+            /* Coluna de participantes no tablet */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
-                width: 50px;
-                min-width: 50px;
-                max-width: 50px;
-                font-size: 0.5rem;
-                word-break: keep-all;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                vertical-align: middle;
-                padding: 2px 1px;
-            }
-            
-            /* Coluna de participantes no tablet */
-            .table-classifications th:nth-child(2),
-            .table-classifications td:nth-child(2) {
-                width: 50px;
-                min-width: 50px;
-                max-width: 50px;
-                font-size: 0.45rem;
+                width: 80px;
+                min-width: 80px;
+                max-width: 80px;
+                font-size: 0.55rem;
                 padding: 2px 1px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -192,41 +149,31 @@
             }
             
             /* Coluna de números no tablet */
-            .table-classifications th:nth-child(3),
-            .table-classifications td:nth-child(3) {
-                width: 50px;
-                min-width: 50px;
-                max-width: 50px;
+            .table-classifications th:nth-child(2),
+            .table-classifications td:nth-child(2) {
+                width: 70px;
+                min-width: 70px;
+                max-width: 70px;
                 font-size: 0.45rem;
                 padding: 2px 6px 2px 6px;
             }
             
             /* Pontos no tablet */
-            .table-classifications th:nth-child(4),
-            .table-classifications td:nth-child(4) {
-                width: 25px;
-                min-width: 25px;
-                max-width: 25px;
+            .table-classifications th:nth-child(3),
+            .table-classifications td:nth-child(3) {
+                width: 40px;
+                min-width: 40px;
+                max-width: 40px;
                 font-size: 0.5rem;
                 padding: 2px 1px;
             }
             
-            /* Status no tablet */
-            .table-classifications th:nth-child(5),
-            .table-classifications td:nth-child(5) {
+            /* Ações no tablet */
+            .table-classifications th:nth-child(4),
+            .table-classifications td:nth-child(4) {
                 width: 35px;
                 min-width: 35px;
                 max-width: 35px;
-                font-size: 0.45rem;
-                padding: 2px 1px;
-            }
-            
-            /* Ações no tablet */
-            .table-classifications th:nth-child(6),
-            .table-classifications td:nth-child(6) {
-                width: 25px;
-                min-width: 25px;
-                max-width: 25px;
                 font-size: 0.5rem;
                 padding: 2px 1px;
             }
@@ -243,7 +190,7 @@
             
             /* Texto do vendedor no tablet */
             .table-classifications .text-muted {
-                font-size: 0.25rem;
+                font-size: 0.35rem;
             }
             
             .classification-number-ball {
@@ -260,9 +207,9 @@
             }
             
             .classification-number-ball {
-                width: 10px;
-                height: 10px;
-                font-size: 0.30rem;
+                width: 15px;
+                height: 15px;
+                font-size: 0.50rem;
             }
             
             .prize-type-badge {
@@ -270,70 +217,45 @@
                 padding: 1px 1px;
             }
             
-            /* Ticket pequeno no mobile */
+            /* Participantes no mobile pequeno */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
-                width: 30px;
-                min-width: 30px;
-                max-width: 30px;
-                font-size: 0.3rem;
-                padding: 2px 1px;
-                word-break: keep-all;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                vertical-align: middle;
-            }
-            
-            /* Participantes no mobile pequeno */
-            .table-classifications th:nth-child(2),
-            .table-classifications td:nth-child(2) {
-                width: 35px;
-                min-width: 35px;
-                max-width: 35px;
-                font-size: 0.3rem;
-                padding: 2px 1px;
+                width: 100px;
+                min-width: 100px;
+                max-width: 100px;
+                font-size: 0.5rem;
+                padding: 2px 1px 2px 2px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             
             /* Números no mobile pequeno */
-            .table-classifications th:nth-child(3),
-            .table-classifications td:nth-child(3) {
-                width: 70px;
-                min-width: 70px;
-                max-width: 70px;
+            .table-classifications th:nth-child(2),
+            .table-classifications td:nth-child(2) {
+                width: 110px;
+                min-width: 110px;
+                max-width: 110px;
                 font-size: 0.3rem;
-                padding: 2px 4px 2px 10px;
+                padding: 2px 2px 2px 2px;
             }
             
             /* Pontos mínimo no mobile pequeno */
-            .table-classifications th:nth-child(4),
-            .table-classifications td:nth-child(4) {
+            .table-classifications th:nth-child(3),
+            .table-classifications td:nth-child(3) {
                 width: 20px;
                 min-width: 20px;
                 max-width: 20px;
                 font-size: 0.3rem;
-                padding: 2px 1px;
-            }
-            
-            /* Status mínimo no mobile pequeno */
-            .table-classifications th:nth-child(5),
-            .table-classifications td:nth-child(5) {
-                width: 20px;
-                min-width: 20px;
-                max-width: 20px;
-                font-size: 0.3rem;
-                padding: 2px 1px;
+                padding: 2px 2px 2px 6px;
             }
             
             /* Ações mínimo no mobile pequeno */
-            .table-classifications th:nth-child(6),
-            .table-classifications td:nth-child(6) {
-                width: 20px;
-                min-width: 20px;
-                max-width: 20px;
+            .table-classifications th:nth-child(4),
+            .table-classifications td:nth-child(4) {
+                width: 30px;
+                min-width: 30px;
+                max-width: 30px;
                 font-size: 0.3rem;
                 padding: 2px 1px;
             }
@@ -350,7 +272,7 @@
             
             /* Texto do vendedor no mobile pequeno */
             .table-classifications .text-muted {
-                font-size: 0.2rem;
+                font-size: 0.3rem;
             }
         }
         /* Grid de dezenas - ultra compacto */
@@ -537,33 +459,29 @@
             <table class="table table-classifications">
                 <thead>
                     <tr>
-                        <th>Ticket</th>
                         <th>Participantes</th>
                         <th>Números</th>
-                        <th>Pontos</th>
-                        <th>Status</th>
+                        <th>Pts</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
                     @if ($classifications->isEmpty())
                         <tr>
-                            <td colspan="6" class="text-center text-muted">Não há apostas para esse jogo com os filtros especificados.</td>
+                            <td colspan="4" class="text-center text-muted">Não há apostas para esse jogo com os filtros especificados.</td>
                         </tr>
                     @else
                         @foreach ($classifications as $index => $classification)
                             <tr>
                                 <td>
-                                    <strong>{{ $classification->identifier }}</strong>
-                                </td>
-                                <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-bold text-primary">{{ $classification->gambler_name }}</span>
+                                        <span class="fw-bold text-primary">{{ Str::limit($classification->gambler_name, 20) }}</span>
                                         @if (in_array($classification->seller->role->level_id, ['seller']))
-                                            <small class="text-muted">Vendedor: {{ $classification->seller->name }}</small>
+                                            <small class="text-muted">Vend.: {{ Str::limit($classification->seller->name, 20) }}</small>
                                         @else
-                                            <small class="text-muted">Vendedor: Banca Central</small>
+                                            <small class="text-muted">Vend: Banca Central</small>
                                         @endif
+                                        <small class="text-muted" style="font-size: 0.3rem;">Ticket: {{ $classification->identifier }}</small>
                                     </div>
                                 </td>
                                 <td>
@@ -586,20 +504,6 @@
                                 <td>
                                     <span class="fw-bold text-primary">
                                         {{ $classification->status == 'PAID' ? $classification->points : '-' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @php
-                                        $statusText = match($classification->status) {
-                                            'PAID' => 'Pago',
-                                            'PENDING' => 'Pendente',
-                                            'CANCELED' => 'Cancelado',
-                                            'FINISHED' => 'Finalizado',
-                                            default => $classification->status
-                                        };
-                                    @endphp
-                                    <span class="badge bg-label-{{ $classification->status == 'PAID' ? 'success' : ($classification->status == 'PENDING' ? 'warning' : 'secondary') }}">
-                                        {{ $statusText }}
                                     </span>
                                 </td>
                                 <td>
