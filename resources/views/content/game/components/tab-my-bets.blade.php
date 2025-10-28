@@ -1,29 +1,284 @@
 <div class="tab-pane fade {{ $tab == 'tab-mybets' ? 'show active' : '' }}" id="mybets" role="tabpanel"
     aria-labelledby="mybets-tab">
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Seleciona todos os botões de pagar na página
-            const loadOnClickButtons = document.querySelectorAll('.btn-loadonclick');
+    <style>
+        /* Tabela responsiva - usar toda largura disponível */
+        .table-my-bets {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 0.85rem;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Coluna de ID/Ticket - primeira coluna */
+        .table-my-bets th:nth-child(1),
+        .table-my-bets td:nth-child(1) {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-            loadOnClickButtons.forEach(button => {
-                button.addEventListener('click', function(event) {
-                    // Verifica se o botão já está desabilitado pela lógica do Blade
-                    if (this.classList.contains('disabled')) {
-                        event.preventDefault(); // Impede a navegação se já estiver desabilitado
-                        return;
-                    }
+        /* Coluna de Apostador - segunda coluna */
+        .table-my-bets th:nth-child(2),
+        .table-my-bets td:nth-child(2) {
+            width: 120px;
+            min-width: 120px;
+            max-width: 120px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-                    // Desabilita o botão imediatamente para evitar clique duplo
-                    this.classList.add('disabled');
-                    this.textContent = 'Processando...';
+        /* Coluna de Vendedor - terceira coluna (se houver) */
+        .table-my-bets th:nth-child(3),
+        .table-my-bets td:nth-child(3) {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-                    // O navegador continuará com a navegação para o href normalmente.
-                    // Não precisamos de setTimeout ou reativar o botão, pois a página vai recarregar.
-                });
-            });
-        });
-    </script>
+        /* Coluna de Pontos */
+        .table-my-bets th:nth-child(4),
+        .table-my-bets td:nth-child(4) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+            text-align: center;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+        }
+
+        /* Coluna de Números */
+        .table-my-bets th:nth-child(5),
+        .table-my-bets td:nth-child(5) {
+            width: 180px;
+            min-width: 180px;
+            max-width: 180px;
+            text-align: center;
+            font-size: 0.75rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+        }
+
+        /* Coluna de Status */
+        .table-my-bets th:nth-child(6),
+        .table-my-bets td:nth-child(6) {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+            text-align: center;
+            font-size: 0.75rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+        }
+
+        /* Coluna de Pago por */
+        .table-my-bets th:nth-child(7),
+        .table-my-bets td:nth-child(7) {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            font-size: 0.75rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Coluna de Ações */
+        .table-my-bets th:nth-child(8),
+        .table-my-bets td:nth-child(8) {
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
+            font-size: 0.7rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+        }
+
+        /* Botões de ações compactos */
+        .table-my-bets .btn-sm {
+            padding: 2px 4px;
+            font-size: 0.7rem;
+            line-height: 1;
+            border-radius: 2px;
+            margin: 1px;
+        }
+
+        /* Container de números no estilo de classificações */
+        .my-bets-numbers-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 2px;
+            max-width: 100%;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+
+        .my-bets-number-ball {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 100%;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1px solid;
+            margin: 0;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+
+        .my-bets-number-ball.hit {
+            background-color: #fbbf24;
+            color: #1a365d;
+            border-color: #f59e0b;
+        }
+
+        .my-bets-number-ball.miss {
+            background-color: #e5e7eb;
+            color: #6b7280;
+            border-color: #d1d5db;
+        }
+
+        /* Coluna "Usuário" (penúltima coluna antes de "Compra em") */
+        .table-my-bets th:nth-last-child(2),
+        .table-my-bets td:nth-last-child(2) {
+            width: 120px;
+            min-width: 120px;
+            max-width: 120px;
+            font-size: 0.75rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Coluna "Compra em" - última coluna */
+        .table-my-bets th:last-child,
+        .table-my-bets td:last-child {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+            font-size: 0.75rem;
+            vertical-align: middle;
+            padding: 3px 1px;
+            white-space: nowrap;
+        }
+
+        /* Responsividade para mobile */
+        @media (max-width: 768px) {
+            .table-my-bets th:nth-child(1),
+            .table-my-bets td:nth-child(1) {
+                width: 60px;
+                min-width: 60px;
+                max-width: 60px;
+                font-size: 0.7rem;
+            }
+            
+            .table-my-bets th:nth-child(2),
+            .table-my-bets td:nth-child(2) {
+                width: 100px;
+                min-width: 100px;
+                max-width: 100px;
+                font-size: 0.7rem;
+            }
+
+            .table-my-bets .btn-sm {
+                padding: 1px 2px;
+                font-size: 0.6rem;
+            }
+
+            .my-bets-number-ball {
+                width: 18px;
+                height: 18px;
+                font-size: 0.6rem;
+            }
+
+            /* Coluna "Usuário" no tablet */
+            .table-my-bets th:nth-last-child(2),
+            .table-my-bets td:nth-last-child(2) {
+                width: 100px;
+                min-width: 100px;
+                max-width: 100px;
+                font-size: 0.7rem;
+            }
+
+            /* Coluna "Compra em" no tablet */
+            .table-my-bets th:last-child,
+            .table-my-bets td:last-child {
+                width: 70px;
+                min-width: 70px;
+                max-width: 70px;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-my-bets th:nth-child(1),
+            .table-my-bets td:nth-child(1) {
+                width: 50px;
+                min-width: 50px;
+                max-width: 50px;
+                font-size: 0.6rem;
+            }
+            
+            .table-my-bets .btn-sm {
+                padding: 1px 1px;
+                font-size: 0.5rem;
+            }
+
+            .my-bets-number-ball {
+                width: 15px;
+                height: 15px;
+                font-size: 0.5rem;
+            }
+
+            /* Coluna "Usuário" no mobile pequeno */
+            .table-my-bets th:nth-last-child(2),
+            .table-my-bets td:nth-last-child(2) {
+                width: 80px;
+                min-width: 80px;
+                max-width: 80px;
+                font-size: 0.65rem;
+            }
+
+            /* Coluna "Compra em" no mobile pequeno */
+            .table-my-bets th:last-child,
+            .table-my-bets td:last-child {
+                width: 60px;
+                min-width: 60px;
+                max-width: 60px;
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+
     <!-- Formulário de Pesquisa e Filtro -->
     <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
         <div class="row">
@@ -90,7 +345,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         <button id="repeat_game_repeat_button_id" type="submit"
-                            class="btn btn-primary">Repetir</button>
+                            class="btn btn-primary btn-loadonclick ">Repetir</button>
                     </div>
                 </form>
             </div>
@@ -240,7 +495,7 @@
     <!-- Tabela de Compras -->
     <div class="card">
         <div class="table-responsive text-nowrap" style="max-height: 70vh; overflow-y: auto;">
-            <table class="table">
+            <table class="table table-my-bets">
                 <thead>
                     <tr>
                         <th>Id</th>
@@ -257,7 +512,7 @@
                             </th>
                         @endif
 
-                        <th>Pontuação
+                        <th>Pts
                             {{-- @if (in_array(Auth::user()->role->level_id, ['admin'])) --}}
                             <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal"
                                 data-bs-target="#filtroPointsModal">
@@ -308,32 +563,23 @@
                                         class="fw-bold text-primary">{{ $purchase->status == 'PAID' ? $purchase->points : '' }}</span>
                                 </td>
                                 <td>
-                                    @php
-                                        // Prepare the arrays once to avoid calling them in the loop repeatedly
-                                        $displayNumbers = explode(' ', $purchase->numbers);
-                                        $matchedNumbers = $purchase->matched_numbers ?? []; // Ensure it's an array
-                                    @endphp
-
-                                    {{-- Loop through the numbers to display them --}}
-                                    @foreach ($displayNumbers as $number)
+                                    <div class="my-bets-numbers-container">
                                         @php
-                                            $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
+                                            // Prepare the arrays once to avoid calling them in the loop repeatedly
+                                            $displayNumbers = explode(' ', $purchase->numbers);
+                                            $matchedNumbers = $purchase->matched_numbers ?? [];
                                         @endphp
-
-                                        {{-- Check if the current number is in the matched array --}}
-                                        @if (in_array($number, $matchedNumbers) && $purchase->status == 'PAID')
-                                            {{-- If it matched, wrap it in a span --}}
-                                            <span class="text-success fw-bold">{{ $paddedNumber }}</span>
-                                        @else
-                                            {{-- Otherwise, just display the number --}}
-                                            {{ $paddedNumber }}
-                                        @endif
-
-                                        {{-- Add a space after each number, but not the last one --}}
-                                        @if (!$loop->last)
-                                            &nbsp; {{-- Using &nbsp; for a non-breaking space --}}
-                                        @endif
-                                    @endforeach
+                                        
+                                        @foreach ($displayNumbers as $number)
+                                            @php
+                                                $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
+                                                $isHit = in_array($number, $matchedNumbers) && $purchase->status == 'PAID';
+                                            @endphp
+                                            <div class="my-bets-number-ball {{ $isHit ? 'hit' : 'miss' }}">
+                                                {{ $paddedNumber }}
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </td>
 
 
@@ -354,39 +600,41 @@
                                     $is_admin = auth()->user()->role->level_id == 'admin';
                                 @endphp
                                 <td>
-                                    <a href="{{ route('purchase-pay', array_merge([$purchase->id], request()->query())) }}"
-                                        class="btn btn-success btn-loadonclick {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
-                                        Pagar
-                                    </a>
-
-                                    @if ($is_imported)
-                                        <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                            class="btn btn-warning btn-loadonclick {{ !$is_admin || ($purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED') ? 'disabled' : '' }}">
-                                            Estornar
+                                    <div style="display: flex; flex-wrap: wrap; gap: 2px;">
+                                        <a href="{{ route('purchase-pay', array_merge([$purchase->id], request()->query())) }}"
+                                            class="btn btn-sm btn-success btn-loadonclick {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
+                                            Pagar
                                         </a>
-                                    @else
-                                        <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                            class="btn btn-warning btn-loadonclick {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
-                                            Estornar
+
+                                        @if ($is_imported)
+                                            <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                                                class="btn btn-sm btn-warning btn-loadonclick {{ !$is_admin || ($purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED') ? 'disabled' : '' }}">
+                                                Estornar
+                                            </a>
+                                        @else
+                                            <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                                                class="btn btn-sm btn-warning btn-loadonclick {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
+                                                Estornar
+                                            </a>
+                                        @endif
+
+                                        <a href="#" data-purchase_id="{{ $purchase->id }}"
+                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                            data-purchase_id="{{ $purchase->id }}"
+                                            data-game_name="{{ $purchase->game->name }}"
+                                            data-gambler_name="{{ $purchase->gambler_name }}"
+                                            data-gambler_phone="{{ $purchase->gambler_phone }}"
+                                            class="btn btn-sm btn-danger delete_game_button {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
+                                            Cancelar
                                         </a>
-                                    @endif
 
-                                    <a href="#" data-purchase_id="{{ $purchase->id }}"
-                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                        data-purchase_id="{{ $purchase->id }}"
-                                        data-game_name="{{ $purchase->game->name }}"
-                                        data-gambler_name="{{ $purchase->gambler_name }}"
-                                        data-gambler_phone="{{ $purchase->gambler_phone }}"
-                                        class="btn btn-danger delete_game_button {{ $purchase->status !== 'PENDING' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' ? 'disabled' : '' }}">
-                                        Cancelar
-                                    </a>
-
-                                    <a href="#" data-purchase_id="{{ $purchase->id }}"
-                                        data-game_name="{{ $purchase->game->name }}"
-                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                        class="btn btn-secondary repeat_game_button">
-                                        Repetir
-                                    </a>
+                                        <a href="#" data-purchase_id="{{ $purchase->id }}"
+                                            data-game_name="{{ $purchase->game->name }}"
+                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                            class="btn btn-sm btn-secondary repeat_game_button">
+                                            Repetir
+                                        </a>
+                                    </div>
                                 </td>
 
                                 @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))

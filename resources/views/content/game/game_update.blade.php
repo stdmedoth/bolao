@@ -28,7 +28,7 @@
             <!-- Temporada -->
             <div class="form-group">
                 <label for="name">Temporada:</label>
-                <input type="text" name="season" class="form-control" value="{{ $game->season }}" required>
+                <input type="text" name="round" class="form-control" value="{{ $game->round }}" required>
             </div>
 
             <div class="form-group">

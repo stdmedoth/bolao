@@ -72,76 +72,52 @@
       "target": "_blank"
     },
     {
-      "url": "/transacoes",
-      "name": "Transações",
+      "url": "/deposito",
+      "name": "Depositar",
       "user_roles_level": [
         "seller",
         "admin",
         "gambler"
       ],
-      "icon": "menu-icon tf-icons bx bx-transfer-alt",
-      "slug": "transactions",
-      "target": "_blank",
-      "submenu": [
-        {
-          "url": "/deposito",
-          "name": "Depositar",
-          "user_roles_level": [
-            "seller",
-            "admin",
-            "gambler"
-          ],
-          "icon": "menu-icon tf-icons bx bx-money",
-          "slug": "deposit"
-        },
-        {
-          "url": "/saque",
-          "name": "Sacar",
-          "user_roles_level": [
-            "seller",
-            "admin",
-            "gambler"
-          ],
-          "icon": "menu-icon tf-icons bx bx-dollar",
-          "slug": "withdraw"
-        }
-      ]
+      "icon": "menu-icon tf-icons bx bx-money",
+      "slug": "deposit",
+      "target": "_blank"
     },
     {
-      "url": "/financeiro",
-      "name": "Financeiro",
+      "url": "/saque",
+      "name": "Sacar",
       "user_roles_level": [
         "seller",
         "admin",
         "gambler"
       ],
-      "icon": "menu-icon tf-icons bx bx-money-withdraw",
-      "slug": "finances",
-      "target": "_blank",
-      "submenu": [
-        {
-          "url": "/financeiro/extrato",
-          "name": "Extrato",
-          "user_roles_level": [
-            "seller",
-            "admin",
-            "gambler"
-          ],
-          "icon": "menu-icon tf-icons bx bx-list-ul",
-          "slug": "transactions-list"
-        },
-        {
-          "url": "/financeiro/resumo",
-          "name": "Resumo",
-          "user_roles_level": [
-            "seller",
-            "admin",
-            "gambler"
-          ],
-          "icon": "menu-icon tf-icons bx bx-math",
-          "slug": "summary"
-        }
-      ]
+      "icon": "menu-icon tf-icons bx bx-dollar",
+      "slug": "withdraw",
+      "target": "_blank"
+    },
+    {
+      "url": "/financeiro/extrato",
+      "name": "Extrato",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon tf-icons bx bx-list-ul",
+      "slug": "transactions-list",
+      "target": "_blank"
+    },
+    {
+      "url": "/financeiro/resumo",
+      "name": "Resumo",
+      "user_roles_level": [
+        "seller",
+        "admin",
+        "gambler"
+      ],
+      "icon": "menu-icon tf-icons bx bx-math",
+      "slug": "summary",
+      "target": "_blank"
     },
     {
       "url": "/indique_ganhe",

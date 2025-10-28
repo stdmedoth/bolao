@@ -21,10 +21,10 @@
         /* Coluna de participantes - agora primeira coluna */
         .table-classifications th:nth-child(1),
         .table-classifications td:nth-child(1) {
-            width: 100px;
-            min-width: 100px;
-            max-width: 100px;
-            font-size: 0.6rem;
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
+            font-size: 1rem;
             vertical-align: middle;
             padding: 3px 1px;
             white-space: nowrap;
@@ -35,11 +35,11 @@
         /* Coluna de números - agora segunda coluna */
         .table-classifications th:nth-child(2),
         .table-classifications td:nth-child(2) {
-            width: 80px;
-            min-width: 80px;
-            max-width: 80px;
+            width: 130px;
+            min-width: 130px;
+            max-width: 130px;
             text-align: center;
-            font-size: 0.5rem;
+            font-size: 1rem;
             vertical-align: middle;
             padding: 3px 8px 3px 8px;
         }
@@ -47,11 +47,11 @@
         /* Coluna de pontos - agora terceira coluna */
         .table-classifications th:nth-child(3),
         .table-classifications td:nth-child(3) {
-            width: 50px;
-            min-width: 50px;
-            max-width: 50px;
+            width: 70px;
+            min-width: 70px;
+            max-width: 70px;
             text-align: center;
-            font-size: 0.55rem;
+            font-size: 1rem;
             vertical-align: middle;
             padding: 3px 1px;
         }
@@ -59,11 +59,11 @@
         /* Coluna de ações - agora quarta coluna */
         .table-classifications th:nth-child(4),
         .table-classifications td:nth-child(4) {
-            width: 50px;
-            min-width: 50px;
-            max-width: 50px;
+            width: 70px;
+            min-width: 70px;
+            max-width: 70px;
             text-align: center;
-            font-size: 0.55rem;
+            font-size: 1rem;
             vertical-align: middle;
             padding: 3px 1px;
         }
@@ -82,10 +82,11 @@
 
         /* Texto do vendedor ultra compacto */
         .table-classifications .text-muted {
-            font-size: 0.4rem;
+            font-size: 0.6rem;
             line-height: 0.8;
             margin-top: 0px;
         }
+
 
 
         /* Container de números responsivo - linha horizontal única */
@@ -132,16 +133,16 @@
         @media (max-width: 768px) {
             .classification-numbers-container {
                 max-width: 110px;
-                height: 16px;
+                height: 18px;
             }
             
             /* Coluna de participantes no tablet */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
-                width: 80px;
-                min-width: 80px;
-                max-width: 80px;
-                font-size: 0.55rem;
+                width: 160px;
+                min-width: 160px;
+                max-width: 160px;
+                font-size: 0.9rem;
                 padding: 2px 1px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -151,9 +152,9 @@
             /* Coluna de números no tablet */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
-                width: 70px;
-                min-width: 70px;
-                max-width: 70px;
+                width: 100px;
+                min-width: 100px;
+                max-width: 100px;
                 font-size: 0.45rem;
                 padding: 2px 6px 2px 6px;
             }
@@ -161,20 +162,20 @@
             /* Pontos no tablet */
             .table-classifications th:nth-child(3),
             .table-classifications td:nth-child(3) {
-                width: 40px;
-                min-width: 40px;
-                max-width: 40px;
-                font-size: 0.5rem;
+                width: 50px;
+                min-width: 50px;
+                max-width: 50px;
+                font-size: 0.6rem;
                 padding: 2px 1px;
             }
             
             /* Ações no tablet */
             .table-classifications th:nth-child(4),
             .table-classifications td:nth-child(4) {
-                width: 35px;
-                min-width: 35px;
-                max-width: 35px;
-                font-size: 0.5rem;
+                width: 50px;
+                min-width: 50px;
+                max-width: 50px;
+                font-size: 0.6rem;
                 padding: 2px 1px;
             }
             
@@ -203,7 +204,7 @@
         @media (max-width: 576px) {
             .classification-numbers-container {
                 max-width: 105px;
-                height: 14px;
+                height: 16px;
             }
             
             .classification-number-ball {
@@ -220,9 +221,9 @@
             /* Participantes no mobile pequeno */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
-                width: 100px;
-                min-width: 100px;
-                max-width: 100px;
+                width: 170px;
+                min-width: 170px;
+                max-width: 170px;
                 font-size: 0.5rem;
                 padding: 2px 1px 2px 2px;
                 white-space: nowrap;
@@ -233,10 +234,10 @@
             /* Números no mobile pequeno */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
-                width: 110px;
-                min-width: 110px;
-                max-width: 110px;
-                font-size: 0.3rem;
+                width: 145px;
+                min-width: 145px;
+                max-width: 145px;
+                font-size: 0.35rem;
                 padding: 2px 2px 2px 2px;
             }
             
@@ -244,19 +245,19 @@
             .table-classifications th:nth-child(3),
             .table-classifications td:nth-child(3) {
                 width: 20px;
-                min-width: 20px;
-                max-width: 20px;
-                font-size: 0.3rem;
-                padding: 2px 2px 2px 6px;
+                min-width: 30px;
+                max-width: 30px;
+                font-size: 0.4rem;
+                padding: 2px 2px 2px 2px;
             }
             
             /* Ações mínimo no mobile pequeno */
             .table-classifications th:nth-child(4),
             .table-classifications td:nth-child(4) {
-                width: 30px;
-                min-width: 30px;
-                max-width: 30px;
-                font-size: 0.3rem;
+                width: 35px;
+                min-width: 35px;
+                max-width: 35px;
+                font-size: 0.4rem;
                 padding: 2px 1px;
             }
             
@@ -349,6 +350,51 @@
             .number-cell {
                 height: 12px;
                 font-size: 0.5rem;
+            }
+        }
+
+        /* Estilos específicos para o modal */
+        #modal-numbers {
+            max-width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            overflow: hidden;
+        }
+
+        #modal-numbers .classification-number-ball {
+            width: 16px;
+            height: 16px;
+            font-size: 0.5rem;
+            margin: 1px;
+            flex-shrink: 0;
+        }
+
+        /* Responsividade do modal */
+        @media (max-width: 768px) {
+            #modal-numbers .classification-number-ball {
+                width: 14px;
+                height: 14px;
+                font-size: 0.45rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            #modal-numbers .classification-number-ball {
+                width: 12px;
+                height: 12px;
+                font-size: 0.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #modal-numbers .classification-number-ball {
+                width: 10px;
+                height: 10px;
+                font-size: 0.35rem;
             }
         }
     </style>
@@ -477,11 +523,11 @@
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold text-primary">{{ Str::limit($classification->gambler_name, 20) }}</span>
                                         @if (in_array($classification->seller->role->level_id, ['seller']))
-                                            <small class="text-muted">Vend.: {{ Str::limit($classification->seller->name, 20) }}</small>
+                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: {{ Str::limit($classification->seller->name, 20) }}</small>
                                         @else
-                                            <small class="text-muted">Vend: Banca Central</small>
+                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: Banca Central</small>
                                         @endif
-                                        <small class="text-muted" style="font-size: 0.3rem;">Ticket: {{ $classification->identifier }}</small>
+                                        <small class="text-muted" style="font-size: 0.5rem;">Ticket: {{ $classification->identifier }}</small>
                                     </div>
                                 </td>
                                 <td>
@@ -586,24 +632,29 @@
                 // Extrair dados da linha da tabela
                 const cells = targetRow.querySelectorAll('td');
                 
-                if (cells.length < 6) {
+                if (cells.length < 4) {
                     console.error('Número insuficiente de células:', cells.length);
                     alert('Erro: Dados da linha incompletos');
                     return;
                 }
                 
                 // Extrair dados com verificações de segurança
-                const ticket = cells[0] ? cells[0].textContent.trim() : 'N/A';
-                const gamblerElement = cells[1] ? cells[1].querySelector('.fw-bold') : null;
+                // Agora a primeira célula é participantes (com ticket dentro)
+                const gamblerElement = cells[0] ? cells[0].querySelector('.fw-bold') : null;
                 const gamblerName = gamblerElement ? gamblerElement.textContent.trim() : 'N/A';
-                const points = cells[3] ? cells[3].textContent.trim() : '0';
                 
-                // Extrair status do badge
-                const statusBadge = cells[4] ? cells[4].querySelector('.badge') : null;
-                const status = statusBadge ? statusBadge.textContent.trim() : 'N/A';
+                // Extrair ticket da primeira célula (participantes)
+                const ticketElement = cells[0] ? cells[0].querySelector('small[style*="font-size: 0.5rem"]') : null;
+                const ticket = ticketElement ? ticketElement.textContent.replace('Ticket: ', '').trim() : 'N/A';
                 
-                // Extrair números da linha
-                const numbersContainer = cells[2] ? cells[2].querySelector('.classification-numbers-container') : null;
+                // Extrair números da segunda célula
+                const numbersContainer = cells[1] ? cells[1].querySelector('.classification-numbers-container') : null;
+                
+                // Extrair pontos da terceira célula
+                const points = cells[2] ? cells[2].textContent.trim() : '0';
+                
+                // Status não existe mais, vamos determinar baseado nos pontos
+                const status = points === '-' ? 'Pendente' : 'Pago';
                 const numbers = [];
                 const matchedNumbers = [];
                 

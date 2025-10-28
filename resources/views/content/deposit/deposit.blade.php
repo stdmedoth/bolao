@@ -53,9 +53,34 @@
                 <div class="row">
                     @if (isset($pix))
                         <div class="col" id="pix_qrcode_image">
-                            <img src="data:image/jpeg;base64, {{ $pix }}" />
-                            <p id="pix_data_copy">{{ $copy_paste }}</p>
-                            <button onclick="copyToClipboard()">Copiar</button>
+                            <div class="pix-container">
+                                <div class="pix-header">
+                                    <h5 class="mb-3">
+                                        <i class="bx bx-qr-scan me-2"></i>
+                                        Pagamento via PIX
+                                    </h5>
+                                    <p class="text-muted mb-4">Escaneie o QR Code ou copie o código PIX</p>
+                                </div>
+                                
+                                <div class="qr-code-wrapper">
+                                    <img src="data:image/jpeg;base64, {{ $pix }}" class="qr-code-image" alt="QR Code PIX" />
+                                </div>
+                                
+                                <div class="pix-code-section">
+                                    <label class="form-label fw-bold mb-2">Código PIX (Copiar e Colar)</label>
+                                    <div class="input-group mb-3">
+                                        <textarea class="form-control pix-code-text" id="pix_data_copy" readonly rows="3">{{ $copy_paste }}</textarea>
+                                        <button class="btn btn-primary copy-btn" onclick="copyToClipboard()" type="button">
+                                            <i class="bx bx-copy me-1"></i>
+                                            Copiar
+                                        </button>
+                                    </div>
+                                    <div class="copy-success-message" id="copySuccessMessage" style="display: none;">
+                                        <i class="bx bx-check-circle text-success me-1"></i>
+                                        <span class="text-success">Código PIX copiado com sucesso!</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
@@ -231,8 +256,9 @@
             document.getElementById('payment_method').addEventListener('change', update_paymethod_form);
 
             function copyToClipboard() {
-
-                text = document.getElementById("pix_data_copy").innerHTML;
+                const text = document.getElementById("pix_data_copy").value;
+                const copyBtn = document.querySelector('.copy-btn');
+                const successMessage = document.getElementById('copySuccessMessage');
 
                 // Cria um elemento temporário para armazenar o texto
                 const tempInput = document.createElement("textarea");
@@ -243,14 +269,32 @@
                 tempInput.select();
                 tempInput.setSelectionRange(0, 99999); // Para compatibilidade com dispositivos móveis
 
-                // Copia o texto para a área de transferência
-                document.execCommand("copy");
+                try {
+                    // Copia o texto para a área de transferência
+                    document.execCommand("copy");
+                    
+                    // Feedback visual
+                    copyBtn.innerHTML = '<i class="bx bx-check me-1"></i>Copiado!';
+                    copyBtn.classList.remove('btn-primary');
+                    copyBtn.classList.add('btn-success');
+                    
+                    successMessage.style.display = 'block';
+                    
+                    // Volta ao estado original após 2 segundos
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="bx bx-copy me-1"></i>Copiar';
+                        copyBtn.classList.remove('btn-success');
+                        copyBtn.classList.add('btn-primary');
+                        successMessage.style.display = 'none';
+                    }, 2000);
+                    
+                } catch (err) {
+                    console.error('Erro ao copiar: ', err);
+                    alert('Erro ao copiar o código PIX. Tente selecionar e copiar manualmente.');
+                }
 
                 // Remove o elemento temporário
                 document.body.removeChild(tempInput);
-
-                // Exibe uma mensagem de sucesso no console
-                console.log("Texto copiado: " + text);
             }
 
             document.querySelector('form').addEventListener('submit', (e) => {
@@ -260,6 +304,99 @@
         </script>
 
         <style>
+            /* Estilos para a seção PIX */
+            .pix-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 15px;
+                padding: 25px;
+                color: white;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                margin-bottom: 20px;
+            }
+
+            .pix-header h5 {
+                color: white;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+
+            .pix-header p {
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 14px;
+            }
+
+            .qr-code-wrapper {
+                text-align: center;
+                margin: 20px 0;
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .qr-code-image {
+                max-width: 200px;
+                width: 100%;
+                height: auto;
+                border-radius: 8px;
+            }
+
+            .pix-code-section {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .pix-code-section .form-label {
+                color: white;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+
+            .pix-code-text {
+                background: white;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                resize: none;
+                color: #333;
+            }
+
+            .pix-code-text:focus {
+                border-color: #fff;
+                box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+                outline: none;
+            }
+
+            .copy-btn {
+                background: linear-gradient(45deg, #28a745, #20c997);
+                border: none;
+                border-radius: 8px;
+                padding: 12px 20px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            }
+
+            .copy-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+                background: linear-gradient(45deg, #218838, #1ea085);
+            }
+
+            .copy-btn:active {
+                transform: translateY(0);
+            }
+
+            .copy-success-message {
+                margin-top: 10px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            /* Estilos para cartão de crédito */
             #credit_card_infos.card {
                 background-color: #f9f9f9;
                 /* Cor de fundo neutra */
@@ -311,6 +448,22 @@
                 /* Efeito de foco */
                 outline: none;
                 /* Remove o outline padrão */
+            }
+
+            /* Responsividade */
+            @media (max-width: 768px) {
+                .pix-container {
+                    padding: 20px;
+                }
+                
+                .qr-code-image {
+                    max-width: 150px;
+                }
+                
+                .copy-btn {
+                    padding: 10px 16px;
+                    font-size: 14px;
+                }
             }
         </style>
     </div>

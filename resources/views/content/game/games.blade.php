@@ -19,7 +19,66 @@
     <div class="contatiner">
         <h1 class="my-4">Concursos</h1>
 
+        <!-- Estilo do botão piscando e cards -->
+        <style>
+            .btn-blink {
+                background-color: #00FF00 !important;
+                color: #000000 !important;
+                box-shadow: 0 0 10px rgba(33, 33, 33, 0.5);
+                border: none !important;
+                animation: blink 1.5s infinite;
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                width: 100%;
+            }
 
+            .btn-blink:hover,
+            .btn-blink:focus,
+            .btn-blink:active {
+                background-color: darkred !important;
+                color: white !important;
+                box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+                transform: scale(1.02);
+                text-decoration: none;
+            }
+
+            @keyframes blink {
+                0%, 50%, 100% { opacity: 1; }
+                25%, 75% { opacity: 0.5; }
+            }
+
+            /* Estilo para cards mais sólidos */
+            .col-md-4 > .card {
+                border: 2px solid #dee2e6 !important;
+                border-radius: 8px !important;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+                transition: box-shadow 0.3s ease, border-color 0.3s ease;
+                background-color: #ffffff !important;
+            }
+
+            .col-md-4 > .card:hover {
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+                border-color: #adb5bd !important;
+            }
+
+            .col-md-4 > .card .card-header {
+                border-bottom: 2px solid #e9ecef !important;
+                background-color: #f8f9fa !important;
+                font-weight: 600;
+            }
+
+            /* Alerta de início amanhã */
+            .start-tomorrow-alert {
+                color: red !important;
+                font-weight: bold;
+                animation: redBlink 1s infinite;
+                font-size: 0.9rem;
+            }
+
+            @keyframes redBlink {
+                0%, 50%, 100% { opacity: 1; }
+                25%, 75% { opacity: 0.4; }
+            }
+        </style>
 
         <form action="{{ url('/concursos') }}" method="GET" class="mb-4">
             <div class="row">
@@ -88,6 +147,14 @@
                                 @endif
                             </div>
                             <div class="card-body" onclick="window.location = '/concursos/{{ $game->id }}'">
+                                @php
+                                    $openAt = \Carbon\Carbon::parse($game->open_at);
+                                    $now = \Carbon\Carbon::now();
+                                    $hoursUntilStart = $now->diffInHours($openAt, false);
+                                @endphp
+                                
+
+                                
                                 <p class="card-text"><strong>Aberto em:</strong>
                                     {{ date('d/m/Y', strtotime($game->open_at)) }}</p>
                                 <p class="card-text"><strong>Fecha em:</strong>
@@ -96,16 +163,6 @@
                                         id="countdown-{{ $game->id }}"></span></p>
                                 <p class="card-text"><strong>Preço:</strong> R$
                                     {{ number_format($game->price, 2, ',', '.') }} </p>
-                                @if (!$game->awards->isEmpty())
-                                    @foreach ($game->awards as $award)
-                                        @if ($award->condition_type === 'WINNER')
-                                            <p class="card-text"><strong>Prêmio {{ $award->name }}:</strong> R$
-                                                {{ number_format($award->amount, 2, ',', '.') }} </p>
-                                        @endif
-                                    @endforeach
-                                @else
-                                    <span class="badge bg-label-warning">Cadastrando prêmios</span>
-                                @endif
 
                                 <p class="card-text">
                                     @switch($game->status)
@@ -122,10 +179,42 @@
                                         @break
                                     @endswitch
                                 </p>
+
+                                                                @if($hoursUntilStart > 0 && $hoursUntilStart <= 24)
+                                    <p class="card-text start-tomorrow-alert">
+                                        <i class="bx bx-bell-ring me-1"></i>Início amanhã!
+                                    </p>
+                                @endif
                             </div>
 
-                            <div class="card-footer">
-
+                            <div class="card-footer" style="padding: 0;">
+                                @if($game->status == 'OPENED')
+                                <div style="padding: 10px;" > 
+                                    <a href="/concursos/{{ $game->id }}" class="btn btn-sm btn-blink" style="width: 100%;">
+                                        <i class="bx bx-plus-circle me-1"></i><b>FAÇA SEU JOGO</b>
+                                    </a>
+                                </div>
+                                @endif
+                                @if($game->status == 'CLOSED')
+                                <div style="padding: 10px;" > 
+                                    <a href="/concursos/{{ $game->id }}" class="btn btn-sm btn-blink" style="width: 100%;">
+                                        <i class="bx bx-plus-circle me-1"></i><b>Aguardando Sorteio</b>
+                                    </a>
+                                </div>
+                                @endif
+                                <div style="background-color: #e9ecef; padding: 8px; margin-top: 0;">
+                                    @if (!$game->awards->isEmpty())
+                                        @foreach ($game->awards as $award)
+                                            @if ($award->condition_type === 'WINNER')
+                                                <small class="text-muted d-block" style="font-size: 0.7rem;">
+                                                    <strong>Prêmio {{ $award->name }}:</strong> R$ {{ number_format($award->amount, 2, ',', '.') }}
+                                                </small>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        <small class="badge bg-label-warning" style="font-size: 0.65rem;">Cadastrando prêmios</small>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -148,21 +237,25 @@
                                     return;
                                 }
 
-                                let hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                                let days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                                let hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                                 let minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                                 let seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
                                 let text = "";
+                                if (days > 0) {
+                                    text += days + "d ";
+                                }
                                 if (hours > 0) {
-                                    text += hours + (hours === 1 ? " hora, " : " horas, ");
+                                    text += hours + "h ";
                                 }
                                 if (minutes > 0) {
-                                    text += minutes + (minutes === 1 ? " minuto e " : " minutos e ");
+                                    text += minutes + "m ";
                                 }
-                                text += seconds + (seconds === 1 ? " segundo" : " segundos");
+                                text += seconds + "s";
 
-                                if (hours === 0 && minutes === 0) {
-                                    text = "Menos de um minuto";
+                                if (days === 0 && hours === 0 && minutes === 0) {
+                                    text = seconds + "s";
                                 }
 
                                 document.getElementById(elementId).innerText = text;

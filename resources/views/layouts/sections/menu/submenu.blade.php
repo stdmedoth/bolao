@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Route;
           $activeClass = 'active';
       }
       elseif (isset($submenu->submenu)) {
+        // Sempre manter submenus abertos, mas só ativo se estiver em página filha
+        $activeClass = 'open';
+        
         if (gettype($submenu->slug) === 'array') {
           foreach($submenu->slug as $slug){
             if (str_contains($currentRouteName,$slug) and strpos($currentRouteName,$slug) === 0) {

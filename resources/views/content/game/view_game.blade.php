@@ -71,6 +71,30 @@
 
     <script>
         window.backendSelectedTab = @json(session('tab'));
+        
+        // Script global para bloquear botões após submit
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleciona todos os botões com classe btn-loadonclick na página
+            const loadOnClickButtons = document.querySelectorAll('.btn-loadonclick');
+
+            loadOnClickButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    // Verifica se o botão já está desabilitado pela lógica do Blade
+                    if (this.classList.contains('disabled')) {
+                        event.preventDefault(); // Impede a navegação se já estiver desabilitado
+                        return;
+                    }
+
+                    // Desabilita o botão imediatamente para evitar clique duplo
+                    this.classList.add('disabled');
+                    this.textContent = 'Processando...';
+
+                    // Para botões de submit de formulário, o navegador continuará com o submit normalmente.
+                    // Para links, o navegador continuará com a navegação normalmente.
+                    // Não precisamos de setTimeout ou reativar o botão, pois a página vai recarregar.
+                });
+            });
+        });
     </script>
 
 @endsection

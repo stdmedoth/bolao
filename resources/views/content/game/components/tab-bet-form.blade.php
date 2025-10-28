@@ -108,7 +108,7 @@
                     <input type="hidden" name="game_id" value="{{ $game->id }}">
                     <input type="hidden" id="numbers" name="numbers" value="">
 
-                    <button type="submit" class="btn btn-primary">Comprar Dezenas</button>
+                    <button type="submit" class="btn btn-primary btn-loadonclick">Comprar Dezenas</button>
 
                     @if (auth()->user()->role->level_id == 'admin')
                         <a href="{{ route('purchases.import.form', $game->id) }}" class="btn btn-secondary">Ir para

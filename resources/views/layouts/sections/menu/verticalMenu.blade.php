@@ -48,6 +48,9 @@
                     if ($currentRouteName === $menu->slug) {
                         $activeClass = 'active';
                     } elseif (isset($menu->submenu)) {
+                        // Sempre manter submenus abertos, mas só ativo se estiver em página filha
+                        $activeClass = 'open';
+                        
                         if (gettype($menu->slug) === 'array') {
                             foreach ($menu->slug as $slug) {
                                 if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
