@@ -14,9 +14,20 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        /* Coluna de ID/Ticket - primeira coluna */
+        /* Coluna de Checkbox - primeira coluna */
         .table-my-bets th:nth-child(1),
         .table-my-bets td:nth-child(1) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 1px;
+        }
+
+        /* Coluna de ID/Ticket - segunda coluna */
+        .table-my-bets th:nth-child(2),
+        .table-my-bets td:nth-child(2) {
             width: 80px;
             min-width: 80px;
             max-width: 80px;
@@ -28,9 +39,9 @@
             text-overflow: ellipsis;
         }
 
-        /* Coluna de Apostador - segunda coluna */
-        .table-my-bets th:nth-child(2),
-        .table-my-bets td:nth-child(2) {
+        /* Coluna de Apostador - terceira coluna */
+        .table-my-bets th:nth-child(3),
+        .table-my-bets td:nth-child(3) {
             width: 120px;
             min-width: 120px;
             max-width: 120px;
@@ -42,9 +53,9 @@
             text-overflow: ellipsis;
         }
 
-        /* Coluna de Vendedor - terceira coluna (se houver) */
-        .table-my-bets th:nth-child(3),
-        .table-my-bets td:nth-child(3) {
+        /* Coluna de Vendedor - quarta coluna (se houver) */
+        .table-my-bets th:nth-child(4),
+        .table-my-bets td:nth-child(4) {
             width: 100px;
             min-width: 100px;
             max-width: 100px;
@@ -57,8 +68,8 @@
         }
 
         /* Coluna de Pontos */
-        .table-my-bets th:nth-child(4),
-        .table-my-bets td:nth-child(4) {
+        .table-my-bets th:nth-child(5),
+        .table-my-bets td:nth-child(5) {
             width: 50px;
             min-width: 50px;
             max-width: 50px;
@@ -69,8 +80,8 @@
         }
 
         /* Coluna de Números */
-        .table-my-bets th:nth-child(5),
-        .table-my-bets td:nth-child(5) {
+        .table-my-bets th:nth-child(6),
+        .table-my-bets td:nth-child(6) {
             width: 180px;
             min-width: 180px;
             max-width: 180px;
@@ -81,8 +92,8 @@
         }
 
         /* Coluna de Status */
-        .table-my-bets th:nth-child(6),
-        .table-my-bets td:nth-child(6) {
+        .table-my-bets th:nth-child(7),
+        .table-my-bets td:nth-child(7) {
             width: 80px;
             min-width: 80px;
             max-width: 80px;
@@ -93,8 +104,8 @@
         }
 
         /* Coluna de Pago por */
-        .table-my-bets th:nth-child(7),
-        .table-my-bets td:nth-child(7) {
+        .table-my-bets th:nth-child(8),
+        .table-my-bets td:nth-child(8) {
             width: 100px;
             min-width: 100px;
             max-width: 100px;
@@ -107,8 +118,8 @@
         }
 
         /* Coluna de Ações */
-        .table-my-bets th:nth-child(8),
-        .table-my-bets td:nth-child(8) {
+        .table-my-bets th:nth-child(9),
+        .table-my-bets td:nth-child(9) {
             width: 200px;
             min-width: 200px;
             max-width: 200px;
@@ -195,14 +206,21 @@
         @media (max-width: 768px) {
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
+                width: 40px;
+                min-width: 40px;
+                max-width: 40px;
+            }
+            
+            .table-my-bets th:nth-child(2),
+            .table-my-bets td:nth-child(2) {
                 width: 60px;
                 min-width: 60px;
                 max-width: 60px;
                 font-size: 0.7rem;
             }
             
-            .table-my-bets th:nth-child(2),
-            .table-my-bets td:nth-child(2) {
+            .table-my-bets th:nth-child(3),
+            .table-my-bets td:nth-child(3) {
                 width: 100px;
                 min-width: 100px;
                 max-width: 100px;
@@ -242,6 +260,13 @@
         @media (max-width: 576px) {
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
+                width: 35px;
+                min-width: 35px;
+                max-width: 35px;
+            }
+            
+            .table-my-bets th:nth-child(2),
+            .table-my-bets td:nth-child(2) {
                 width: 50px;
                 min-width: 50px;
                 max-width: 50px;
@@ -346,6 +371,50 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         <button id="repeat_game_repeat_button_id" type="submit"
                             class="btn btn-primary btn-loadonclick ">Repetir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" id="modal_repeat_game_batch">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ url()->query('/purchase/repeat', request()->all()) }}" method="POST" class="mb-4">
+                    @csrf
+                    @method('POST')
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Repetir jogos em lote</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="repeat_game_id_batch">Jogo para repetir</label>
+                                <select name="repeat_game_id" id="repeat_game_id_batch_tab" class="form-select" required>
+                                    @foreach ($games->where('status', 'OPENED') as $game)
+                                        <option value="{{ $game->id }}"
+                                            {{ request('game_id') == $game->id ? 'selected' : '' }}>
+                                            {{ $game->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label>Apostas selecionadas: <span id="selected_count_batch_tab">0</span></label>
+                                <div id="selected_purchases_list_tab" class="mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                    <p class="text-muted">Nenhuma aposta selecionada</p>
+                                </div>
+                            </div>
+                            
+                            <input id="repeat_game_purchase_ids_batch_tab" name="repeat_game_purchase_ids[]" type="hidden" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button id="repeat_game_repeat_button_batch_id_tab" type="submit"
+                            class="btn btn-primary btn-loadonclick" disabled>Repetir Selecionadas</button>
                     </div>
                 </form>
             </div>
@@ -495,9 +564,25 @@
     <!-- Tabela de Compras -->
     <div class="card">
         <div class="table-responsive text-nowrap" style="max-height: 70vh; overflow-y: auto;">
+            <!-- Botão de Repetir em Lote -->
+            <div class="mb-3" id="batch_repeat_container_tab" style="display: none;">
+                <button type="button" id="btn_repeat_batch_tab" class="btn btn-info">
+                    <i class="bx bx-repeat"></i> Repetir Selecionadas em Lote
+                </button>
+                <button type="button" id="btn_select_all_tab" class="btn btn-sm btn-outline-secondary ms-2">
+                    Selecionar Todas
+                </button>
+                <button type="button" id="btn_deselect_all_tab" class="btn btn-sm btn-outline-secondary ms-2">
+                    Desmarcar Todas
+                </button>
+            </div>
+
             <table class="table table-my-bets">
                 <thead>
                     <tr>
+                        <th width="50">
+                            <input type="checkbox" id="select_all_checkbox_tab" title="Selecionar todas">
+                        </th>
                         <th>Id</th>
                         <th>Apostador</th>
                         @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
@@ -541,6 +626,13 @@
                         <!-- A collection de compras como uma só -->
                         @foreach ($purchases as $purchase)
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="purchase-checkbox-tab" 
+                                        value="{{ $purchase->id }}"
+                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                        data-game-name="{{ $purchase->game->name }}"
+                                        data-gambler-name="{{ $purchase->gambler_name }}">
+                                </td>
                                 <td>
                                     <strong>{{ $purchase->identifier }}</strong>
                                 </td>
@@ -662,5 +754,197 @@
 
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Funcionalidade de repetir em lote
+            const purchaseCheckboxes = document.querySelectorAll('.purchase-checkbox-tab');
+            const selectAllCheckbox = document.getElementById('select_all_checkbox_tab');
+            const batchRepeatContainer = document.getElementById('batch_repeat_container_tab');
+            const btnRepeatBatch = document.getElementById('btn_repeat_batch_tab');
+            const btnSelectAll = document.getElementById('btn_select_all_tab');
+            const btnDeselectAll = document.getElementById('btn_deselect_all_tab');
+            const selectedCountSpan = document.getElementById('selected_count_batch_tab');
+            const selectedPurchasesList = document.getElementById('selected_purchases_list_tab');
+            const repeatPurchaseIdsBatch = document.getElementById('repeat_game_purchase_ids_batch_tab');
+            const repeatButtonBatch = document.getElementById('repeat_game_repeat_button_batch_id_tab');
+
+            function updateBatchUI() {
+                const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
+                const count = selected.length;
+                
+                // Atualiza contador
+                if (selectedCountSpan) selectedCountSpan.textContent = count;
+
+                // Mostra/oculta botão de repetir em lote
+                if (batchRepeatContainer) {
+                    if (count > 0) {
+                        batchRepeatContainer.style.display = 'block';
+                    } else {
+                        batchRepeatContainer.style.display = 'none';
+                    }
+                }
+
+                // Atualiza lista de apostas selecionadas
+                if (count > 0 && selectedPurchasesList) {
+                    selectedPurchasesList.innerHTML = selected.map(cb => {
+                        const numbers = cb.getAttribute('data-numbers');
+                        const gameName = cb.getAttribute('data-game-name');
+                        const gamblerName = cb.getAttribute('data-gambler-name');
+                        return `<div class="mb-1"><small><strong>${gameName}</strong> - ${gamblerName}: ${numbers}</small></div>`;
+                    }).join('');
+                    
+                    // Atualiza input hidden com IDs
+                    const ids = selected.map(cb => cb.value).filter(id => id); // Remove valores vazios
+                    // Remove inputs antigos (incluindo o original se estiver vazio)
+                    if (repeatPurchaseIdsBatch) {
+                        const container = repeatPurchaseIdsBatch.parentNode;
+                        const oldInputs = container.querySelectorAll('input[name="repeat_game_purchase_ids[]"]');
+                        oldInputs.forEach(input => input.remove()); // Remove todos, incluindo o original
+                        
+                        // Adiciona novos inputs apenas com valores válidos
+                        ids.forEach(id => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'repeat_game_purchase_ids[]';
+                            input.value = id;
+                            container.appendChild(input);
+                        });
+                    }
+                    
+                    if (repeatButtonBatch) repeatButtonBatch.disabled = false;
+                } else {
+                    if (selectedPurchasesList) selectedPurchasesList.innerHTML = '<p class="text-muted">Nenhuma aposta selecionada</p>';
+                    if (repeatButtonBatch) repeatButtonBatch.disabled = true;
+                }
+
+                // Atualiza checkbox "selecionar todas"
+                if (selectAllCheckbox) {
+                    if (count === purchaseCheckboxes.length && purchaseCheckboxes.length > 0) {
+                        selectAllCheckbox.checked = true;
+                        selectAllCheckbox.indeterminate = false;
+                    } else if (count > 0) {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = true;
+                    } else {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = false;
+                    }
+                }
+            }
+
+            // Event listeners para checkboxes individuais
+            purchaseCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBatchUI);
+                // Previne que o checkbox dispare a seleção da linha
+                checkbox.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+
+            // Checkbox "selecionar todas"
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    purchaseCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Selecionar Todas"
+            if (btnSelectAll) {
+                btnSelectAll.addEventListener('click', function() {
+                    purchaseCheckboxes.forEach(cb => cb.checked = true);
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Desmarcar Todas"
+            if (btnDeselectAll) {
+                btnDeselectAll.addEventListener('click', function() {
+                    purchaseCheckboxes.forEach(cb => cb.checked = false);
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Repetir em Lote"
+            if (btnRepeatBatch) {
+                btnRepeatBatch.addEventListener('click', function() {
+                    const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
+                    if (selected.length === 0) {
+                        alert('Selecione pelo menos uma aposta para repetir');
+                        return;
+                    }
+                    
+                    const myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game_batch'), {
+                        focus: true
+                    });
+                    myModal.show();
+                });
+            }
+
+            // Inicializa UI
+            updateBatchUI();
+
+            // Funcionalidade de repetir jogo individual
+            const repeat_game_buttons = document.getElementsByClassName('repeat_game_button');
+            for (var i = 0; i < repeat_game_buttons.length; i++) {
+                (function(index) {
+                    repeat_game_buttons[index].addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game'), {
+                            focus: true
+                        });
+
+                        const numbers = e.target.getAttribute('data-numbers');
+                        const repeat_game_numbers_id = document.getElementById('repeat_game_numbers_id');
+                        if (repeat_game_numbers_id) repeat_game_numbers_id.value = numbers;
+
+                        const purchase_id = e.target.getAttribute('data-purchase_id');
+                        const repeat_game_purchase_id = document.getElementById('repeat_game_purchase_id');
+                        if (repeat_game_purchase_id) repeat_game_purchase_id.value = purchase_id;
+
+                        myModal.show();
+                    });
+                })(i);
+            }
+
+            // Funcionalidade de deletar jogo
+            const delete_game_buttons = document.getElementsByClassName('delete_game_button');
+            for (var i = 0; i < delete_game_buttons.length; i++) {
+                (function(index) {
+                    delete_game_buttons[index].addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var myModal = new bootstrap.Modal(document.getElementById('modal_delete_game'), {
+                            focus: true
+                        });
+
+                        const numbers = e.target.getAttribute('data-numbers');
+                        const delete_game_numbers = document.getElementById('delete_game_numbers');
+                        if (delete_game_numbers) delete_game_numbers.value = numbers;
+
+                        const game_name = e.target.getAttribute('data-game_name');
+                        const delete_game_name = document.getElementById('delete_game_name');
+                        if (delete_game_name) delete_game_name.value = game_name;
+
+                        const gambler_name = e.target.getAttribute('data-gambler_name大师');
+                        const delete_game_gambler_name = document.getElementById('delete_game_gambler_name');
+                        if (delete_game_gambler_name) delete_game_gambler_name.value = gambler_name;
+
+                        const gambler_phone = e.target.getAttribute('data-gambler_phone');
+                        const delete_game_gambler_phone = document.getElementById('delete_game_gambler_phone');
+                        if (delete_game_gambler_phone) delete_game_gambler_phone.value = gambler_phone;
+
+                        const purchase_id = e.target.getAttribute('data-purchase_id');
+                        const delete_game_purchase_id = document.getElementById('delete_game_purchase_id');
+                        if (delete_game_purchase_id) delete_game_purchase_id.value = purchase_id;
+
+                        myModal.show();
+                    });
+                })(i);
+            }
+        });
+    </script>
 
 </div>

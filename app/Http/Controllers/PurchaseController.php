@@ -442,130 +442,185 @@ class PurchaseController extends Controller
   public function repeat(Request $request)
   {
     // Validação dos dados recebidos
-    $request->validate([
+    $rules = [
       'repeat_game_id' => 'required|exists:games,id',
-      'repeat_game_purchase_id' => 'required|exists:purchases,id',
-    ]);
+    ];
 
-    $old_purchase = Purchase::find($request->repeat_game_purchase_id);
-
-    // Criação da compra
-    $newPurchase = $old_purchase->replicate();
-    $newPurchase->status = "PENDING";
-    $newPurchase->identifier = generate_identifier();
-    $repeat_game = Game::find($request->repeat_game_id);
-    $newPurchase->game_id = $request->repeat_game_id;
-    $newPurchase->round = $repeat_game->round;
-    $newPurchase->imported = false;
-
-    $user = User::find(Auth::user()->id);
-    $role_level_id = $user->role->level_id;
-
-    // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
-    if ($role_level_id == 'seller') {
-      $price = $newPurchase->price - $newPurchase->price * $user->comission_percent;
+    // Verifica se é repetição em lote ou individual
+    $has_batch_ids = $request->has('repeat_game_purchase_ids') && 
+                     is_array($request->repeat_game_purchase_ids);
+    
+    if ($has_batch_ids) {
+      // Remove valores vazios/null e verifica se há pelo menos um ID
+      $purchase_ids = array_filter($request->repeat_game_purchase_ids, function($id) {
+        return !empty($id);
+      });
+      
+      if (!empty($purchase_ids)) {
+        // Repetição em lote - valida array de purchase_ids
+        $rules['repeat_game_purchase_ids'] = 'required|array|min:1';
+        $rules['repeat_game_purchase_ids.*'] = 'required|exists:purchases,id';
+        $purchase_ids = array_values($purchase_ids); // Reindexa o array
+      } else {
+        // Array vazio, tratar como erro
+        return redirect()->back()
+          ->withErrors(['repeat_game_purchase_ids' => 'Selecione pelo menos uma aposta para repetir.'])
+          ->with(['tab' => 'tab-mybets']);
+      }
+    } else {
+      // Repetição individual (backward compatible)
+      $rules['repeat_game_purchase_id'] = 'required|exists:purchases,id';
+      $purchase_ids = [$request->repeat_game_purchase_id];
     }
 
+    $request->validate($rules);
+    $user = User::find(Auth::user()->id);
+    $role_level_id = $user->role->level_id;
+    $repeat_game = Game::find($request->repeat_game_id);
+    $success_count = 0;
+    $failed_count = 0;
+    $total_price = 0;
 
-    $quantity = 1;
-    $game = Game::find($request->repeat_game_id);
-    $price = $game->price * $quantity;
+    // Processa cada compra
+    foreach ($purchase_ids as $purchase_id) {
+      try {
+        $old_purchase = Purchase::find($purchase_id);
+        if (!$old_purchase) {
+          $failed_count++;
+          continue;
+        }
 
-    $newPurchase->quantity = $quantity;
-    $newPurchase->user_id = $user->id;
-    $newPurchase->price = $price;
+        // Criação da compra
+        $newPurchase = $old_purchase->replicate();
+        $newPurchase->status = "PENDING";
+        $newPurchase->identifier = generate_identifier();
+        $newPurchase->game_id = $request->repeat_game_id;
+        $newPurchase->round = $repeat_game->round;
+        $newPurchase->points = 0;
+        $newPurchase->imported = false;
 
-    // Salvando a compra no banco de dados
-    $newPurchase->save();
+        // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
+        if ($role_level_id == 'seller') {
+          $price = $old_purchase->price - $old_purchase->price * $user->comission_percent;
+        }
 
-    if (!in_array($role_level_id, ['admin'])) {
-      if ($user->game_credit < $price) {
-        return redirect()->back()->with(['success' => 'Compra realizada com sucesso! Aguardando pagamento...', 'tab' => 'tab-mybets']);
-      }
+        $quantity = 1;
+        $game = Game::find($request->repeat_game_id);
+        $price = $game->price * $quantity;
 
-      $user->game_credit -= $price;
-      $user->save();
+        $newPurchase->quantity = $quantity;
+        $newPurchase->user_id = $user->id;
+        $newPurchase->price = $price;
 
-      // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
-      if ($role_level_id == 'gambler') {
-        if ($user->seller_id) {
-          $seller = User::find($user->seller_id);
+        // Salvando a compra no banco de dados
+        $newPurchase->save();
 
-          $comission = $newPurchase->price * $seller->comission_percent;
+        if (!in_array($role_level_id, ['admin'])) {
+          if ($user->game_credit < $price) {
+            $failed_count++;
+            continue;
+          }
+
+          $user->game_credit -= $price;
+          $user->save();
+          $total_price += $price;
+
+          // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
+          if ($role_level_id == 'gambler') {
+            if ($user->seller_id) {
+              $seller = User::find($user->seller_id);
+
+              $comission = $newPurchase->price * $seller->comission_percent;
+              Transactions::create(
+                [
+                  "type" => 'PAY_PURCHASE_COMISSION',
+                  "game_id" => $newPurchase->game_id,
+                  "purchase_id" => $newPurchase->id,
+                  "amount" => $comission,
+                  "user_id" => $user->seller_id,
+                ]
+              );
+              $seller->game_credit = $seller->game_credit + $comission;
+              $seller->save();
+            }
+
+            // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
+            if ($user->invited_by_id && $price >= 10.00) {
+              // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
+              $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
+                ->where('status', 'PAID')
+                ->exists();
+              
+              // Se NÃO tem compras pagas anteriores, esta é a primeira
+              if (!$has_previous_paid_purchases) {
+                $refer = ReferEarn::where(
+                  'refer_user_id',
+                  $user->invited_by_id
+                )->where(
+                  'invited_user_id',
+                  $user->id
+                )->where(
+                  'earn_paid',
+                  FALSE
+                )->first();
+                if ($refer) {
+                  $refer->invited_user_bought = TRUE;
+                  $refer->save();
+                }
+              }
+            }
+          }
+        }
+
+        $newPurchase->status = "PAID";
+        $newPurchase->paid_by_user_id = $user->id;
+        $newPurchase->save();
+
+        if ($role_level_id == 'seller') {
+          $comission = $newPurchase->price * $user->comission_percent;
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
               "game_id" => $newPurchase->game_id,
               "purchase_id" => $newPurchase->id,
               "amount" => $comission,
-              "user_id" => $user->seller_id,
+              "user_id" => $user->id,
             ]
           );
-          $seller->game_credit = $seller->game_credit + $comission;
-          $seller->save();
+          $user->game_credit = $user->game_credit + $comission;
+          $user->save();
         }
 
-        // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
-        if ($user->invited_by_id && $purchase->price >= 10.00) {
-          // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
-          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
-            ->where('status', 'PAID')
-            ->exists();
-          
-          // Se NÃO tem compras pagas anteriores, esta é a primeira
-          if (!$has_previous_paid_purchases) {
-            $refer = ReferEarn::where(
-              'refer_user_id',
-              $user->invited_by_id
-            )->where(
-              'invited_user_id',
-              $user->id
-            )->where(
-              'earn_paid',
-              FALSE
-            )->first();
-            if ($refer) {
-              $refer->invited_user_bought = TRUE;
-              $refer->save();
-            }
-          }
-        }
+        Transactions::create(
+          [
+            "type" => 'PAY_PURCHASE',
+            "game_id" => $newPurchase->game_id,
+            "purchase_id" => $newPurchase->id,
+            "amount" => $newPurchase->price,
+            "user_id" => $newPurchase->user_id,
+          ]
+        );
+
+        $success_count++;
+      } catch (\Exception $e) {
+        $failed_count++;
+        continue;
       }
     }
 
-    $newPurchase->status = "PAID";
-    $newPurchase->paid_by_user_id = $user->id;
-    $newPurchase->save();
-
-    if ($role_level_id == 'seller') {
-      $comission = $newPurchase->price * $user->comission_percent;
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE_COMISSION',
-          "game_id" => $newPurchase->game_id,
-          "purchase_id" => $newPurchase->id,
-          "amount" => $comission,
-          "user_id" => $user->id,
-        ]
-      );
-      $user->game_credit = $user->game_credit + $comission;
-      $user->save();
+    
+    // Redirecionamento com mensagem de sucesso
+    if ($success_count > 0 && $failed_count == 0) {
+      $message = count($purchase_ids) > 1 
+        ? "{$success_count} compras realizadas com sucesso!" 
+        : 'Compra realizada com sucesso!';
+    } elseif ($success_count > 0 && $failed_count > 0) {
+      $message = "{$success_count} compras realizadas com sucesso! {$failed_count} compras falharam (crédito insuficiente).";
+    } else {
+      $message = 'Nenhuma compra foi realizada. Verifique se há crédito suficiente.';
     }
 
-    Transactions::create(
-      [
-        "type" => 'PAY_PURCHASE',
-        "game_id" => $newPurchase->game_id,
-        "purchase_id" => $newPurchase->id,
-        "amount" => $newPurchase->price,
-        "user_id" => $newPurchase->user_id,
-      ]
-    );
-
-
-
-    // Redirecionamento com mensagem de sucesso
-    return redirect()->back()->with(['success' => 'Compra realizada com sucesso!', 'tab' => 'tab-mybets']);
+    return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
   }
 
   /**

@@ -15,6 +15,17 @@
             </div>
         @endif
 
+        <!-- Exibição de erros de validação -->
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Exibição da mensagem de erro geral -->
         @if ($errors->has('error'))
             <div class="alert alert-danger">
@@ -29,7 +40,7 @@
 
             <div class="form-group">
                 <label for="name">Nome:</label>
-                <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
+                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
                 @error('name')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror

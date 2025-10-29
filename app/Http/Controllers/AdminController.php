@@ -186,9 +186,30 @@ class AdminController extends Controller
     if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
       abort(403, 'Você só pode atualizar seus próprios clientes.');
     }
+
+    // Converter valores formatados (vírgula) para formato numérico antes da validação
+    $formatFloatInputs = [
+      'balance',
+      'game_credit',
+      'game_credit_limit',
+      'comission_percent'
+    ];
+    
+    $requestData = $request->all();
+    foreach ($formatFloatInputs as $field) {
+      if (isset($requestData[$field]) && is_string($requestData[$field])) {
+        // Remove pontos (separadores de milhar) e substitui vírgula por ponto
+        $requestData[$field] = str_replace(".", "", $requestData[$field]);
+        $requestData[$field] = str_replace(",", ".", $requestData[$field]);
+      }
+    }
+    
+    // Cria uma nova request com os dados convertidos para validação
+    $request->merge($requestData);
+
     $validatedData = $request->validate(
       [
-        'name' => 'nullable|string|max:255',
+        'name' => 'required|string|max:255',
         'email' => [
           'nullable',
           'string',
@@ -208,11 +229,12 @@ class AdminController extends Controller
         'comission_percent' => 'required|numeric|min:0|max:100',
         'phone' => 'nullable|string|max:255',
         'role_user_id' => 'nullable|exists:role_users,id',
-        'active_refer_earn' => 'boolean',
+        'active_refer_earn' => 'nullable|in:0,1',
         'invited_by_id' => 'nullable|exists:users,id',
         'seller_id' => 'nullable|exists:users,id',
       ],
       [
+        'name.required' => 'O campo nome é obrigatório.',
         'name.string' => 'O nome deve ser uma string.',
         'email.email' => 'O email deve ser um endereço de email válido.',
         'email.unique' => 'Este email já está em uso.',
@@ -227,22 +249,12 @@ class AdminController extends Controller
       ]
     );
 
-    $formatFloatInputs = [
-      'balance',
-      'game_credit',
-      'comission_percent'
-    ];
-    foreach ($formatFloatInputs as $formatFloatInput) {
-      if (isset($validatedData[$formatFloatInput]) && is_string($validatedData[$formatFloatInput])) {
-        $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
-        $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
+    // Converter valores validados para float para garantir que sejam salvos corretamente
+    $numericFields = ['balance', 'game_credit', 'game_credit_limit', 'comission_percent'];
+    foreach ($numericFields as $field) {
+      if (isset($validatedData[$field])) {
+        $validatedData[$field] = (float) $validatedData[$field];
       }
-    }
-    
-    // Formata game_credit_limit apenas se estiver presente
-    if (isset($validatedData['game_credit_limit']) && is_string($validatedData['game_credit_limit'])) {
-      $validatedData['game_credit_limit'] = str_replace(".", "", $validatedData['game_credit_limit']);
-      $validatedData['game_credit_limit'] = str_replace(",", ".", $validatedData['game_credit_limit']);
     }
 
     // Validação customizada para seller_id
@@ -262,14 +274,25 @@ class AdminController extends Controller
     }
     // Se não há invited_by_id, mantém o seller_id original ou null
 
-    $user->update($validatedData);
+    // Converter active_refer_earn para boolean se presente
+    if (isset($validatedData['active_refer_earn'])) {
+      $validatedData['active_refer_earn'] = (bool) $validatedData['active_refer_earn'];
+    }
+
+    // Atualizar campo por campo explicitamente para garantir que sejam salvos
+    foreach ($validatedData as $key => $value) {
+      if (in_array($key, $user->getFillable())) {
+        $user->$key = $value;
+      }
+    }
 
     // Update password only if a new one is provided
     if ($request->filled('password')) {
-      //$user->password = bcrypt($request->input('password'));
       $user->password = Hash::make($request->input('password'));
     }
 
+    // Força o save e usa touch() para atualizar updated_at mesmo sem mudanças detectadas
+    $user->touch();
     $user->save();
 
     return redirect(route('edit-user-form', ['id' => $user->id]))->with('success', 'Usuário atualizado com sucesso!');

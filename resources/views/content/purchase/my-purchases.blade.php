@@ -67,6 +67,50 @@
             </div>
         </div>
 
+        <div class="modal" tabindex="-1" id="modal_repeat_game_batch">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url()->query('/purchase/repeat', request()->all()) }}" method="POST" class="mb-4">
+                        @csrf
+                        @method('POST')
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">Repetir jogos em lote</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="repeat_game_id_batch">Jogo para repetir</label>
+                                    <select name="repeat_game_id" id="repeat_game_id_batch" class="form-select" required>
+                                        @foreach ($games->where('status', 'OPENED') as $game)
+                                            <option value="{{ $game->id }}"
+                                                {{ request('game_id') == $game->id ? 'selected' : '' }}>
+                                                {{ $game->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label>Apostas selecionadas: <span id="selected_count_batch">0</span></label>
+                                    <div id="selected_purchases_list" class="mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                        <p class="text-muted">Nenhuma aposta selecionada</p>
+                                    </div>
+                                </div>
+                                
+                                <input id="repeat_game_purchase_ids_batch" name="repeat_game_purchase_ids[]" type="hidden" value="">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button id="repeat_game_repeat_button_batch_id" type="submit"
+                                class="btn btn-primary" disabled>Repetir Selecionadas</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <div class="modal" tabindex="-1" id="modal_delete_game">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -168,10 +212,25 @@
                     </div>
                 </form>
 
+                <!-- Botão de Repetir em Lote -->
+                <div class="mb-3" id="batch_repeat_container" style="display: none;">
+                    <button type="button" id="btn_repeat_batch" class="btn btn-info">
+                        <i class="bx bx-repeat"></i> Repetir Selecionadas em Lote
+                    </button>
+                    <button type="button" id="btn_select_all" class="btn btn-sm btn-outline-secondary ms-2">
+                        Selecionar Todas
+                    </button>
+                    <button type="button" id="btn_deselect_all" class="btn btn-sm btn-outline-secondary ms-2">
+                        Desmarcar Todas
+                    </button>
+                </div>
 
                 <table class="table">
                     <thead>
                         <tr>
+                            <th width="50">
+                                <input type="checkbox" id="select_all_checkbox" title="Selecionar todas">
+                            </th>
                             <th>Jogo</th>
                             <th>Apostador</th>
                             @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
@@ -194,6 +253,13 @@
                         <!-- A collection de compras como uma só -->
                         @foreach ($purchases as $purchase)
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="purchase-checkbox" 
+                                        value="{{ $purchase->id }}"
+                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                        data-game-name="{{ $purchase->game->name }}"
+                                        data-gambler-name="{{ $purchase->gambler_name }}">
+                                </td>
                                 <td>
                                     <a href='/concursos/{{ $purchase->game->id }}'>
                                         <!-- Mostrando o nome do jogo relacionado -->
@@ -286,12 +352,14 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
 
+            // Funcionalidade de repetir jogo individual
             repeat_game_buttons = document.getElementsByClassName('repeat_game_button');
             repeat_game_repeat_button_id = document.getElementsByClassName('repeat_game_repeat_button_id');
 
             for (var i = 0; i < repeat_game_buttons.length; i++) {
                 (function(index) {
                     repeat_game_buttons[index].addEventListener("click", function(e) {
+                        e.preventDefault();
                         var myModal = new bootstrap.Modal(document.getElementById(
                             'modal_repeat_game'), {
                             focus: true
@@ -311,13 +379,14 @@
                 })(i);
             }
 
-
+            // Funcionalidade de deletar jogo
             delete_game_buttons = document.getElementsByClassName('delete_game_button');
             delete_game_delete_button_id = document.getElementsByClassName('delete_game_delete_button_id');
 
             for (var i = 0; i < delete_game_buttons.length; i++) {
                 (function(index) {
                     delete_game_buttons[index].addEventListener("click", function(e) {
+                        e.preventDefault();
                         var myModal = new bootstrap.Modal(document.getElementById(
                             'modal_delete_game'), {
                             focus: true
@@ -348,6 +417,128 @@
                     });
                 })(i);
             }
+
+            // Funcionalidade de repetir em lote
+            const purchaseCheckboxes = document.querySelectorAll('.purchase-checkbox');
+            const selectAllCheckbox = document.getElementById('select_all_checkbox');
+            const batchRepeatContainer = document.getElementById('batch_repeat_container');
+            const btnRepeatBatch = document.getElementById('btn_repeat_batch');
+            const btnSelectAll = document.getElementById('btn_select_all');
+            const btnDeselectAll = document.getElementById('btn_deselect_all');
+            const selectedCountSpan = document.getElementById('selected_count_batch');
+            const selectedPurchasesList = document.getElementById('selected_purchases_list');
+            const repeatPurchaseIdsBatch = document.getElementById('repeat_game_purchase_ids_batch');
+            const repeatButtonBatch = document.getElementById('repeat_game_repeat_button_batch_id');
+
+            function updateBatchUI() {
+                const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
+                const count = selected.length;
+                
+                // Atualiza contador
+                selectedCountSpan.textContent = count;
+
+                // Mostra/oculta botão de repetir em lote
+                if (count > 0) {
+                    batchRepeatContainer.style.display = 'block';
+                } else {
+                    batchRepeatContainer.style.display = 'none';
+                }
+
+                // Atualiza lista de apostas selecionadas
+                if (count > 0) {
+                    selectedPurchasesList.innerHTML = selected.map(cb => {
+                        const numbers = cb.getAttribute('data-numbers');
+                        const gameName = cb.getAttribute('data-game-name');
+                        const gamblerName = cb.getAttribute('data-gambler-name');
+                        return `<div class="mb-1"><small><strong>${gameName}</strong> - ${gamblerName}: ${numbers}</small></div>`;
+                    }).join('');
+                    
+                    // Atualiza input hidden com IDs
+                    const ids = selected.map(cb => cb.value).filter(id => id); // Remove valores vazios
+                    // Remove inputs antigos (incluindo o original se estiver vazio)
+                    if (repeatPurchaseIdsBatch) {
+                        const container = repeatPurchaseIdsBatch.parentNode;
+                        const oldInputs = container.querySelectorAll('input[name="repeat_game_purchase_ids[]"]');
+                        oldInputs.forEach(input => input.remove()); // Remove todos, incluindo o original
+                        
+                        // Adiciona novos inputs apenas com valores válidos
+                        ids.forEach(id => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'repeat_game_purchase_ids[]';
+                            input.value = id;
+                            container.appendChild(input);
+                        });
+                    }
+                    
+                    repeatButtonBatch.disabled = false;
+                } else {
+                    selectedPurchasesList.innerHTML = '<p class="text-muted">Nenhuma aposta selecionada</p>';
+                    repeatButtonBatch.disabled = true;
+                }
+
+                // Atualiza checkbox "selecionar todas"
+                if (count === purchaseCheckboxes.length && purchaseCheckboxes.length > 0) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (count > 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            }
+
+            // Event listeners para checkboxes individuais
+            purchaseCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBatchUI);
+            });
+
+            // Checkbox "selecionar todas"
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    purchaseCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Selecionar Todas"
+            if (btnSelectAll) {
+                btnSelectAll.addEventListener('click', function() {
+                    purchaseCheckboxes.forEach(cb => cb.checked = true);
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Desmarcar Todas"
+            if (btnDeselectAll) {
+                btnDeselectAll.addEventListener('click', function() {
+                    purchaseCheckboxes.forEach(cb => cb.checked = false);
+                    updateBatchUI();
+                });
+            }
+
+            // Botão "Repetir em Lote"
+            if (btnRepeatBatch) {
+                btnRepeatBatch.addEventListener('click', function() {
+                    const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
+                    if (selected.length === 0) {
+                        alert('Selecione pelo menos uma aposta para repetir');
+                        return;
+                    }
+                    
+                    const myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game_batch'), {
+                        focus: true
+                    });
+                    myModal.show();
+                });
+            }
+
+            // Inicializa UI
+            updateBatchUI();
 
         });
     </script>
