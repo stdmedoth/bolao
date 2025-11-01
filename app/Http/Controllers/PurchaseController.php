@@ -479,6 +479,7 @@ class PurchaseController extends Controller
     $repeat_game = Game::find($request->repeat_game_id);
     $success_count = 0;
     $failed_count = 0;
+    $already_repeated_count = 0;
     $total_price = 0;
 
     // Processa cada compra
@@ -490,6 +491,12 @@ class PurchaseController extends Controller
           continue;
         }
 
+        // Validação: não permite repetir uma compra que já foi criada por repetição
+        if ($old_purchase->repeated_from_purchase_id !== null) {
+          $already_repeated_count++;
+          continue;
+        }
+
         // Criação da compra
         $newPurchase = $old_purchase->replicate();
         $newPurchase->status = "PENDING";
@@ -498,6 +505,7 @@ class PurchaseController extends Controller
         $newPurchase->round = $repeat_game->round;
         $newPurchase->points = 0;
         $newPurchase->imported = false;
+        $newPurchase->repeated_from_purchase_id = $old_purchase->id; // Marca que foi criada por repetição
 
         // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
         if ($role_level_id == 'seller') {
@@ -610,17 +618,32 @@ class PurchaseController extends Controller
 
     
     // Redirecionamento com mensagem de sucesso
-    if ($success_count > 0 && $failed_count == 0) {
+    $errors = [];
+    if ($already_repeated_count > 0) {
+      $errors[] = "{$already_repeated_count} " . ($already_repeated_count == 1 ? 'aposta já foi criada por repetição' : 'apostas já foram criadas por repetição') . " e não podem ser repetidas novamente.";
+    }
+
+    if ($success_count > 0 && $failed_count == 0 && $already_repeated_count == 0) {
       $message = count($purchase_ids) > 1 
         ? "{$success_count} compras realizadas com sucesso!" 
         : 'Compra realizada com sucesso!';
-    } elseif ($success_count > 0 && $failed_count > 0) {
-      $message = "{$success_count} compras realizadas com sucesso! {$failed_count} compras falharam (crédito insuficiente).";
+      return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
+    } elseif ($success_count > 0) {
+      $message = "{$success_count} compra(s) realizada(s) com sucesso!";
+      if ($failed_count > 0) {
+        $message .= " {$failed_count} compra(s) falharam (crédito insuficiente).";
+      }
+      if (!empty($errors)) {
+        $message .= " " . implode(' ', $errors);
+      }
+      return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
     } else {
+      if (!empty($errors)) {
+        return redirect()->back()->withErrors(['repeat_game_purchase_ids' => implode(' ', $errors)])->with(['tab' => 'tab-mybets']);
+      }
       $message = 'Nenhuma compra foi realizada. Verifique se há crédito suficiente.';
+      return redirect()->back()->withErrors(['repeat_game_purchase_ids' => $message])->with(['tab' => 'tab-mybets']);
     }
-
-    return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
   }
 
   /**

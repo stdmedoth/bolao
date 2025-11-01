@@ -252,13 +252,18 @@
 
                         <!-- A collection de compras como uma só -->
                         @foreach ($purchases as $purchase)
+                            @php
+                                $is_repeated = $purchase->repeated_from_purchase_id !== null;
+                            @endphp
                             <tr>
                                 <td>
-                                    <input type="checkbox" class="purchase-checkbox" 
-                                        value="{{ $purchase->id }}"
-                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                        data-game-name="{{ $purchase->game->name }}"
-                                        data-gambler-name="{{ $purchase->gambler_name }}">
+                                    @if (!$is_repeated)
+                                        <input type="checkbox" class="purchase-checkbox" 
+                                            value="{{ $purchase->id }}"
+                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                            data-game-name="{{ $purchase->game->name }}"
+                                            data-gambler-name="{{ $purchase->gambler_name }}">
+                                    @endif
                                 </td>
                                 <td>
                                     <a href='/concursos/{{ $purchase->game->id }}'>
@@ -329,12 +334,14 @@
                                         Deletar
                                     </a>
 
-                                    <a href="#" data-purchase_id="{{ $purchase->id }}"
-                                        data-game_name="{{ $purchase->game->name }}"
-                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                        class="btn btn-secondary repeat_game_button">
-                                        Repetir
-                                    </a>
+                                    @if (!$is_repeated)
+                                        <a href="#" data-purchase_id="{{ $purchase->id }}"
+                                            data-game_name="{{ $purchase->game->name }}"
+                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                            class="btn btn-secondary repeat_game_button">
+                                            Repetir
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

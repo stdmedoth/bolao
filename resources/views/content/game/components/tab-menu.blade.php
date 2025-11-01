@@ -52,7 +52,10 @@
             <li class="nav-item" role="presentation">
                 <a class="nav-link {{ $tab == $id ? 'active' : '' }}" id="{{ $id }}-tab" data-bs-toggle="tab"
                     href="#{{ str_replace('tab-', '', $id) }}" role="tab"
-                    aria-controls="{{ str_replace('tab-', '', $id) }}" aria-selected="{{ $tab == $id ? 'true' : 'false' }}">
+                    aria-controls="{{ str_replace('tab-', '', $id) }}" 
+                    aria-selected="{{ $tab == $id ? 'true' : 'false' }}"
+                    aria-label="{{ $label }}"
+                >
                     {{ $label }}
                 </a>
             </li>

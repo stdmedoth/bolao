@@ -30,7 +30,7 @@ class AdminController extends Controller
     if ($sellerId === null) {
       return true; // seller_id pode ser null
     }
-    
+
     $seller = User::with('role')->find($sellerId);
     return $seller && $seller->role && $seller->role->level_id === 'seller';
   }
@@ -80,12 +80,12 @@ class AdminController extends Controller
     }
 
     $user = User::findOrFail($id);
-    
+
     // Vendedores só podem deletar seus próprios clientes
     if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
       abort(403, 'Você só pode deletar seus próprios clientes.');
     }
-    
+
     $user->delete();
     return redirect()->route('list-user')->with('success', 'Usuário deletado com sucesso.');
   }
@@ -98,12 +98,12 @@ class AdminController extends Controller
     }
 
     $user = User::findOrFail($id);
-    
+
     // Vendedores só podem editar seus próprios clientes
     if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
       abort(403, 'Você só pode editar seus próprios clientes.');
     }
-    
+
     $roles = RoleUser::get(); // Para preencher as opções de papel
     $sellers = User::where('role_user_id', 2)->get();
 
@@ -145,7 +145,7 @@ class AdminController extends Controller
         $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
       }
     }
-    
+
     // Formata game_credit_limit apenas se estiver presente
     if (isset($validatedData['game_credit_limit']) && is_string($validatedData['game_credit_limit'])) {
       $validatedData['game_credit_limit'] = str_replace(".", "", $validatedData['game_credit_limit']);
@@ -181,7 +181,7 @@ class AdminController extends Controller
     }
 
     $user = User::findOrFail($id);
-    
+
     // Vendedores só podem atualizar seus próprios clientes
     if (Auth::user()->role->level_id === 'seller' && $user->seller_id !== Auth::user()->id) {
       abort(403, 'Você só pode atualizar seus próprios clientes.');
@@ -194,7 +194,7 @@ class AdminController extends Controller
       'game_credit_limit',
       'comission_percent'
     ];
-    
+
     $requestData = $request->all();
     foreach ($formatFloatInputs as $field) {
       if (isset($requestData[$field]) && is_string($requestData[$field])) {
@@ -203,7 +203,7 @@ class AdminController extends Controller
         $requestData[$field] = str_replace(",", ".", $requestData[$field]);
       }
     }
-    
+
     // Cria uma nova request com os dados convertidos para validação
     $request->merge($requestData);
 
@@ -352,7 +352,7 @@ class AdminController extends Controller
     if (!$this->isAdmin()) {
       abort(403, 'Apenas administradores podem criar jogos.');
     }
-    
+
     return view('content.game.create_game');
   }
 
@@ -422,7 +422,7 @@ class AdminController extends Controller
     }
 
     $game = Game::findOrFail($id);
-    // Fechar o jogo
+    
     $game->status = 'OPENED';
     $game->round = $game->round + 1;
 
@@ -465,7 +465,7 @@ class AdminController extends Controller
       }
 
       $eligiblePurchases = $this->getEligiblePurchases($award, $purchasePoints, $winners);
-      
+
       if ($award->condition_type === 'WINNER' && !empty($eligiblePurchases)) {
         $hasWinner = true;
         $winners = array_merge($winners, $eligiblePurchases);
@@ -758,7 +758,7 @@ class AdminController extends Controller
 
   public function editGameHistory(Request $request, $game_history_id)
   {
-    if (Auth::user()->role->level_id !== 'admin') {
+    if (!$this->isAdmin()) {
       abort(403, 'Você não tem permissão para editar histórico de jogos.');
     }
 
@@ -770,10 +770,7 @@ class AdminController extends Controller
 
   public function updateGameHistory(Request $request, $game_history_id)
   {
-    if (Auth::user()->role->level_id !== 'admin') {
-      // Como você me pediu para ter opiniões e corrigir, sugiro um `abort(403)`
-      // ou um redirecionamento para o login, se a intenção for sempre deslogar.
-      // O `redirect('/auth/logout')` é válido, mas `abort(403)` é mais direto para "não autorizado".
+    if (!$this->isAdmin()) {
       abort(403, 'Você não tem permissão para realizar esta ação.');
     }
 
@@ -783,8 +780,8 @@ class AdminController extends Controller
 
     // Validação
     $validatedData = $request->validate([
-      "description" => "string|nullable", // Ajustei para nullable se não for obrigatório
-      "result_numbers" => "string|nullable", // Ajustei para nullable
+      "description" => "string|nullable", 
+      "result_numbers" => "string|nullable",
     ]);
 
     // Pega os números antigos do histórico para comparação
@@ -867,6 +864,19 @@ class AdminController extends Controller
     // 4. Reprocessar os históricos em ordem cronológica
     $allAddedNumbers = []; // Acumula os números de todos os históricos já processados neste loop
 
+
+    $purchases = Purchase::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('status', 'PAID')
+      ->get();
+
+    // Atualiza os pontos de cada compra
+    foreach ($purchases as $purchase) {
+      $purchase->points = 0;
+      $purchase->save();
+    }
+
+
     foreach ($historiesToReprocessData as $historyData) {
       $game = Game::findOrFail($game_id); // Pega o jogo novamente para garantir dados frescos
 
@@ -893,12 +903,6 @@ class AdminController extends Controller
         ->where('type', 'ADDING_NUMBER')
         ->where('round', $game->round)
         ->count();
-
-
-      $purchases = Purchase::where('game_id', $game->id)
-        ->where('round', $game->round)
-        ->where('status', 'PAID')
-        ->get();
 
       $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
       // Atualiza os pontos de cada compra
@@ -1002,6 +1006,17 @@ class AdminController extends Controller
       GameHistory::whereIn('id', $subsequentHistories->pluck('id'))->delete();
     }
 
+    $purchases = Purchase::where('game_id', $game_id)
+      ->where('round', $round)
+      ->where('status', 'PAID')
+      ->get();
+
+    // Atualiza os pontos de cada compra
+    foreach ($purchases as $purchase) {
+      $purchase->points = 0;
+      $purchase->save();
+    }
+
 
     // 4. Reprocessar os históricos subsequentes em ordem cronológica
     $allAddedNumbers = []; // Acumula os números de todos os históricos já processados neste loop
@@ -1044,11 +1059,6 @@ class AdminController extends Controller
         ->where('round', $game->round)
         ->count();
 
-
-      $purchases = Purchase::where('game_id', $game_id)
-        ->where('round', $game->round)
-        ->where('status', 'PAID')
-        ->get();
 
       $purchasePoints = $this->calculateUserPoints($purchases, $uniqueNumbers);
       // Atualiza os pontos de cada compra

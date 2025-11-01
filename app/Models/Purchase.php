@@ -26,6 +26,7 @@ class Purchase extends Model
     "paid_by_user_id",
     "user_id",
     "seller_id",
+    "repeated_from_purchase_id",
   ];
 
   protected $with = [
@@ -53,5 +54,10 @@ class Purchase extends Model
   public function paid_by_user(): BelongsTo
   {
     return $this->belongsTo(User::class, 'paid_by_user_id', 'id');
+  }
+
+  public function repeatedFrom(): BelongsTo
+  {
+    return $this->belongsTo(Purchase::class, 'repeated_from_purchase_id', 'id');
   }
 }
