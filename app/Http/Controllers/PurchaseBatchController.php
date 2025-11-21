@@ -322,6 +322,12 @@ class PurchaseBatchController extends Controller
 
         // Paga a comissão do vendedor, se aplicável
         $comission = $purchase->price * $seller->comission_percent;
+        $purchase->load('game');
+        $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+          'purchase' => $purchase,
+          'seller' => $seller,
+          'user' => $seller,
+        ]);
         Transactions::create(
           [
             "type" => 'PAY_PURCHASE_COMISSION',
@@ -329,18 +335,22 @@ class PurchaseBatchController extends Controller
             "purchase_id" => $purchase->id,
             "amount" => $comission,
             "user_id" => $seller->id,
+            "description" => $description,
           ]
         );
-        $seller->game_credit = $seller->game_credit + $comission;
-        $seller->save();
-
+        $purchase->load('paid_by_user');
+        $description = Transactions::generateDescription('PAY_PURCHASE', $purchase->price, [
+          'purchase' => $purchase,
+          'paid_by_user' => $purchase->paid_by_user,
+        ]);
         Transactions::create(
           [
             "type" => 'PAY_PURCHASE',
             "game_id" => $purchase->game_id,
             "purchase_id" => $purchase->id,
             "amount" => $purchase->price,
-            "user_id" => $item->paid_by_user_id,
+            "user_id" => $purchase->paid_by_user_id,
+            "description" => $description,
           ]
         );
       }

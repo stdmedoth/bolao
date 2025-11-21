@@ -51,6 +51,7 @@ use App\Http\Controllers\PurchaseBatchController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\PurchaseImportController;
 use App\Http\Controllers\ReferEarnController;
+use App\Http\Controllers\PublicGameController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\WithdrawalController;
@@ -159,6 +160,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/financeiro/extrato', [TransactionsController::class, 'index'])->name('finances.extract');
   Route::get('/financeiro/resumo', [TransactionsController::class, 'summary'])->name('finances.summary');
+  Route::post('/financeiro/lancamento', [TransactionsController::class, 'store'])->name('finances.transaction.store');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
   Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');
@@ -175,6 +177,8 @@ Route::get('/comunidade', function () {
   $url = 'https://api.whatsapp.com/send?phone=19997655946';
   return Redirect::to($url);
 });
+
+Route::get('/bolao', [PublicGameController::class, 'index'])->name('public-bolao');
 
 // Main Page Route
 

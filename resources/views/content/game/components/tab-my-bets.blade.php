@@ -17,83 +17,52 @@
         /* Coluna de Checkbox - primeira coluna */
         .table-my-bets th:nth-child(1),
         .table-my-bets td:nth-child(1) {
-            width: 50px;
-            min-width: 50px;
-            max-width: 50px;
+            width: 40px;
+            min-width: 40px;
+            max-width: 40px;
             text-align: center;
             vertical-align: middle;
             padding: 3px 1px;
         }
 
-        /* Coluna de ID/Ticket - segunda coluna */
+        /* Coluna de Participantes (ID/Ticket + Apostador + Vendedor) - segunda coluna */
         .table-my-bets th:nth-child(2),
         .table-my-bets td:nth-child(2) {
-            width: 80px;
-            min-width: 80px;
-            max-width: 80px;
-            font-size: 0.8rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Coluna de Apostador - terceira coluna */
-        .table-my-bets th:nth-child(3),
-        .table-my-bets td:nth-child(3) {
-            width: 120px;
-            min-width: 120px;
-            max-width: 120px;
-            font-size: 0.8rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Coluna de Vendedor - quarta coluna (se houver) */
-        .table-my-bets th:nth-child(4),
-        .table-my-bets td:nth-child(4) {
-            width: 100px;
-            min-width: 100px;
-            max-width: 100px;
-            font-size: 0.8rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Coluna de Pontos */
-        .table-my-bets th:nth-child(5),
-        .table-my-bets td:nth-child(5) {
-            width: 50px;
-            min-width: 50px;
-            max-width: 50px;
-            text-align: center;
-            font-size: 0.85rem;
-            vertical-align: middle;
-            padding: 3px 1px;
-        }
-
-        /* Coluna de Números */
-        .table-my-bets th:nth-child(6),
-        .table-my-bets td:nth-child(6) {
             width: 180px;
             min-width: 180px;
             max-width: 180px;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            padding: 3px 4px;
+        }
+
+        /* Coluna de Pontos - terceira coluna */
+        .table-my-bets th:nth-child(3),
+        .table-my-bets td:nth-child(3) {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            text-align: center;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            padding: 3px 8px;
+        }
+
+        /* Coluna de Números - quarta coluna */
+        .table-my-bets th:nth-child(4),
+        .table-my-bets td:nth-child(4) {
+            width: 240px;
+            min-width: 240px;
+            max-width: 240px;
             text-align: center;
             font-size: 0.75rem;
             vertical-align: middle;
-            padding: 3px 1px;
+            padding: 3px 6px;
         }
 
-        /* Coluna de Status */
-        .table-my-bets th:nth-child(7),
-        .table-my-bets td:nth-child(7) {
+        /* Coluna de Status - quinta coluna */
+        .table-my-bets th:nth-child(5),
+        .table-my-bets td:nth-child(5) {
             width: 80px;
             min-width: 80px;
             max-width: 80px;
@@ -103,9 +72,9 @@
             padding: 3px 1px;
         }
 
-        /* Coluna de Pago por */
-        .table-my-bets th:nth-child(8),
-        .table-my-bets td:nth-child(8) {
+        /* Coluna de Pago por - sexta coluna */
+        .table-my-bets th:nth-child(6),
+        .table-my-bets td:nth-child(6) {
             width: 100px;
             min-width: 100px;
             max-width: 100px;
@@ -117,71 +86,23 @@
             text-overflow: ellipsis;
         }
 
-        /* Coluna de Ações */
-        .table-my-bets th:nth-child(9),
-        .table-my-bets td:nth-child(9) {
-            width: 200px;
-            min-width: 200px;
-            max-width: 200px;
+        /* Coluna de Ações - sétima coluna */
+        .table-my-bets th:nth-child(7),
+        .table-my-bets td:nth-child(7) {
+            width: 180px;
+            min-width: 180px;
+            max-width: 180px;
             font-size: 0.7rem;
             vertical-align: middle;
             padding: 3px 1px;
-        }
-
-        /* Botões de ações compactos */
-        .table-my-bets .btn-sm {
-            padding: 2px 4px;
-            font-size: 0.7rem;
-            line-height: 1;
-            border-radius: 2px;
-            margin: 1px;
-        }
-
-        /* Container de números no estilo de classificações */
-        .my-bets-numbers-container {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 2px;
-            max-width: 100%;
-            justify-content: center;
-            align-items: center;
-            overflow: visible;
-        }
-
-        .my-bets-number-ball {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 22px;
-            height: 22px;
-            border-radius: 100%;
-            font-size: 0.7rem;
-            font-weight: 600;
-            border: 1px solid;
-            margin: 0;
-            flex-shrink: 0;
-            flex-grow: 0;
-        }
-
-        .my-bets-number-ball.hit {
-            background-color: #fbbf24;
-            color: #1a365d;
-            border-color: #f59e0b;
-        }
-
-        .my-bets-number-ball.miss {
-            background-color: #e5e7eb;
-            color: #6b7280;
-            border-color: #d1d5db;
         }
 
         /* Coluna "Usuário" (penúltima coluna antes de "Compra em") */
         .table-my-bets th:nth-last-child(2),
         .table-my-bets td:nth-last-child(2) {
-            width: 120px;
-            min-width: 120px;
-            max-width: 120px;
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
             font-size: 0.75rem;
             vertical-align: middle;
             padding: 3px 1px;
@@ -202,29 +123,135 @@
             white-space: nowrap;
         }
 
+        /* Botões de ações compactos */
+        .table-my-bets .btn-sm {
+            padding: 2px 4px;
+            font-size: 0.7rem;
+            line-height: 1;
+            border-radius: 2px;
+            margin: 1px;
+        }
+
+        /* Container de números no estilo de classificações - sem quebra de linha */
+        .my-bets-numbers-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 2px;
+            max-width: 100%;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+
+        .my-bets-number-ball {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 100%;
+            font-size: 0.65rem;
+            font-weight: 600;
+            border: 1px solid;
+            margin: 0;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+
+        .my-bets-number-ball.hit {
+            background-color: #fbbf24;
+            color: #1a365d;
+            border-color: #f59e0b;
+        }
+
+        .my-bets-number-ball.miss {
+            background-color: #e5e7eb;
+            color: #6b7280;
+            border-color: #d1d5db;
+        }
+
+        /* Estilo para participantes (similar a classificações) */
+        .my-bets-participants {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .my-bets-participants .participant-name {
+            font-weight: bold;
+            color: #3b82f6;
+            font-size: 0.85rem;
+        }
+
+        .my-bets-participants .participant-info {
+            font-size: 0.6rem;
+            color: #6b7280;
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+
         /* Responsividade para mobile */
         @media (max-width: 768px) {
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
-                width: 40px;
-                min-width: 40px;
-                max-width: 40px;
+                width: 35px;
+                min-width: 35px;
+                max-width: 35px;
             }
             
+            /* Coluna de Participantes no tablet */
             .table-my-bets th:nth-child(2),
             .table-my-bets td:nth-child(2) {
-                width: 60px;
-                min-width: 60px;
-                max-width: 60px;
-                font-size: 0.7rem;
+                width: 140px;
+                min-width: 140px;
+                max-width: 140px;
+                font-size: 0.75rem;
             }
-            
+
+            /* Coluna de Pontos no tablet */
             .table-my-bets th:nth-child(3),
             .table-my-bets td:nth-child(3) {
                 width: 100px;
                 min-width: 100px;
                 max-width: 100px;
+                font-size: 0.75rem;
+                padding: 3px 6px;
+            }
+
+            /* Coluna de Números no tablet */
+            .table-my-bets th:nth-child(4),
+            .table-my-bets td:nth-child(4) {
+                width: 200px;
+                min-width: 200px;
+                max-width: 200px;
+                padding: 3px 4px;
+            }
+
+            /* Coluna de Status no tablet */
+            .table-my-bets th:nth-child(5),
+            .table-my-bets td:nth-child(5) {
+                width: 70px;
+                min-width: 70px;
+                max-width: 70px;
                 font-size: 0.7rem;
+            }
+
+            /* Coluna de Pago por no tablet */
+            .table-my-bets th:nth-child(6),
+            .table-my-bets td:nth-child(6) {
+                width: 90px;
+                min-width: 90px;
+                max-width: 90px;
+                font-size: 0.7rem;
+            }
+
+            /* Coluna de Ações no tablet */
+            .table-my-bets th:nth-child(7),
+            .table-my-bets td:nth-child(7) {
+                width: 160px;
+                min-width: 160px;
+                max-width: 160px;
+                font-size: 0.65rem;
             }
 
             .table-my-bets .btn-sm {
@@ -233,17 +260,25 @@
             }
 
             .my-bets-number-ball {
-                width: 18px;
-                height: 18px;
-                font-size: 0.6rem;
+                width: 16px;
+                height: 16px;
+                font-size: 0.55rem;
+            }
+
+            .my-bets-participants .participant-name {
+                font-size: 0.75rem;
+            }
+
+            .my-bets-participants .participant-info {
+                font-size: 0.55rem;
             }
 
             /* Coluna "Usuário" no tablet */
             .table-my-bets th:nth-last-child(2),
             .table-my-bets td:nth-last-child(2) {
-                width: 100px;
-                min-width: 100px;
-                max-width: 100px;
+                width: 90px;
+                min-width: 90px;
+                max-width: 90px;
                 font-size: 0.7rem;
             }
 
@@ -260,16 +295,63 @@
         @media (max-width: 576px) {
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
-                width: 35px;
-                min-width: 35px;
-                max-width: 35px;
+                width: 30px;
+                min-width: 30px;
+                max-width: 30px;
             }
             
+            /* Coluna de Participantes no mobile pequeno */
             .table-my-bets th:nth-child(2),
             .table-my-bets td:nth-child(2) {
-                width: 50px;
-                min-width: 50px;
-                max-width: 50px;
+                width: 120px;
+                min-width: 120px;
+                max-width: 120px;
+                font-size: 0.7rem;
+            }
+
+            /* Coluna de Pontos no mobile pequeno */
+            .table-my-bets th:nth-child(3),
+            .table-my-bets td:nth-child(3) {
+                width: 70px;
+                min-width: 70px;
+                max-width: 70px;
+                font-size: 0.7rem;
+                padding: 3px 4px;
+            }
+
+            /* Coluna de Números no mobile pequeno */
+            .table-my-bets th:nth-child(4),
+            .table-my-bets td:nth-child(4) {
+                width: 190px;
+                min-width: 190px;
+                max-width: 190px;
+                padding: 3px 4px;
+            }
+
+            /* Coluna de Status no mobile pequeno */
+            .table-my-bets th:nth-child(5),
+            .table-my-bets td:nth-child(5) {
+                width: 60px;
+                min-width: 60px;
+                max-width: 60px;
+                font-size: 0.65rem;
+            }
+
+            /* Coluna de Pago por no mobile pequeno */
+            .table-my-bets th:nth-child(6),
+            .table-my-bets td:nth-child(6) {
+                width: 80px;
+                min-width: 80px;
+                max-width: 80px;
+                font-size: 0.65rem;
+            }
+
+            /* Coluna de Ações no mobile pequeno */
+            .table-my-bets th:nth-child(7),
+            .table-my-bets td:nth-child(7) {
+                width: 160px;
+                min-width: 160px;
+                max-width: 160px;
                 font-size: 0.6rem;
             }
             
@@ -279,8 +361,16 @@
             }
 
             .my-bets-number-ball {
-                width: 15px;
-                height: 15px;
+                width: 14px;
+                height: 14px;
+                font-size: 0.5rem;
+            }
+
+            .my-bets-participants .participant-name {
+                font-size: 0.7rem;
+            }
+
+            .my-bets-participants .participant-info {
                 font-size: 0.5rem;
             }
 
@@ -304,20 +394,27 @@
         }
     </style>
 
+    @php
+        $formatSellerLabel = function ($seller) {
+            return $seller->name;
+        };
+        $selectedSeller = $sellers->firstWhere('id', request('seller'));
+        $selectedSellerLabel = $selectedSeller ? $formatSellerLabel($selectedSeller) : '';
+    @endphp
     <!-- Formulário de Pesquisa e Filtro -->
     <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
-        <div class="row">
+        <div class="row g-3 align-items-end">
             <div class="col-md-4">
-                <!-- Campo de pesquisa -->
+                <label class="form-label">Pesquisar</label>
                 <div class="input-group">
                     <input type="text" name="search" class="form-control"
-                        placeholder="Pesquisar por nome do concurso, numeros..." value="{{ request('search') }}">
+                        placeholder="Nome do concurso, números, telefone..." value="{{ request('search') }}">
                     <button class="btn btn-primary" type="submit">Buscar</button>
                 </div>
             </div>
 
             <div class="col-md-3">
-                <!-- Select de filtro por role -->
+                <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Todos os status</option>
                     @foreach (['PAID', 'PENDING', 'CANCELED', 'FINISHED'] as $status)
@@ -326,6 +423,24 @@
                         </option>
                     @endforeach
                 </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Vendedor</span>
+                </label>
+                <input type="text" id="sellerFilterInput" class="form-control"
+                    placeholder="Digite o nome do vendedor"
+                    list="sellerFilterOptions" autocomplete="off" value="{{ $selectedSellerLabel }}">
+                <input type="hidden" name="seller" id="sellerFilterHidden" value="{{ request('seller') }}">
+                <datalist id="sellerFilterOptions">
+                    @foreach ($sellers as $seller)
+                        @php
+                            $sellerLabel = $formatSellerLabel($seller);
+                        @endphp
+                        <option value="{{ $sellerLabel }}" data-id="{{ $seller->id }}"></option>
+                    @endforeach
+                </datalist>
             </div>
 
             <div class="col-md-2">
@@ -408,7 +523,7 @@
                                 </div>
                             </div>
                             
-                            <input id="repeat_game_purchase_ids_batch_tab" name="repeat_game_purchase_ids[]" type="hidden" value="">
+                            <div id="repeat_game_purchase_ids_container_tab"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -491,6 +606,37 @@
                     rows.forEach(r => r.classList.remove('row-selected'));
                     row.classList.add('row-selected');
                 });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sellerInput = document.getElementById('sellerFilterInput');
+            const sellerHiddenInput = document.getElementById('sellerFilterHidden');
+            const sellerDatalist = document.getElementById('sellerFilterOptions');
+
+            if (!sellerInput || !sellerHiddenInput || !sellerDatalist) {
+                return;
+            }
+
+            const syncSellerHiddenValue = () => {
+                const inputValue = sellerInput.value.trim();
+                if (!inputValue) {
+                    sellerHiddenInput.value = '';
+                    return;
+                }
+
+                const matchingOption = Array.from(sellerDatalist.options).find(option => option.value === inputValue);
+                sellerHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+            };
+
+            sellerInput.addEventListener('change', syncSellerHiddenValue);
+            sellerInput.addEventListener('blur', syncSellerHiddenValue);
+            sellerInput.addEventListener('input', () => {
+                if (!sellerInput.value.trim()) {
+                    sellerHiddenInput.value = '';
+                }
             });
         });
     </script>
@@ -583,20 +729,7 @@
                         <th width="50">
                             <input type="checkbox" id="select_all_checkbox_tab" title="Selecionar todas">
                         </th>
-                        <th>Id</th>
-                        <th>Apostador</th>
-                        @if (in_array(Auth::user()->role->level_id, ['admin', 'seller']))
-                            <th>
-                                Vendedor
-                                @if (in_array(Auth::user()->role->level_id, ['admin']))
-                                    <button type="button" class="btn btn-sm btn-link p-0 ms-1"
-                                        data-bs-toggle="modal" data-bs-target="#filtroVendedorModal">
-                                        <i class="bx bx-filter-alt"></i>
-                                    </button>
-                                @endif
-                            </th>
-                        @endif
-
+                        <th>Participantes</th>
                         <th>Pts
                             {{-- @if (in_array(Auth::user()->role->level_id, ['admin'])) --}}
                             <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal"
@@ -605,7 +738,6 @@
                             </button>
                             {{-- @endif --}}
                         </th>
-
                         <th>Números</th>
                         <th>Status</th>
                         <th>Pago por</th>
@@ -625,36 +757,29 @@
 
                         <!-- A collection de compras como uma só -->
                         @foreach ($purchases as $purchase)
-                            @php
-                                $is_repeated = $purchase->repeated_from_purchase_id !== null;
-                            @endphp
                             <tr>
                                 <td>
-                                    @if (!$is_repeated)
-                                        <input type="checkbox" class="purchase-checkbox-tab" 
-                                            value="{{ $purchase->id }}"
-                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                            data-game-name="{{ $purchase->game->name }}"
-                                            data-gambler-name="{{ $purchase->gambler_name }}">
-                                    @endif
+                                    <input type="checkbox" class="purchase-checkbox-tab" 
+                                        value="{{ $purchase->id }}"
+                                        data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                        data-game-name="{{ $purchase->game->name }}"
+                                        data-gambler-name="{{ $purchase->gambler_name }}">
                                 </td>
                                 <td>
-                                    <strong>{{ $purchase->identifier }}</strong>
+                                    <div class="my-bets-participants">
+                                        <span class="participant-name">{{ Str::limit($purchase->gambler_name, 20) }}</span>
+                                        @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
+                                            <small class="participant-info">
+                                                @if (in_array($purchase->seller->role->level_id, ['seller']))
+                                                    Vendedor: {{ Str::limit($purchase->seller->name, 20) }}
+                                                @else
+                                                    Vendedor: Banca Central
+                                                @endif
+                                            </small>
+                                        @endif
+                                        <small class="participant-info">Ticket: {{ $purchase->identifier }}</small>
+                                    </div>
                                 </td>
-                                <td>
-                                    <span class="badge bg-label-primary me-1">{{ __($purchase->gambler_name) }}</span>
-                                </td>
-
-                                @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
-                                    <!-- Quem é o Vendedor -->
-                                    @if (in_array($purchase->seller->role->level_id, ['seller']))
-                                        <td>{{ $purchase->seller->name }}</td>
-                                    @else
-                                        <!-- Se foi o admin que comprou, então a banca central é o vendedor -->
-                                        <td>Banca Central</td>
-                                    @endif
-                                    <!-- -->
-                                @endif
 
                                 <td><span
                                         class="fw-bold text-primary">{{ $purchase->status == 'PAID' ? $purchase->points : '' }}</span>
@@ -725,14 +850,12 @@
                                             Cancelar
                                         </a>
 
-                                        @if (!$is_repeated)
-                                            <a href="#" data-purchase_id="{{ $purchase->id }}"
-                                                data-game_name="{{ $purchase->game->name }}"
-                                                data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
-                                                class="btn btn-sm btn-secondary repeat_game_button">
-                                                Repetir
-                                            </a>
-                                        @endif
+                                        <a href="#" data-purchase_id="{{ $purchase->id }}"
+                                            data-game_name="{{ $purchase->game->name }}"
+                                            data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
+                                            class="btn btn-sm btn-secondary repeat_game_button">
+                                            Repetir
+                                        </a>
                                     </div>
                                 </td>
 
@@ -773,11 +896,17 @@
             const btnDeselectAll = document.getElementById('btn_deselect_all_tab');
             const selectedCountSpan = document.getElementById('selected_count_batch_tab');
             const selectedPurchasesList = document.getElementById('selected_purchases_list_tab');
-            const repeatPurchaseIdsBatch = document.getElementById('repeat_game_purchase_ids_batch_tab');
+            const repeatPurchaseIdsContainer = document.getElementById('repeat_game_purchase_ids_container_tab');
             const repeatButtonBatch = document.getElementById('repeat_game_repeat_button_batch_id_tab');
+            const modalRepeatBatch = document.getElementById('modal_repeat_game_batch');
 
             function updateBatchUI() {
-                const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
+                // Verifica se os checkboxes existem
+                if (!purchaseCheckboxes || purchaseCheckboxes.length === 0) {
+                    return;
+                }
+                
+                const selected = Array.from(purchaseCheckboxes).filter(cb => cb && cb.checked);
                 const count = selected.length;
                 
                 // Atualiza contador
@@ -795,39 +924,42 @@
                 // Atualiza lista de apostas selecionadas
                 if (count > 0 && selectedPurchasesList) {
                     selectedPurchasesList.innerHTML = selected.map(cb => {
-                        const numbers = cb.getAttribute('data-numbers');
-                        const gameName = cb.getAttribute('data-game-name');
-                        const gamblerName = cb.getAttribute('data-gambler-name');
+                        const numbers = cb.getAttribute('data-numbers') || '';
+                        const gameName = cb.getAttribute('data-game-name') || '';
+                        const gamblerName = cb.getAttribute('data-gambler-name') || '';
                         return `<div class="mb-1"><small><strong>${gameName}</strong> - ${gamblerName}: ${numbers}</small></div>`;
                     }).join('');
                     
                     // Atualiza input hidden com IDs
-                    const ids = selected.map(cb => cb.value).filter(id => id); // Remove valores vazios
-                    // Remove inputs antigos (incluindo o original se estiver vazio)
-                    if (repeatPurchaseIdsBatch) {
-                        const container = repeatPurchaseIdsBatch.parentNode;
-                        const oldInputs = container.querySelectorAll('input[name="repeat_game_purchase_ids[]"]');
-                        oldInputs.forEach(input => input.remove()); // Remove todos, incluindo o original
+                    const ids = selected.map(cb => cb ? cb.value : null).filter(id => id); // Remove valores vazios
+                    
+                    // Remove inputs antigos
+                    if (repeatPurchaseIdsContainer) {
+                        repeatPurchaseIdsContainer.innerHTML = '';
                         
                         // Adiciona novos inputs apenas com valores válidos
                         ids.forEach(id => {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'repeat_game_purchase_ids[]';
-                            input.value = id;
-                            container.appendChild(input);
+                            if (id) {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'repeat_game_purchase_ids[]';
+                                input.value = id;
+                                repeatPurchaseIdsContainer.appendChild(input);
+                            }
                         });
                     }
                     
                     if (repeatButtonBatch) repeatButtonBatch.disabled = false;
                 } else {
                     if (selectedPurchasesList) selectedPurchasesList.innerHTML = '<p class="text-muted">Nenhuma aposta selecionada</p>';
+                    if (repeatPurchaseIdsContainer) repeatPurchaseIdsContainer.innerHTML = '';
                     if (repeatButtonBatch) repeatButtonBatch.disabled = true;
                 }
 
                 // Atualiza checkbox "selecionar todas"
-                if (selectAllCheckbox) {
-                    if (count === purchaseCheckboxes.length && purchaseCheckboxes.length > 0) {
+                if (selectAllCheckbox && purchaseCheckboxes) {
+                    const totalCheckboxes = purchaseCheckboxes.length;
+                    if (count === totalCheckboxes && totalCheckboxes > 0) {
                         selectAllCheckbox.checked = true;
                         selectAllCheckbox.indeterminate = false;
                     } else if (count > 0) {
@@ -884,10 +1016,21 @@
                         return;
                     }
                     
+                    // Atualiza a UI antes de abrir o modal para garantir que os inputs estejam corretos
+                    updateBatchUI();
+                    
                     const myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game_batch'), {
                         focus: true
                     });
                     myModal.show();
+                });
+            }
+            
+            // Atualiza os inputs quando o modal é aberto (evento show do Bootstrap)
+            if (modalRepeatBatch) {
+                modalRepeatBatch.addEventListener('show.bs.modal', function() {
+                    // Garante que os inputs estejam atualizados quando o modal abrir
+                    updateBatchUI();
                 });
             }
 

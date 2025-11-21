@@ -244,12 +244,16 @@
             font-weight: 500;
         }
 
-        .table-winners {
+        .table-winners-wrapper {
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             overflow: hidden;
             border: 1px solid #e5e7eb;
+        }
+
+        table.table-winners {
+            margin-bottom: 0;
         }
 
         .table-winners thead th {
@@ -278,7 +282,13 @@
 
         /* Responsividade para mobile */
         @media (max-width: 768px) {
-            .table-winners {
+            .table-winners-wrapper {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table.table-winners {
                 min-width: 600px;
             }
             
@@ -341,7 +351,7 @@
         }
 
         @media (max-width: 576px) {
-            .table-winners {
+            table.table-winners {
                 min-width: 500px;
             }
             
@@ -436,8 +446,11 @@
             <p class="text-muted">Os prêmios serão distribuídos após o fechamento do jogo.</p>
         </div>
     @else
+        @php
+            $isAdmin = auth()->check() && optional(auth()->user()->role)->level_id === 'admin';
+        @endphp
         <div class="table-responsive">
-        <div class="table-winners">
+        <div class="table-winners-wrapper">
             <table class="table table-winners mb-0">
                 <thead>
                     <tr>
@@ -446,7 +459,7 @@
                         <th>Prêmio</th>
                         <th>Pontos</th>
                         <th>Status</th>
-                        @if (auth()->user()->role->level_id == 'admin')
+                        @if ($isAdmin)
                             <th>Pago Por</th>
                         @endif
                         <th>Números</th>
@@ -494,9 +507,9 @@
                                         <div class="mb-2">
                                             <div class="small text-muted mb-1">Apostador:</div>
                                             <div class="fw-bold text-primary">{{ $winner->purchase->gambler_name }}</div>
-                                            @if ($winner->purchase->gambler_phone)
+                                            @if ($isAdmin && $winner->purchase->gambler_phone)
                                                 <small class="text-muted">{{ $winner->purchase->gambler_phone }}</small>
-                            @endif
+                                            @endif
                                         </div>
                                         <div>
                                             <div class="small text-muted mb-1">Vendedor:</div>
@@ -533,16 +546,17 @@
                                 <td>
                                     <span class="fw-bold text-primary">{{ $winner->userPoint }} pts</span>
                                 </td>
-                                @if (auth()->user()->role->level_id == 'admin')
-                                    <td>
-                                        {{ $winner->purchase->paid_by_user->name ?? 'N/A' }}
-                                    </td>
-                                @endif
                                 <td>
                                     <span class="status-badge {{ strtolower($winner->status) }}">
                                         {{ $statusText }}
                                     </span>
                                 </td>
+                                @if ($isAdmin)
+                                    <td>
+                                        {{ $winner->purchase->paid_by_user->name ?? 'N/A' }}
+                                    </td>
+                                @endif
+
                                 <td>
                                     <div class="d-flex flex-wrap numbers-container">
                                         @foreach ($purchaseNumbers as $number)
@@ -561,7 +575,7 @@
                                         <button class="info-icon" data-bs-toggle="modal" data-bs-target="#winnerModal{{ $index }}" title="Ver detalhes">
                                             <i class="bx bx-info-circle"></i>
                                         </button>
-                                        @if (auth()->user()->role->level_id == 'admin')
+                                        @if ($isAdmin)
                                             <a href="{{ route('user_award-pay', $winner->id) }}"
                                                 class="btn btn-success btn-sm {{ $winner->status == 'PAID' ? 'disabled' : '' }}"
                                                 title="Pagar prêmio">
@@ -600,15 +614,17 @@
                                                         <span class="detail-label">Nome do Apostador:</span>
                                                         <span class="detail-value">{{ $winner->purchase->gambler_name }}</span>
                                                     </div>
-                                                    <div class="detail-row">
-                                                        <span class="detail-label">Telefone:</span>
-                                                        <span class="detail-value">{{ $winner->purchase->gambler_phone ?? 'Não informado' }}</span>
-                                                    </div>
+                                                    @if ($isAdmin)
+                                                        <div class="detail-row">
+                                                            <span class="detail-label">Telefone:</span>
+                                                            <span class="detail-value">{{ $winner->purchase->gambler_phone ?? 'Não informado' }}</span>
+                                                        </div>
+                                                    @endif
                                                     <div class="detail-row">
                                                         <span class="detail-label">Vendedor:</span>
                                                         <span class="detail-value">{{ in_array($winner->purchase->seller->role->level_id, ['seller']) ? $winner->purchase->seller->name : 'Banca Central' }}</span>
                                                     </div>
-                                                    @if (auth()->user()->role->level_id == 'admin')
+                                                    @if ($isAdmin)
                                                         <div class="detail-row">
                                                             <span class="detail-label">Pago Por:</span>
                                                             <span class="detail-value">{{ $winner->purchase->paid_by_user->name ?? 'N/A' }}</span>

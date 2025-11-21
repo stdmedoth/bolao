@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
@@ -59,5 +60,10 @@ class Purchase extends Model
   public function repeatedFrom(): BelongsTo
   {
     return $this->belongsTo(Purchase::class, 'repeated_from_purchase_id', 'id');
+  }
+
+  public function userAwards(): HasMany
+  {
+    return $this->hasMany(UserAwards::class, 'purchase_id', 'id');
   }
 }

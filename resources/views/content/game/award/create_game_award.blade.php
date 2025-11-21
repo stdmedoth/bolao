@@ -40,6 +40,7 @@
                         <select class="form-select" id="condition_type" name="condition_type" required>
                             <option value="EXACT_POINT">Ponto Exato</option>
                             <option value="WINNER">Vencedor</option>
+                            <option value="SECONDARY_WINNER">Vencedor Secundário</option>
                         </select>
                     </div>
 
@@ -139,7 +140,7 @@
                     // Mostra a div apropriada com base no valor selecionado
                     if (selectedValue === 'EXACT_POINT') {
                         exactPointDiv.show();
-                    } else if (selectedValue === 'WINNER') {
+                    } else if (selectedValue === 'WINNER' || selectedValue === 'SECONDARY_WINNER') {
                         winnerPointDiv.show();
                     }
                 }

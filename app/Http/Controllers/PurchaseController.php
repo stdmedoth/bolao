@@ -135,6 +135,12 @@ class PurchaseController extends Controller
         if ($user->seller_id) {
           $seller = User::find($user->seller_id);
           $comission = $purchase->price * $seller->comission_percent;
+          $purchase->load('game');
+          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+            'purchase' => $purchase,
+            'seller' => $seller,
+            'user' => $seller,
+          ]);
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
@@ -142,6 +148,7 @@ class PurchaseController extends Controller
               "purchase_id" => $purchase->id,
               "amount" => $comission,
               "user_id" => $user->seller_id,
+              "description" => $description,
             ]
           );
           $seller->game_credit = $seller->game_credit + $comission;
@@ -154,6 +161,11 @@ class PurchaseController extends Controller
     $purchase->paid_by_user_id = Auth::user()->id;
     $purchase->save();
 
+    $purchase->load(['game', 'paid_by_user']);
+    $description = Transactions::generateDescription('PAY_PURCHASE', $purchase->price, [
+      'purchase' => $purchase,
+      'paid_by_user' => $purchase->paid_by_user,
+    ]);
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
@@ -161,11 +173,18 @@ class PurchaseController extends Controller
         "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
         "user_id" => $purchase->paid_by_user_id,
+        "description" => $description,
       ]
     );
 
     if ($role_level_id == 'seller') {
       $comission = $purchase->price * $user->comission_percent;
+      $purchase->load('game');
+      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+        'purchase' => $purchase,
+        'seller' => $user,
+        'user' => $user,
+      ]);
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION',
@@ -173,6 +192,7 @@ class PurchaseController extends Controller
           "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
+          "description" => $description,
         ]
       );
       $user->game_credit = $user->game_credit + $comission;
@@ -230,6 +250,11 @@ class PurchaseController extends Controller
         if ($user->seller_id) {
           $seller = User::find($user->seller_id);
           $comission = $purchase->price * $seller->comission_percent;
+          $purchase->load('game');
+          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION_WITHDRAWAL', $comission, [
+            'purchase' => $purchase,
+            'user' => $seller,
+          ]);
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
@@ -237,6 +262,7 @@ class PurchaseController extends Controller
               "purchase_id" => $purchase->id,
               "amount" => $comission,
               "user_id" => $user->seller_id,
+              "description" => $description,
             ]
           );
           $seller->game_credit = $seller->game_credit - $comission;
@@ -252,6 +278,11 @@ class PurchaseController extends Controller
 
     if (in_array($role_level_id, ['seller'])) {
       $comission = $purchase->price * $user->comission_percent;
+      $purchase->load('game');
+      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION_WITHDRAWAL', $comission, [
+        'purchase' => $purchase,
+        'user' => $user,
+      ]);
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
@@ -259,12 +290,18 @@ class PurchaseController extends Controller
           "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
+          "description" => $description,
         ]
       );
       $user->game_credit = $user->game_credit - $comission;
       $user->save();
     }
 
+    $purchase->load(['game', 'paid_by_user']);
+    $description = Transactions::generateDescription('PAY_PURCHASE_WITHDRAWAL', $purchase->price, [
+      'purchase' => $purchase,
+      'user' => $user,
+    ]);
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE_WITHDRAWAL',
@@ -272,6 +309,7 @@ class PurchaseController extends Controller
         "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 
@@ -361,6 +399,12 @@ class PurchaseController extends Controller
         if ($sellerId) {
           $seller = User::find($sellerId);
           $comission = $purchase->price * $seller->comission_percent;
+          $purchase->load('game');
+          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+            'purchase' => $purchase,
+            'seller' => $seller,
+            'user' => $seller,
+          ]);
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
@@ -368,6 +412,7 @@ class PurchaseController extends Controller
               "purchase_id" => $purchase->id,
               "amount" => $comission,
               "user_id" => $sellerId,
+              "description" => $description,
             ]
           );
           $seller->game_credit = $seller->game_credit + $comission;
@@ -408,6 +453,12 @@ class PurchaseController extends Controller
 
     if ($role_level_id == 'seller') {
       $comission = $purchase->price * $user->comission_percent;
+      $purchase->load('game');
+      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+        'purchase' => $purchase,
+        'seller' => $user,
+        'user' => $user,
+      ]);
       Transactions::create(
         [
           "type" => 'PAY_PURCHASE_COMISSION',
@@ -415,12 +466,18 @@ class PurchaseController extends Controller
           "purchase_id" => $purchase->id,
           "amount" => $comission,
           "user_id" => $user->id,
+          "description" => $description,
         ]
       );
       $user->game_credit = $user->game_credit + $comission;
       $user->save();
     }
 
+    $purchase->load(['game', 'paid_by_user']);
+    $description = Transactions::generateDescription('PAY_PURCHASE', $purchase->price, [
+      'purchase' => $purchase,
+      'paid_by_user' => $purchase->paid_by_user,
+    ]);
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE',
@@ -428,6 +485,7 @@ class PurchaseController extends Controller
         "purchase_id" => $purchase->id,
         "amount" => $purchase->price,
         "user_id" => $purchase->user_id,
+        "description" => $description,
       ]
     );
 
@@ -491,8 +549,33 @@ class PurchaseController extends Controller
           continue;
         }
 
-        // Validação: não permite repetir uma compra que já foi criada por repetição
-        if ($old_purchase->repeated_from_purchase_id !== null) {
+        // Normaliza os números para garantir comparação consistente
+        $normalizedNumbers = explode(' ', $old_purchase->numbers);
+        $normalizedNumbers = array_map('intval', $normalizedNumbers);
+        $normalizedNumbers = implode(' ', $normalizedNumbers);
+
+        // Validação: verifica se já existe uma aposta com os mesmos números no jogo de destino para o mesmo apostador
+        // Isso impede que uma aposta seja repetida de volta para o jogo original (criando duplicatas)
+        // Busca todas as apostas do jogo de destino e compara números normalizados
+        $existingPurchases = Purchase::where('game_id', $request->repeat_game_id)
+          ->where('gambler_name', $old_purchase->gambler_name)
+          ->where('status', '!=', 'CANCELED') // Considera apenas apostas ativas (PAID, PENDING, FINISHED)
+          ->get();
+        
+        $existingPurchase = null;
+        foreach ($existingPurchases as $purchase) {
+          // Normaliza os números da aposta do banco para comparar
+          $purchaseNumbers = explode(' ', $purchase->numbers);
+          $purchaseNumbers = array_map('intval', $purchaseNumbers);
+          $purchaseNumbers = implode(' ', $purchaseNumbers);
+          
+          if ($purchaseNumbers === $normalizedNumbers) {
+            $existingPurchase = $purchase;
+            break;
+          }
+        }
+
+        if ($existingPurchase) {
           $already_repeated_count++;
           continue;
         }
@@ -505,7 +588,8 @@ class PurchaseController extends Controller
         $newPurchase->round = $repeat_game->round;
         $newPurchase->points = 0;
         $newPurchase->imported = false;
-        $newPurchase->repeated_from_purchase_id = $old_purchase->id; // Marca que foi criada por repetição
+        $newPurchase->repeated_from_purchase_id = $old_purchase->id; // Marca que foi criada por repetição (para rastreamento)
+        $newPurchase->numbers = $normalizedNumbers; // Garante que os números estejam normalizados
 
         // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
         if ($role_level_id == 'seller') {
@@ -539,6 +623,12 @@ class PurchaseController extends Controller
               $seller = User::find($user->seller_id);
 
               $comission = $newPurchase->price * $seller->comission_percent;
+              $newPurchase->load('game');
+              $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+                'purchase' => $newPurchase,
+                'seller' => $seller,
+                'user' => $seller,
+              ]);
               Transactions::create(
                 [
                   "type" => 'PAY_PURCHASE_COMISSION',
@@ -546,6 +636,7 @@ class PurchaseController extends Controller
                   "purchase_id" => $newPurchase->id,
                   "amount" => $comission,
                   "user_id" => $user->seller_id,
+                  "description" => $description,
                 ]
               );
               $seller->game_credit = $seller->game_credit + $comission;
@@ -586,6 +677,12 @@ class PurchaseController extends Controller
 
         if ($role_level_id == 'seller') {
           $comission = $newPurchase->price * $user->comission_percent;
+          $newPurchase->load('game');
+          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+            'purchase' => $newPurchase,
+            'seller' => $user,
+            'user' => $user,
+          ]);
           Transactions::create(
             [
               "type" => 'PAY_PURCHASE_COMISSION',
@@ -593,12 +690,18 @@ class PurchaseController extends Controller
               "purchase_id" => $newPurchase->id,
               "amount" => $comission,
               "user_id" => $user->id,
+              "description" => $description,
             ]
           );
           $user->game_credit = $user->game_credit + $comission;
           $user->save();
         }
 
+        $newPurchase->load(['game', 'paid_by_user']);
+        $description = Transactions::generateDescription('PAY_PURCHASE', $newPurchase->price, [
+          'purchase' => $newPurchase,
+          'paid_by_user' => $newPurchase->paid_by_user,
+        ]);
         Transactions::create(
           [
             "type" => 'PAY_PURCHASE',
@@ -606,6 +709,7 @@ class PurchaseController extends Controller
             "purchase_id" => $newPurchase->id,
             "amount" => $newPurchase->price,
             "user_id" => $newPurchase->user_id,
+            "description" => $description,
           ]
         );
 
@@ -617,10 +721,10 @@ class PurchaseController extends Controller
     }
 
     
-    // Redirecionamento com mensagem de sucesso
-    $errors = [];
+    // Redirecionamento com mensagem
+    $errorMessage = '';
     if ($already_repeated_count > 0) {
-      $errors[] = "{$already_repeated_count} " . ($already_repeated_count == 1 ? 'aposta já foi criada por repetição' : 'apostas já foram criadas por repetição') . " e não podem ser repetidas novamente.";
+      $errorMessage = "{$already_repeated_count} " . ($already_repeated_count == 1 ? 'aposta não pode ser repetida' : 'apostas não podem ser repetidas') . " pois já existe uma aposta com os mesmos números para este jogo.";
     }
 
     if ($success_count > 0 && $failed_count == 0 && $already_repeated_count == 0) {
@@ -633,16 +737,16 @@ class PurchaseController extends Controller
       if ($failed_count > 0) {
         $message .= " {$failed_count} compra(s) falharam (crédito insuficiente).";
       }
-      if (!empty($errors)) {
-        $message .= " " . implode(' ', $errors);
+      if (!empty($errorMessage)) {
+        return redirect()->back()->with(['success' => $message, 'error' => $errorMessage, 'tab' => 'tab-mybets']);
       }
       return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
     } else {
-      if (!empty($errors)) {
-        return redirect()->back()->withErrors(['repeat_game_purchase_ids' => implode(' ', $errors)])->with(['tab' => 'tab-mybets']);
+      if (!empty($errorMessage)) {
+        return redirect()->back()->with(['error' => $errorMessage, 'tab' => 'tab-mybets']);
       }
       $message = 'Nenhuma compra foi realizada. Verifique se há crédito suficiente.';
-      return redirect()->back()->withErrors(['repeat_game_purchase_ids' => $message])->with(['tab' => 'tab-mybets']);
+      return redirect()->back()->with(['error' => $message, 'tab' => 'tab-mybets']);
     }
   }
 

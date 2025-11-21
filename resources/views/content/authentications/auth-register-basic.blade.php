@@ -113,11 +113,11 @@
                                         {{ session('success') }}
                                     </div>
                                 @endif
-
+                                
+                                @if (isset($refered_by_id) && $refered_by_id != '')
                                 <input type="hidden" id="refered_by_id" class="form-control" name="refered_by_id"
-                                    {{ isset($refered_by_id) ? 'disabled' : '' }}
-                                    value="{{ isset($refered_by_id) ? $refered_by_id : '' }}" />
-
+                                    value="{{$refered_by_id}}" />
+                                @endif
                                 <button class="btn btn-primary d-grid w-100">
                                     Registrar
                                 </button>

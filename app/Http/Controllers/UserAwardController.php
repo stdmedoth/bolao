@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Awards;
+use App\Models\Game;
 use App\Models\Purchase;
 use App\Models\Transactions;
 use App\Models\User;
@@ -43,14 +44,19 @@ class UserAwardController extends Controller
     $user_award->status = "PAID";
     $user_award->save();
 
+    $game = Game::find($user_award->game_id);
+    $description = Transactions::generateDescription('PAY_AWARD', $user_award->amount, [
+      'game' => $game,
+      'user' => $user,
+    ]);
     Transactions::create(
       [
         "type" => 'PAY_AWARD',
-
         "game_id" => $user_award->game_id,
-
+        "purchase_id" => $user_award->purchase_id,
         "amount" => $user_award->amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 
@@ -72,14 +78,19 @@ class UserAwardController extends Controller
     $user_award->status = "PENDING";
     $user_award->save();
 
+    $game = Game::find($user_award->game_id);
+    $description = Transactions::generateDescription('PAY_AWARD_WITHDRAWAL', $user_award->amount, [
+      'game' => $game,
+      'user' => $user,
+    ]);
     Transactions::create(
       [
         "type" => 'PAY_AWARD_WITHDRAWAL',
-
         "game_id" => $user_award->game_id,
-
+        "purchase_id" => $user_award->purchase_id,
         "amount" => $user_award->amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 

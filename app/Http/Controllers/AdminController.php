@@ -369,10 +369,11 @@ class AdminController extends Controller
       'open_at' => 'required|date',
       'close_at' => 'required|date|after:open_at',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER',
+      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER,SECONDARY_WINNER',
       'awards.*.exact_point_value' => 'nullable|integer',
       'awards.*.winner_point_value' => 'nullable|integer',
-      'awards.*.only_on_first_round' => 'boolean',
+      'awards.*.only_on_first_round' => 'nullable|boolean',
+      'awards.*.only_when_finish_round' => 'nullable|boolean',
       'awards.*.name' => 'required|string|max:255',
       'awards.*.amount' => 'required|numeric|min:5',
     ]);
@@ -399,8 +400,16 @@ class AdminController extends Controller
     // Criar os prêmios associados ao jogo
     if ($request->has('awards')) {
       foreach ($request->awards as $awardData) {
-        $awardData['game_id'] = $game->id;
-        GameAward::create($awardData);
+        GameAward::create([
+          'game_id' => $game->id,
+          'name' => $awardData['name'],
+          'condition_type' => $awardData['condition_type'],
+          'exact_point_value' => $awardData['exact_point_value'] ?? null,
+          'winner_point_value' => $awardData['winner_point_value'] ?? null,
+          'only_on_first_round' => isset($awardData['only_on_first_round']) ? (bool)$awardData['only_on_first_round'] : false,
+          'only_when_finish_round' => isset($awardData['only_when_finish_round']) ? (bool)$awardData['only_when_finish_round'] : false,
+          'amount' => $awardData['amount'],
+        ]);
       }
     }
 
@@ -508,7 +517,7 @@ class AdminController extends Controller
 
     if ($award->condition_type === 'EXACT_POINT') {
       $needyPoint = $award->exact_point_value;
-    } elseif ($award->condition_type === 'WINNER') {
+    } elseif ($award->condition_type === 'WINNER' || $award->condition_type === 'SECONDARY_WINNER') {
       $needyPoint = $award->winner_point_value;
     }
 
@@ -552,7 +561,7 @@ class AdminController extends Controller
             'exact_point_value' => $award->exact_point_value,
             'game_history_id' => $gameHistoryId,
             'round' => $round,
-            'points' => $award->condition_type === 'EXACT_POINT' ? $award->exact_point_value : $award->winner_point_value,
+            'points' => ($award->condition_type === 'EXACT_POINT') ? $award->exact_point_value : $award->winner_point_value,
             'game_award_id' => $award->id,
             'amount' => $awardAmountPerUser,
             'status' => 'PENDING',
@@ -1127,12 +1136,16 @@ class AdminController extends Controller
     }
     $user = User::find($user_id);
 
+    $amount = $user->game_credit_limit - $user->game_credit;
+    $description = Transactions::generateDescription('GAME_CREDIT', $amount, [
+      'user' => $user,
+    ]);
     Transactions::create(
       [
         "type" => 'GAME_CREDIT',
-
-        "amount" => $user->game_credit_limit - $user->game_credit,
+        "amount" => $amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 

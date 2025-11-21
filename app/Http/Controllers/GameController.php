@@ -257,7 +257,7 @@ class GameController extends Controller
    */
   public function editGameForm($id)
   {
-    $game = Game::findOrFail($id);
+    $game = Game::with('awards')->findOrFail($id);
 
     $game->open_at = Carbon::parse($game->open_at)->format("Y-m-d");
     $game->close_at = Carbon::parse($game->close_at)->format("Y-m-d");
@@ -278,9 +278,12 @@ class GameController extends Controller
       'close_at' => 'required|date|after_or_equal:open_at',
       'status' => 'required|in:OPENED,CLOSED,FINISHED',
       'awards' => 'array',
-      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER',
-      'awards.*.only_when_finish_round' => 'boolean',
-      'awards.*.only_on_first_round' => 'boolean',
+      'awards.*.name' => 'nullable|string|max:255',
+      'awards.*.condition_type' => 'required|in:EXACT_POINT,WINNER,SECONDARY_WINNER',
+      'awards.*.only_when_finish_round' => 'nullable|boolean',
+      'awards.*.only_on_first_round' => 'nullable|boolean',
+      'awards.*.exact_point_value' => 'nullable|integer',
+      'awards.*.winner_point_value' => 'nullable|integer',
       'awards.*.amount' => 'required|numeric|min:0',
     ]);
 
@@ -326,6 +329,7 @@ class GameController extends Controller
         // Atualizar prêmio existente
         $award = GameAward::findOrFail($awardData['id']);
         $award->update([
+          'name' => $awardData['name'] ?? $award->name,
           'condition_type' => $awardData['condition_type'],
           'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
           'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,
@@ -336,6 +340,7 @@ class GameController extends Controller
       } else {
         // Criar novo prêmio
         $game->awards()->create([
+          'name' => $awardData['name'] ?? 'Prêmio',
           'condition_type' => $awardData['condition_type'],
           'only_on_first_round' => $awardData['only_on_first_round'] ?? false,
           'only_when_finish_round' => $awardData['only_when_finish_round'] ?? false,

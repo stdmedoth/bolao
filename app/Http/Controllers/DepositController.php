@@ -247,11 +247,15 @@ class DepositController extends Controller
 
     $user->save();
 
+    $description = Transactions::generateDescription('DEPOSIT', $amount, [
+      'user' => $user,
+    ]);
     Transactions::create(
       [
         "type" => 'DEPOSIT',
         "amount" => $amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 
@@ -280,12 +284,16 @@ class DepositController extends Controller
         $user->game_credit += $request->payment['value'];
         $user->save();
 
+        $description = Transactions::generateDescription('DEPOSIT', $request->payment['value'], [
+          'user' => $user,
+        ]);
         Transactions::create(
           [
             "type" => 'DEPOSIT',
             "amount" => $request->payment['value'],
             'external_id' => $external_id,
             "user_id" => $user->id,
+            "description" => $description,
           ]
         );
 

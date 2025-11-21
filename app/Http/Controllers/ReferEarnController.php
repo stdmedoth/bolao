@@ -124,11 +124,18 @@ class ReferEarnController extends Controller
     $refer->earn_paid = true;
     $refer->save();
 
+    $refer->load(['referUser', 'invitedUser']);
+    $description = Transactions::generateDescription('REFER_EARN', $refer->amount, [
+      'user' => $user,
+      'refer_user' => $refer->referUser,
+      'invited_user' => $refer->invitedUser,
+    ]);
     Transactions::create(
       [
         "type" => 'REFER_EARN',
         "amount" => $refer->amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 
@@ -148,11 +155,18 @@ class ReferEarnController extends Controller
     $refer->earn_paid = false;
     $refer->save();
 
+    $refer->load(['referUser', 'invitedUser']);
+    $description = Transactions::generateDescription('REFER_EARN_REVERSAL', $refer->amount, [
+      'user' => $user,
+      'refer_user' => $refer->referUser,
+      'invited_user' => $refer->invitedUser,
+    ]);
     Transactions::create(
       [
         "type" => 'REFER_EARN_REVERSAL',
         "amount" => $refer->amount,
         "user_id" => $user->id,
+        "description" => $description,
       ]
     );
 
