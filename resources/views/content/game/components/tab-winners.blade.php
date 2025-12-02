@@ -437,18 +437,65 @@
         }
     </style>
 
+    @php
+        $isAdmin = auth()->check() && optional(auth()->user()->role)->level_id === 'admin';
+        $formatUserLabel = function ($user) {
+            return $user->name;
+        };
+        $selectedUser = isset($users) ? $users->firstWhere('id', request('user')) : null;
+        $selectedUserLabel = $selectedUser ? $formatUserLabel($selectedUser) : '';
+    @endphp
+
+    <!-- Formulário de Filtro -->
+    <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
+        <input type="hidden" name="tab" value="tab-winners">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Usuário</span>
+                </label>
+                <input type="text" id="userFilterInputWinners" class="form-control"
+                    placeholder="Digite o nome do usuário"
+                    list="userFilterOptionsWinners" autocomplete="off" value="{{ $selectedUserLabel }}">
+                <input type="hidden" name="user" id="userFilterHiddenWinners" value="{{ request('user') }}">
+                <datalist id="userFilterOptionsWinners">
+                    @if (isset($users))
+                        @foreach ($users as $user)
+                            @php
+                                $userLabel = $formatUserLabel($user);
+                            @endphp
+                            <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
+                        @endforeach
+                    @endif
+                </datalist>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-secondary w-100" type="submit">Aplicar Filtro</button>
+            </div>
+            @if (request('user'))
+                <div class="col-md-2">
+                    <a href="{{ url('/concursos/' . $game->id . '?tab=tab-winners') }}" class="btn btn-outline-secondary w-100">Limpar Filtro</a>
+                </div>
+            @endif
+        </div>
+    </form>
+
     @if (!count($winners))
         <div class="text-center py-5">
             <div class="mb-4">
                 <i class="bx bx-trophy" style="font-size: 4rem; color: #cbd5e0;"></i>
             </div>
-            <h4 class="text-muted">Nenhum ganhador ainda</h4>
-            <p class="text-muted">Os prêmios serão distribuídos após o fechamento do jogo.</p>
+            <h4 class="text-muted">Nenhum ganhador encontrado</h4>
+            <p class="text-muted">
+                @if (request('user'))
+                    Não há ganhadores para o usuário selecionado. Tente outro filtro ou limpe o filtro para ver todos os ganhadores.
+                @else
+                    Os prêmios serão distribuídos após o fechamento do jogo.
+                @endif
+            </p>
         </div>
     @else
-        @php
-            $isAdmin = auth()->check() && optional(auth()->user()->role)->level_id === 'admin';
-        @endphp
+
         <div class="table-responsive">
         <div class="table-winners-wrapper">
             <table class="table table-winners mb-0">
@@ -720,4 +767,35 @@
             {{ $user_awards->appends(request()->all())->links('pagination::bootstrap-5') }}
         </div>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userInput = document.getElementById('userFilterInputWinners');
+            const userHiddenInput = document.getElementById('userFilterHiddenWinners');
+            const userDatalist = document.getElementById('userFilterOptionsWinners');
+
+            if (!userInput || !userHiddenInput || !userDatalist) {
+                return;
+            }
+
+            const syncUserHiddenValue = () => {
+                const inputValue = userInput.value.trim();
+                if (!inputValue) {
+                    userHiddenInput.value = '';
+                    return;
+                }
+
+                const matchingOption = Array.from(userDatalist.options).find(option => option.value === inputValue);
+                userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+            };
+
+            userInput.addEventListener('change', syncUserHiddenValue);
+            userInput.addEventListener('blur', syncUserHiddenValue);
+            userInput.addEventListener('input', () => {
+                if (!userInput.value.trim()) {
+                    userHiddenInput.value = '';
+                }
+            });
+        });
+    </script>
 </div>

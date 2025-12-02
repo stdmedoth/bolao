@@ -106,6 +106,7 @@ Route::middleware('auth:web')->group(function () {
   Route::put('/concursos/{id}', [GameController::class, 'update'])->name('game-update');
   Route::get('/concursos/generate_pdf/{id}', [GameController::class, 'generatePdf'])->name('game-pdf');
   Route::get('/concursos/generate_csv/{id}', [GameController::class, 'generateCsv'])->name('game-csv');
+  Route::get('/concursos/{id}/minhas_apostas/pdf', [GameController::class, 'generateMyBetsPdf'])->name('game-my-bets-pdf');
 
 
 
@@ -160,6 +161,7 @@ Route::middleware('auth:web')->group(function () {
 
   Route::get('/financeiro/extrato', [TransactionsController::class, 'index'])->name('finances.extract');
   Route::get('/financeiro/resumo', [TransactionsController::class, 'summary'])->name('finances.summary');
+  Route::get('/financeiro/resumo/pdf', [TransactionsController::class, 'summaryPdf'])->name('finances.summary.pdf');
   Route::post('/financeiro/lancamento', [TransactionsController::class, 'store'])->name('finances.transaction.store');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');

@@ -226,27 +226,6 @@
 
                     </div>
 
-                    <div class="form-group">
-                        <label for="balance" class="form-label">Saldo para sacar</label>
-                        <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance"
-                            placeholder="Digite o valor" value="{{ number_format($user->balance, 2, '.', '') }}"
-                            required>
-                    </div>
-
-                    <script>
-                        var event = document.createEvent('Event');
-                        event.initEvent('input', true, false);
-
-                        const balanceInput = document.getElementById('balance');
-
-                        // Evento de input para aplicar a máscara ao digitar
-                        balanceInput.addEventListener('input', () => {
-                            let cursorPosition = balanceInput.selectionStart;
-                            let formattedValue = formatToBRL(balanceInput.value);
-                            balanceInput.value = formattedValue;
-                            balanceInput.setSelectionRange(formattedValue.length, formattedValue.length);
-                        });
-                    </script>
 
                     <div class="form-group">
                         <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>
@@ -268,11 +247,9 @@
 
 
 
-                        balanceInput.value = balanceInput.value.replace(",", ".").replace(".", ",");
                         comissionPercentInput.value = comissionPercentInput.value.replace(",", ".").replace(".", ",");
                         gameCreditInput.value = gameCreditInput.value.replace(",", ".").replace(".", ",");
 
-                        //balanceInput.dispatchEvent(event);
                         //gameCreditInput.dispatchEvent(event);
                         //comissionPercentInput.dispatchEvent(event);
                     </script>

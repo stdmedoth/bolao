@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\GameHistory;
+use App\Models\Purchase;
 use App\Models\Transactions;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransactionsController extends Controller
 {
@@ -93,13 +95,9 @@ class TransactionsController extends Controller
     $hasSelectedMonth = $request->has('month') && $request->month != '';
     $selectedMonth = null;
 
-    // Filter by user if not admin
+    // Filter by user if not admin (non-admin users only see their own transactions)
     if (Auth::user()->role->level_id !== 'admin') {
       $builder = $builder->where('user_id', Auth::user()->id);
-    } else {
-      if ($request->has('user_id') && $request->user_id !=  '') {
-        $builder = $builder->where('user_id', $request->user_id);
-      }
     }
 
     // Apply month filter:
@@ -131,7 +129,33 @@ class TransactionsController extends Controller
     $users = User::without(['invited_by'])->get();
     $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
 
-    if ($request->has('game_id') && ($request->game_id) != 'all') {
+    // Filter by user if provided (only for admin)
+    // Unifica os filtros de vendedor e apostador em um único filtro de usuário
+    $selectedUserId = Auth::user()->id;
+    $hasUserFilter = false;
+    $isSellerFilter = false;
+    
+    if (Auth::user()->role->level_id === 'admin' && $request->has('user_id') && $request->user_id != '') {
+      $selectedUserId = $request->user_id;
+      $hasUserFilter = true;
+      $selectedUser = User::find($selectedUserId);
+      
+      // Verifica se o usuário é vendedor
+      $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
+      
+      if ($isSellerFilter) {
+        // Se for vendedor, mostra apenas transações relacionadas a purchases onde ele foi o vendedor
+        // Isso garante que PAY_PURCHASE mostre apenas jogos dos apostadores dele, não todos os jogos onde participou
+        $builder = $builder->whereHas('purchase', function ($query) use ($selectedUserId) {
+          $query->where('seller_id', $selectedUserId);
+        });
+      } else {
+        // Se for apostador ou outro tipo, filtra apenas por user_id da transação
+        $builder = $builder->where('user_id', $selectedUserId);
+      }
+    }
+
+    if ($request->has('game_id') && ($request->game_id) != 'all' && $request->game_id != '') {
       $builder = $builder->where('game_id', $request->game_id);
 
 
@@ -148,17 +172,14 @@ class TransactionsController extends Controller
           $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
         }
       }
-    } elseif (Auth::user()->role->level_id !== 'admin' && $games->last()) {
+    } elseif ((!$request->has('game_id') || $request->game_id == '') && Auth::user()->role->level_id !== 'admin' && $games->last()) {
       $builder = $builder->where('game_id', $games->first()->id);
     }
 
     // Get all transactions for summary with relationships
-    $transactions = $builder->with(['game', 'purchase', 'purchase.seller', 'purchase.paid_by_user', 'purchase.user', 'purchase.userAwards'])->orderBy('created_at', 'DESC')->get();
+    $transactions = $builder->with(['game', 'user', 'purchase', 'purchase.seller', 'purchase.paid_by_user', 'purchase.user', 'purchase.userAwards'])->orderBy('created_at', 'DESC')->get();
 
     // Get selected user info
-    $selectedUserId = Auth::user()->role->level_id === 'admin' && $request->has('user_id') && $request->user_id != '' 
-      ? $request->user_id 
-      : Auth::user()->id;
     $selectedUser = User::find($selectedUserId);
     
     // Get user info (inclui informações de limite de crédito para manter coerência com a plataforma)
@@ -199,8 +220,9 @@ class TransactionsController extends Controller
     // Agrupamentos por concurso (game) apenas para:
     // - Pagamentos de jogos (PAY_PURCHASE)
     // - Comissão do vendedor (PAY_PURCHASE_COMISSION onde o user da transação é o seller)
+    // Quando filtrar por vendedor, agrupa por concurso E usuário (apostador)
     $groupedByGame = [
-      'game_payments' => [],       // Pagamento de jogos por concurso
+      'game_payments' => [],       // Pagamento de jogos por concurso (e usuário se for vendedor)
       'seller_commissions' => [],  // Comissão do vendedor por concurso
     ];
 
@@ -208,6 +230,7 @@ class TransactionsController extends Controller
     $detailedRows = [];
 
     $uniqueGames = [];
+    $totalGamesCount = 0; // Contador total de jogos (purchases)
 
     foreach ($transactions as $transaction) {
       $amount = $transaction->amount;
@@ -241,23 +264,97 @@ class TransactionsController extends Controller
       $gameId = $game ? $game->id : null;
       $gameName = $game ? $game->name : 'N/A';
 
+      // Conta jogos baseado no tipo de filtro aplicado
       if ($gameId) {
-        $uniqueGames[$gameId] = $gameName;
+        $shouldCountGame = true;
+        // Se há filtro de vendedor, conta jogos onde o vendedor é o selecionado (purchase.seller_id)
+        // Se há filtro de apostador, conta jogos onde o apostador é o selecionado (purchase.user_id)
+        if ($hasUserFilter && $purchase) {
+          if ($isSellerFilter) {
+            $shouldCountGame = ($purchase->seller_id == $selectedUserId);
+          } else {
+            $shouldCountGame = ($purchase->user_id == $selectedUserId);
+          }
+        }
+        
+        if ($shouldCountGame) {
+          $uniqueGames[$gameId] = $gameName;
+        }
+      }
+
+      // Conta o total de jogos (purchases) para transações PAY_PURCHASE
+      if ($type === 'PAY_PURCHASE' && $purchase) {
+        $shouldCountPurchase = true;
+        // Se há filtro de vendedor, conta purchases onde o vendedor é o selecionado
+        if ($isSellerFilter) {
+          $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
+        }
+        // Se há filtro de apostador, conta purchases onde o apostador é o selecionado
+        elseif ($hasUserFilter) {
+          $shouldCountPurchase = ($purchase->user_id == $selectedUserId);
+        }
+        // Se não há filtro específico mas é seller, conta purchases onde o seller_id corresponde ao usuário logado
+        elseif (!$hasUserFilter && Auth::user()->role->level_id === 'seller') {
+          $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
+        }
+        // Se não há filtro específico mas é admin, conta todas as purchases (sem filtro)
+        // (já está como true por padrão)
+        
+        if ($shouldCountPurchase) {
+          $totalGamesCount++;
+        }
       }
 
       // 1) Agrupamento de pagamentos de jogos por concurso
-      if ($type === 'PAY_PURCHASE' && $gameId) {
-        if (!isset($groupedByGame['game_payments'][$gameId])) {
-          $groupedByGame['game_payments'][$gameId] = [
-            'game_name' => $gameName,
-            'count' => 0,
-            'total' => 0,
-          ];
-        }
+      if ($type === 'PAY_PURCHASE' && $gameId && $purchase) {
+        // Verifica se deve agrupar este jogo baseado no filtro
+        $shouldGroup = true;
+        
+        // Se há filtro de vendedor, só agrupa jogos onde o vendedor da purchase corresponde ao vendedor selecionado
+        if ($isSellerFilter) {
+          $shouldGroup = ($purchase->seller_id == $selectedUserId);
+          
+          // Quando filtrar por vendedor, agrupa por concurso E usuário (apostador)
+          if ($shouldGroup) {
+            $groupKey = $gameId . '_' . $purchase->user_id; // Chave composta: game_id + user_id
+            
+            // Verifica se o vendedor criou o jogo (é o paid_by_user_id)
+            $isCreator = ($purchase->paid_by_user_id == $selectedUserId);
+            
+            if (!isset($groupedByGame['game_payments'][$groupKey])) {
+              $groupedByGame['game_payments'][$groupKey] = [
+                'game_name' => $gameName,
+                'user_name' => $purchase->user ? $purchase->user->name : 'N/A',
+                'is_creator' => $isCreator, // Flag para identificar se o vendedor criou
+                'count' => 0,
+                'total' => 0,
+              ];
+            }
 
-        $groupedByGame['game_payments'][$gameId]['count']++;
-        $groupedByGame['game_payments'][$gameId]['total'] += $amount;
-        continue;
+            $groupedByGame['game_payments'][$groupKey]['count']++;
+            $groupedByGame['game_payments'][$groupKey]['total'] += $amount;
+            continue;
+          }
+        }
+        // Se há filtro de apostador, só agrupa jogos onde o apostador da purchase corresponde ao apostador selecionado
+        elseif ($hasUserFilter) {
+          $shouldGroup = ($purchase->user_id == $selectedUserId);
+        }
+        
+        if ($shouldGroup) {
+          // Agrupamento normal (apenas por game_id) quando não for filtro de vendedor
+          if (!isset($groupedByGame['game_payments'][$gameId])) {
+            $groupedByGame['game_payments'][$gameId] = [
+              'game_name' => $gameName,
+              'count' => 0,
+              'total' => 0,
+            ];
+          }
+
+          $groupedByGame['game_payments'][$gameId]['count']++;
+          $groupedByGame['game_payments'][$gameId]['total'] += $amount;
+          continue;
+        }
       }
 
       // 2) Agrupamento de comissão do vendedor por concurso
@@ -336,6 +433,9 @@ class TransactionsController extends Controller
         case 'CUSTOM_OUTCOME':
           $rowTypeLabel = 'Saída personalizada';
           break;
+        case 'PAY_PURCHASE':
+          $rowTypeLabel = 'Pagamento de jogos';
+          break;
         case 'PAY_PURCHASE_COMISSION':
           // Comissão que não é do vendedor (por exemplo, comissão do apostador)
           $rowTypeLabel = 'Comissão de jogos';
@@ -346,41 +446,64 @@ class TransactionsController extends Controller
           break;
       }
 
+      // Determina qual usuário mostrar para esta transação
+      $userName = null;
+      if ($transaction->user) {
+        $userName = $transaction->user->name;
+      }
+      // Para prêmios, mostra o usuário que ganhou (purchase.user)
+      if ($type === 'PAY_AWARD' && $purchase && $purchase->user) {
+        $userName = $purchase->user->name;
+      }
+
       $detailedRows[] = [
         'type' => $rowTypeLabel,
         'game_name' => $gameName,
         'quantity' => '-',
         'total' => $amount,
         'category' => $typeCategories[$type],
+        'user_name' => $userName,
       ];
     }
 
-    // Calculate total games
-    $userInfo['total_games'] = count($uniqueGames);
+    // Calculate total games (total de purchases/jogos, não apenas concursos diferentes)
+    $userInfo['total_games'] = $totalGamesCount;
 
     // Monta linhas para paginação do resumo detalhado
     $rows = [];
 
     // Pagamentos de jogos por concurso
     foreach ($groupedByGame['game_payments'] as $gameId => $data) {
+      // Se for filtro de vendedor, verifica se ele criou o jogo
+      if ($isSellerFilter) {
+        // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
+        // Se não criou, mostra "Jogo do Apostador"
+        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
+      } else {
+        $typeLabel = 'Pagamento de jogos';
+      }
+      
       $rows[] = [
-        'type' => 'Pagamento de jogos',
+        'type' => $typeLabel,
         'game_name' => $data['game_name'],
         'quantity' => $data['count'],
         'total' => $data['total'],
         'category' => 'outcome',
+        'user_name' => isset($data['user_name']) ? $data['user_name'] : null,
       ];
     }
 
-    // Comissão do vendedor por concurso
-    foreach ($groupedByGame['seller_commissions'] as $gameId => $data) {
-      $rows[] = [
-        'type' => 'Comissão do vendedor',
-        'game_name' => $data['game_name'],
-        'quantity' => $data['count'],
-        'total' => $data['total'],
-        'category' => 'income',
-      ];
+    // Comissão do vendedor por concurso (apenas para vendedores e admin)
+    if (Auth::user()->role->level_id !== 'gambler') {
+      foreach ($groupedByGame['seller_commissions'] as $gameId => $data) {
+        $rows[] = [
+          'type' => 'Comissão do vendedor',
+          'game_name' => $data['game_name'],
+          'quantity' => $data['count'],
+          'total' => $data['total'],
+          'category' => 'income',
+        ];
+      }
     }
 
     // Demais transações detalhadas (já vêm na ordem das transações)
@@ -414,6 +537,419 @@ class TransactionsController extends Controller
       'games' => $games,
       'selectedMonth' => $selectedMonth ?? ($hasSelectedMonth ? (int)$request->month : null),
     ]);
+  }
+
+  /**
+   * Generate PDF for summary
+   */
+  public function summaryPdf(Request $request)
+  {
+    // Only admin and seller can generate PDF
+    if (!in_array(Auth::user()->role->level_id, ['admin', 'seller'])) {
+      return redirect()->back()->with('error', 'Acesso negado.');
+    }
+
+    // Reuse the same logic from summary method but without pagination
+    $builder = new Transactions();
+    $hasExplicitStart = $request->has('start_date') && $request->start_date != '';
+    $hasExplicitEnd = $request->has('end_date') && $request->end_date != '';
+    $hasExplicitPeriod = $hasExplicitStart || $hasExplicitEnd;
+    $hasSelectedMonth = $request->has('month') && $request->month != '';
+    $selectedMonth = null;
+
+    // Filter by user if not admin
+    if (Auth::user()->role->level_id !== 'admin') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+
+    // Apply month filter
+    if ($hasSelectedMonth || !$hasExplicitPeriod) {
+      $month = $hasSelectedMonth ? (int)$request->month : (int)date('n');
+      $year = date('Y');
+      $selectedMonth = $month;
+      
+      $startDate = date('Y-m-01', mktime(0, 0, 0, $month, 1, $year));
+      $lastDay = date('t', mktime(0, 0, 0, $month, 1, $year));
+      $endDate = date('Y-m-' . $lastDay, mktime(0, 0, 0, $month, 1, $year));
+      
+      $builder = $builder->whereDate('created_at', '>=', $startDate)
+                         ->whereDate('created_at', '<=', $endDate);
+    }
+
+    if ($hasExplicitStart) {
+      $builder = $builder->whereDate('created_at', '>=', $request->start_date);
+    }
+
+    if ($hasExplicitEnd) {
+      $builder = $builder->whereDate('created_at', '<=', $request->end_date);
+    }
+
+    $users = User::without(['invited_by'])->get();
+    $games = Game::without(['awards'])->orderBy('created_at', 'DESC')->get();
+
+    // Filter by user if provided (only for admin)
+    // Unifica os filtros de vendedor e apostador em um único filtro de usuário
+    $selectedUserId = Auth::user()->id;
+    $hasUserFilter = false;
+    $isSellerFilter = false;
+    
+    if (Auth::user()->role->level_id === 'admin' && $request->has('user_id') && $request->user_id != '') {
+      $selectedUserId = $request->user_id;
+      $hasUserFilter = true;
+      $selectedUser = User::find($selectedUserId);
+      
+      // Verifica se o usuário é vendedor
+      $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
+      
+      if ($isSellerFilter) {
+        // Se for vendedor, mostra apenas transações relacionadas a purchases onde ele foi o vendedor
+        // Isso garante que PAY_PURCHASE mostre apenas jogos dos apostadores dele, não todos os jogos onde participou
+        $builder = $builder->whereHas('purchase', function ($query) use ($selectedUserId) {
+          $query->where('seller_id', $selectedUserId);
+        });
+      } else {
+        // Se for apostador ou outro tipo, filtra apenas por user_id da transação
+        $builder = $builder->where('user_id', $selectedUserId);
+      }
+    }
+
+    if ($request->has('game_id') && ($request->game_id) != 'all' && $request->game_id != '') {
+      $builder = $builder->where('game_id', $request->game_id);
+
+      if ((!$request->has('end_date') || $request->end_date == '') && (!$request->has('month') || $request->month == '')) {
+        $lastClosedHistory = GameHistory::where('game_id', $request->game_id)
+          ->where('type', 'OPENED')
+          ->orderBy('created_at', 'DESC')
+          ->first();
+
+        if ($lastClosedHistory) {
+          $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
+        }
+      }
+    } elseif ((!$request->has('game_id') || $request->game_id == '') && Auth::user()->role->level_id !== 'admin' && $games->last()) {
+      $builder = $builder->where('game_id', $games->first()->id);
+    }
+
+    // Get all transactions for summary with relationships (no pagination)
+    $transactions = $builder->with(['game', 'purchase', 'purchase.seller', 'purchase.paid_by_user', 'purchase.user', 'purchase.userAwards'])->orderBy('created_at', 'DESC')->get();
+
+    // Get selected user info
+    $selectedUser = User::find($selectedUserId);
+    
+    $userInfo = [
+      'name' => $selectedUser->name ?? 'N/A',
+      'comission_percent' => ($selectedUser->comission_percent ?? 0) * 100,
+      'total_games' => 0,
+      'game_credit' => $selectedUser->game_credit ?? 0,
+      'game_credit_limit' => $selectedUser->game_credit_limit ?? 0,
+      'credit_debt' => max(0, ($selectedUser->game_credit_limit ?? 0) - ($selectedUser->game_credit ?? 0)),
+    ];
+
+    // Same logic as summary method to build rows
+    $typeCategories = [
+      'DEPOSIT' => 'income',
+      'WITHDRAWAL' => 'outcome',
+      'DEPOSIT_REVERSAL' => 'outcome',
+      'WITHDRAWAL_REVERSAL' => 'income',
+      'REFER_EARN' => 'income',
+      'REFER_EARN_REVERSAL' => 'outcome',
+      'PAY_PURCHASE' => 'outcome',
+      'PAY_PURCHASE_WITHDRAWAL' => 'income',
+      'PAY_PURCHASE_COMISSION' => 'income',
+      'PAY_PURCHASE_COMISSION_WITHDRAWAL' => 'outcome',
+      'PAY_AWARD' => 'income',
+      'PAY_AWARD_WITHDRAWAL' => 'outcome',
+      'GAME_CREDIT' => 'income',
+      'GAME_CREDIT_REVERSAL' => 'outcome',
+      'CUSTOM_INCOME' => 'income',
+      'CUSTOM_OUTCOME' => 'outcome'
+    ];
+
+    $totalIncome = 0;
+    $totalOutcome = 0;
+    $groupedByGame = [
+      'game_payments' => [],
+      'seller_commissions' => [],
+    ];
+    $detailedRows = [];
+    $uniqueGames = [];
+    $totalGamesCount = 0; // Contador total de jogos (purchases)
+
+    foreach ($transactions as $transaction) {
+      $amount = $transaction->amount;
+      $type = $transaction->type;
+
+      if (!isset($typeCategories[$type])) {
+        continue;
+      }
+
+      if (in_array($type, [
+        'PAY_PURCHASE_WITHDRAWAL',
+        'PAY_PURCHASE_COMISSION_WITHDRAWAL',
+        'REFER_EARN_REVERSAL',
+        'GAME_CREDIT_REVERSAL',
+        'PAY_AWARD_WITHDRAWAL',
+        'DEPOSIT_REVERSAL',
+        'WITHDRAWAL_REVERSAL'
+      ])) {
+        continue;
+      }
+
+      if ($typeCategories[$type] === 'income') {
+        $totalIncome += $amount;
+      } else {
+        $totalOutcome += $amount;
+      }
+
+      $game = $transaction->game;
+      $purchase = $transaction->purchase;
+      $gameId = $game ? $game->id : null;
+      $gameName = $game ? $game->name : 'N/A';
+
+      // Conta jogos baseado no tipo de filtro aplicado
+      if ($gameId) {
+        $shouldCountGame = true;
+        // Se há filtro de vendedor, conta jogos onde o vendedor é o selecionado (purchase.seller_id)
+        // Se há filtro de apostador, conta jogos onde o apostador é o selecionado (purchase.user_id)
+        if ($hasUserFilter && $purchase) {
+          if ($isSellerFilter) {
+            $shouldCountGame = ($purchase->seller_id == $selectedUserId);
+          } else {
+            $shouldCountGame = ($purchase->user_id == $selectedUserId);
+          }
+        }
+        
+        if ($shouldCountGame) {
+          $uniqueGames[$gameId] = $gameName;
+        }
+      }
+
+      // Conta o total de jogos (purchases) para transações PAY_PURCHASE
+      if ($type === 'PAY_PURCHASE' && $purchase) {
+        $shouldCountPurchase = true;
+        // Se há filtro de vendedor, conta purchases onde o vendedor é o selecionado
+        if ($isSellerFilter) {
+          $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
+        }
+        // Se há filtro de apostador, conta purchases onde o apostador é o selecionado
+        elseif ($hasUserFilter) {
+          $shouldCountPurchase = ($purchase->user_id == $selectedUserId);
+        }
+        // Se não há filtro específico mas é seller, conta purchases onde o seller_id corresponde ao usuário logado
+        elseif (!$hasUserFilter && Auth::user()->role->level_id === 'seller') {
+          $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
+        }
+        // Se não há filtro específico mas é admin, conta todas as purchases (sem filtro)
+        // (já está como true por padrão)
+        
+        if ($shouldCountPurchase) {
+          $totalGamesCount++;
+        }
+      }
+
+      // 1) Agrupamento de pagamentos de jogos por concurso
+      if ($type === 'PAY_PURCHASE' && $gameId && $purchase) {
+        // Verifica se deve agrupar este jogo baseado no filtro
+        $shouldGroup = true;
+        
+        // Se há filtro de vendedor, só agrupa jogos onde o vendedor da purchase corresponde ao vendedor selecionado
+        if ($isSellerFilter) {
+          $shouldGroup = ($purchase->seller_id == $selectedUserId);
+          
+          // Quando filtrar por vendedor, agrupa por concurso E usuário (apostador)
+          if ($shouldGroup) {
+            $groupKey = $gameId . '_' . $purchase->user_id; // Chave composta: game_id + user_id
+            
+            // Verifica se o vendedor criou o jogo (é o paid_by_user_id)
+            $isCreator = ($purchase->paid_by_user_id == $selectedUserId);
+            
+            if (!isset($groupedByGame['game_payments'][$groupKey])) {
+              $groupedByGame['game_payments'][$groupKey] = [
+                'game_name' => $gameName,
+                'user_name' => $purchase->user ? $purchase->user->name : 'N/A',
+                'is_creator' => $isCreator, // Flag para identificar se o vendedor criou
+                'count' => 0,
+                'total' => 0,
+              ];
+            }
+
+            $groupedByGame['game_payments'][$groupKey]['count']++;
+            $groupedByGame['game_payments'][$groupKey]['total'] += $amount;
+            continue;
+          }
+        }
+        // Se há filtro de apostador, só agrupa jogos onde o apostador da purchase corresponde ao apostador selecionado
+        elseif ($hasUserFilter) {
+          $shouldGroup = ($purchase->user_id == $selectedUserId);
+        }
+        
+        if ($shouldGroup) {
+          // Agrupamento normal (apenas por game_id) quando não for filtro de vendedor
+          if (!isset($groupedByGame['game_payments'][$gameId])) {
+            $groupedByGame['game_payments'][$gameId] = [
+              'game_name' => $gameName,
+              'count' => 0,
+              'total' => 0,
+            ];
+          }
+
+          $groupedByGame['game_payments'][$gameId]['count']++;
+          $groupedByGame['game_payments'][$gameId]['total'] += $amount;
+          continue;
+        }
+      }
+
+      // 2) Agrupamento de comissão do vendedor por concurso
+      if ($type === 'PAY_PURCHASE_COMISSION' && $purchase && $gameId) {
+        if ($purchase->seller_id == $transaction->user_id) {
+          if (!isset($groupedByGame['seller_commissions'][$gameId])) {
+            $groupedByGame['seller_commissions'][$gameId] = [
+              'game_name' => $gameName,
+              'count' => 0,
+              'total' => 0,
+            ];
+          }
+          $groupedByGame['seller_commissions'][$gameId]['count']++;
+          $groupedByGame['seller_commissions'][$gameId]['total'] += $amount;
+          continue;
+        }
+      }
+
+      $rowTypeLabel = null;
+      switch ($type) {
+        case 'REFER_EARN':
+          $rowTypeLabel = 'Bônus de indicação';
+          break;
+        case 'GAME_CREDIT':
+          $rowTypeLabel = 'Adição de Credito';
+          break;
+        case 'PAY_AWARD':
+          $purchase = $transaction->purchase;
+          if (!$purchase || !$gameId) {
+            continue 2;
+          }
+          $userAward = $purchase->userAwards
+            ->where('status', 'PAID')
+            ->where('game_id', $gameId)
+            ->sortByDesc('created_at')
+            ->first();
+          if (!$userAward) {
+            continue 2;
+          }
+          $rowTypeLabel = 'Prêmio';
+          $userAward->loadMissing('game_award');
+          if ($userAward->game_award && $userAward->game_award->name) {
+            $rowTypeLabel = $userAward->game_award->name;
+          }
+          if ($userAward->points) {
+            $rowTypeLabel .= " ({$userAward->points} dezena" . ($userAward->points > 1 ? 's' : '') . ")";
+          }
+          break;
+        case 'WITHDRAWAL':
+          $rowTypeLabel = 'Saque';
+          break;
+        case 'DEPOSIT':
+          $rowTypeLabel = 'Depósito';
+          break;
+        case 'CUSTOM_INCOME':
+          $rowTypeLabel = $transaction->description;
+          break;
+        case 'CUSTOM_OUTCOME':
+          $rowTypeLabel = 'Saída personalizada';
+          break;
+        case 'PAY_PURCHASE':
+          $rowTypeLabel = 'Pagamento de jogos';
+          break;
+        case 'PAY_PURCHASE_COMISSION':
+          $rowTypeLabel = 'Comissão de jogos';
+          break;
+        default:
+          $rowTypeLabel = $type;
+          break;
+      }
+
+      // Determina qual usuário mostrar para esta transação
+      $userName = null;
+      if ($transaction->user) {
+        $userName = $transaction->user->name;
+      }
+      // Para prêmios, mostra o usuário que ganhou (purchase.user)
+      if ($type === 'PAY_AWARD' && $purchase && $purchase->user) {
+        $userName = $purchase->user->name;
+      }
+
+      $detailedRows[] = [
+        'type' => $rowTypeLabel,
+        'game_name' => $gameName,
+        'quantity' => '-',
+        'total' => $amount,
+        'category' => $typeCategories[$type],
+        'user_name' => $userName,
+      ];
+    }
+
+    // Calculate total games (total de purchases/jogos, não apenas concursos diferentes)
+    $userInfo['total_games'] = $totalGamesCount;
+
+    $rows = [];
+    foreach ($groupedByGame['game_payments'] as $gameId => $data) {
+      // Se for filtro de vendedor, verifica se ele criou o jogo
+      if ($isSellerFilter) {
+        // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
+        // Se não criou, mostra "Jogo do Apostador"
+        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
+      } else {
+        $typeLabel = 'Pagamento de jogos';
+      }
+      
+      $rows[] = [
+        'type' => $typeLabel,
+        'game_name' => $data['game_name'],
+        'quantity' => $data['count'],
+        'total' => $data['total'],
+        'category' => 'outcome',
+        'user_name' => isset($data['user_name']) ? $data['user_name'] : null,
+      ];
+    }
+
+    // Comissão do vendedor por concurso (apenas para vendedores e admin)
+    if (Auth::user()->role->level_id !== 'gambler') {
+      foreach ($groupedByGame['seller_commissions'] as $gameId => $data) {
+        $rows[] = [
+          'type' => 'Comissão do vendedor',
+          'game_name' => $data['game_name'],
+          'quantity' => $data['count'],
+          'total' => $data['total'],
+          'category' => 'income',
+        ];
+      }
+    }
+
+    foreach ($detailedRows as $detailRow) {
+      $rows[] = $detailRow;
+    }
+
+    // Calculate net value
+    $net = $totalIncome - $totalOutcome;
+
+    // Get filter info
+    $filterInfo = [
+      'game' => $request->has('game_id') && $request->game_id != 'all' ? $games->firstWhere('id', $request->game_id) : null,
+      'month' => $selectedMonth,
+      'seller' => $request->has('seller') && $request->seller != '' ? $sellers->firstWhere('id', $request->seller) : null,
+    ];
+
+    $pdf = Pdf::loadView('pdf.summary_report', compact(
+      'totalIncome',
+      'totalOutcome',
+      'net',
+      'userInfo',
+      'rows',
+      'filterInfo',
+      'selectedUser'
+    ))->setPaper('a4', 'portrait');
+
+    return $pdf->download('resumo_transacoes_' . date('Y-m-d') . '.pdf');
   }
 
   /**
@@ -452,27 +988,23 @@ class TransactionsController extends Controller
       'user_id' => $request->user_id,
     ]);
 
-    // Update user balance
+    // Update user game_credit (saldo único)
     if ($type === 'CUSTOM_INCOME') {
-      $user->balance += $request->amount;
+      $user->game_credit += $request->amount;
     } else {
-      $user->balance -= $request->amount;
-      // Ensure balance doesn't go negative
-      if ($user->balance < 0) {
-        $user->balance = 0;
-      }
+      $user->game_credit -= $request->amount;
     }
     $user->save();
 
     $redirectParams = [];
-    if ($request->has('filter_user_id') && $request->filter_user_id) {
-      $redirectParams['user_id'] = $request->filter_user_id;
-    }
     if ($request->has('filter_game_id') && $request->filter_game_id) {
       $redirectParams['game_id'] = $request->filter_game_id;
     }
     if ($request->has('filter_month') && $request->filter_month) {
       $redirectParams['month'] = $request->filter_month;
+    }
+    if ($request->has('filter_user_id') && $request->filter_user_id) {
+      $redirectParams['user_id'] = $request->filter_user_id;
     }
 
     return redirect()->route('finances.summary', $redirectParams)

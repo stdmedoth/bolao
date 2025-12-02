@@ -1,10 +1,6 @@
 @php
-$width = $width ?? '25'; // Largura padrão definida como 25.
+    $width = $width ?? '25'; // Largura padrão definida como 25.
 @endphp
 
-<img 
-  src="https://bolaovip.carapicuiba.com.br/assets/img/logos/logo.png" 
-  alt="Logo" 
-  width="{{ $width * 2.5 }}" 
-  style="height: auto;"
->
+<img src="http://192.168.1.247:8000/assets/img/logos/logo.png" alt="Logo" width="{{ $width * 2.5 }}"
+    style="height: auto;">

@@ -49,12 +49,20 @@
 
         <!-- Place this tag where you want the button to render. -->
         <li class="nav-item lh-1 me-4">
+            @php
+                $user = auth()->user();
+                $creditDebt = $user->credit_debt;
+                $availableBalance = $user->available_balance;
+            @endphp
             <a href="{{ route('transactions.deposito') }}" data-icon="octicon-star" data-size="large"
                 data-show-count="true" aria-label="Saldo">
                 <i class="bx bx-money"></i>
-                <span>Saldo: R$ {{ number_format(auth()->user()->balance, 2, ',', '.') }}</span>
+                @if($creditDebt > 0)
+                    <span class="text-danger">Dívida: R$ {{ number_format($creditDebt, 2, ',', '.') }}</span>
+                @else
+                    <span>Saldo: R$ {{ number_format($availableBalance, 2, ',', '.') }}</span>
+                @endif
             </a>
-
         </li>
 
         <!-- User -->

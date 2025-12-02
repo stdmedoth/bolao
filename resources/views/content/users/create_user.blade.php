@@ -232,23 +232,6 @@
 
                 </div>
 
-                <div class="form-group">
-                    <label for="balance" class="form-label">Saldo para sacar</label>
-                    <input type="text" class="form-control" id="balance" inputmode="numeric" name="balance"
-                        placeholder="Digite o valor" value="{{ session('balance', old('balance')) }}" required>
-                </div>
-
-                <script>
-                    const balanceInput = document.getElementById('balance');
-
-                    // Evento de input para aplicar a máscara ao digitar
-                    balanceInput.addEventListener('input', () => {
-                        let cursorPosition = balanceInput.selectionStart;
-                        let formattedValue = formatToBRL(balanceInput.value);
-                        balanceInput.value = formattedValue;
-                        balanceInput.setSelectionRange(formattedValue.length, formattedValue.length);
-                    });
-                </script>
 
                 <div class="form-group">
                     <label for="comission_percent" class="form-label">Porcentagem de Comissão</label>

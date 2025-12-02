@@ -29,7 +29,6 @@ class User extends Authenticatable
     'external_finnancial_id',
     'password',
 
-    'balance',
     'game_credit',
     'comission_percent',
     'game_credit_limit',
@@ -94,5 +93,35 @@ class User extends Authenticatable
   public function seller()
   {
     return $this->belongsTo(User::class, 'seller_id', 'id');
+  }
+
+  /**
+   * Calcula o saldo devedor (crédito usado)
+   * Retorna 0 se não deve nada
+   */
+  public function getCreditDebtAttribute()
+  {
+    return max(0, $this->game_credit_limit - $this->game_credit);
+  }
+
+  /**
+   * Calcula o saldo disponível para saque
+   * Saldo disponível = apenas o que está acima do limite inicial (game_credit_limit)
+   * O limite é crédito dado pelo vendedor e não pode ser sacado
+   * Exemplo: game_credit_limit=100, game_credit=150 → pode sacar apenas R$ 50
+   */
+  public function getAvailableBalanceAttribute()
+  {
+    // Só pode sacar o que está acima do limite inicial
+    // Se game_credit < game_credit_limit, não pode sacar nada (está devendo)
+    return max(0, $this->game_credit - $this->game_credit_limit);
+  }
+
+  /**
+   * Verifica se o usuário tem saldo disponível para saque
+   */
+  public function hasAvailableBalance($amount)
+  {
+    return $this->available_balance >= $amount;
   }
 }

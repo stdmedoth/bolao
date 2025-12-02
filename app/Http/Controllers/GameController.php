@@ -78,7 +78,10 @@ class GameController extends Controller
     //
     $game = Game::find($id);
     $user_awards_builder = UserAwards::where('game_id', $id);
-    $sellers = User::where('role_user_id', 2)->get();
+    // Buscar todos os usuários (vendedores e apostadores) para o filtro
+    $users = User::with('role')->whereHas('role', function ($query) {
+      $query->whereIn('level_id', ['seller', 'gambler']);
+    })->get();
 
     $winners = [];
     $round = $game->round;
@@ -98,6 +101,16 @@ class GameController extends Controller
       ->toArray();
 
     $uniqueNumbers = array_unique($allAddedNumbers);
+
+    // Filter by user if provided (filters by user_id for gambler or seller_id for seller)
+    if ($request->has('user') && $request->user != '') {
+      $user_awards_builder = $user_awards_builder->whereHas('purchase', function ($query) use ($request) {
+        $query->where(function ($q) use ($request) {
+          $q->where('user_id', $request->user)
+            ->orWhere('seller_id', $request->user);
+        });
+      });
+    }
 
     $user_awards = $user_awards_builder->where('round', $round)
       ->with(['user', 'game_award', 'purchase']) // Eager loading para evitar N+1 queries
@@ -165,8 +178,12 @@ class GameController extends Controller
     //$builder = $builder->orderBy('created_at', 'desc');
     $builder = $builder->orderBy('gambler_name', 'asc');
 
-    if ($request->has('seller') && $request->seller != '') {
-      $builder = $builder->where('seller_id', $request->seller);
+    // Filter by user if provided (filters by user_id for gambler or seller_id for seller)
+    if ($request->has('user') && $request->user != '') {
+      $builder = $builder->where(function ($query) use ($request) {
+        $query->where('user_id', $request->user)
+          ->orWhere('seller_id', $request->user);
+      });
     }
 
     if ($request->has('points') && $request->points != '') {
@@ -178,7 +195,7 @@ class GameController extends Controller
     // Dados para classificação (todas as compras ordenadas por pontos)
     $classificationsBuilder = Purchase::where('game_id', $id)
       ->where('status', 'PAID')
-      ->with(['user', 'seller',])
+      ->with(['user', 'seller', 'userAwards'])
       ->where('round', $round)
       ->orderBy('points', 'desc')
       ->orderBy('created_at', 'desc');
@@ -246,7 +263,7 @@ class GameController extends Controller
       'winners' => $winners,
       'user_awards' => $user_awards,
       'winner_award' => $winner_award,
-      'sellers' => $sellers,
+      'users' => $users,
       'classifications' => $classifications,
       'uniqueNumbers' => $uniqueNumbers
     ]);
@@ -516,6 +533,163 @@ class GameController extends Controller
     return Response::stream($callback, 200, $headers);
   }
 
+  /**
+   * Generate PDF for my bets
+   */
+  public function generateMyBetsPdf(Request $request, $id)
+  {
+    $game = Game::findOrFail($id);
+    $round = $game->round;
+
+    // Replicar a mesma lógica de filtros do método show
+    $builder = new Purchase();
+
+    if (Auth::user()->role->level_id == 'gambler') {
+      $builder = $builder->where('user_id', Auth::user()->id);
+    }
+
+    if (Auth::user()->role->level_id == 'seller') {
+      $builder = $builder->where(function ($query) {
+        $query->where('user_id', Auth::user()->id)
+          ->orWhere('seller_id', Auth::user()->id);
+      });
+    }
+
+    if ($request->has('search') && $request->search != '') {
+      $builder = $builder->where(function ($q) use ($request) {
+        $q->whereHas('game', function ($gameq) use ($request) {
+          $gameq->where('name', 'like', '%' . $request->search . '%');
+        })->orWhere('numbers', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
+          ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
+          ->orWhere('identifier', 'like', '%' . $request->search . '%');
+      });
+    }
+
+    $builder = $builder->where('game_id', $id);
+
+    if ($request->has('status') && $request->status != '') {
+      $builder = $builder->where('status', $request->status);
+    }
+
+    // only shows purchases in same round that the last game opening
+    $builder = $builder->whereHas('game', function ($query) {
+      $query->whereColumn('purchases.round', 'games.round');
+    });
+
+    $builder = $builder->orderBy('gambler_name', 'asc');
+
+    // Filter by user if provided
+    if ($request->has('user') && $request->user != '') {
+      $builder = $builder->where(function ($query) use ($request) {
+        $query->where('user_id', $request->user)
+          ->orWhere('seller_id', $request->user);
+      });
+    }
+
+    if ($request->has('points') && $request->points != '') {
+      $builder = $builder->where('points', $request->points);
+    }
+
+    // Get all purchases without pagination
+    $purchases = $builder->with(['seller', 'paid_by_user', 'userAwards.game_award'])->get();
+
+    // Get unique numbers for calculating points
+    $allAddedNumbers = GameHistory::where('game_id', $game->id)
+      ->where('type', 'ADDING_NUMBER')
+      ->where('round', $round)->get()->pluck('numbers')
+      ->flatMap(fn($numbers) => explode(" ", $numbers))
+      ->toArray();
+
+    $uniqueNumbers = array_unique($allAddedNumbers);
+
+    // Prepare purchases data for PDF
+    $purchasesData = [];
+    foreach ($purchases as $purchase) {
+      // Usa os pontos já calculados no banco de dados
+      $points = $purchase->points;
+      $matchedNumbers = [];
+      
+      // Só calcula matched_numbers se a compra está paga/finalizada
+      if (in_array($purchase->status, ["PAID", "FINISHED"])) {
+        $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
+        $matchedNumbers = array_intersect($uniqueNumbers, $purchaseNumbers);
+        // Usa os pontos do banco, não recalcula
+      }
+
+      // Get individual numbers for display
+      $displayNumbers = explode(' ', $purchase->numbers);
+      $numbersArray = [];
+      foreach ($displayNumbers as $number) {
+        $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
+        $isHit = in_array($number, $matchedNumbers) && in_array($purchase->status, ["PAID", "FINISHED"]);
+        $numbersArray[] = [
+          'number' => $paddedNumber,
+          'isHit' => $isHit
+        ];
+      }
+
+      // Get paid by user name
+      $paidBy = '-';
+      if ($purchase->paid_by_user) {
+        $paidBy = $purchase->paid_by_user->name;
+      }
+
+      // Get participant name (gambler name)
+      $participant = $purchase->gambler_name;
+
+      // Get status (keep original for badge color)
+      $status = $purchase->status;
+
+      // Get badge color for points based on award type
+      $badgeColor = 'secondary';
+      if ($purchase->status == 'PAID' && $purchase->userAwards && $purchase->userAwards->count() > 0) {
+        $userAward = $purchase->userAwards->first();
+        if ($userAward && $userAward->game_award) {
+          $conditionType = $userAward->game_award->condition_type;
+          switch ($conditionType) {
+            case 'WINNER':
+              $badgeColor = 'danger';
+              break;
+            case 'SECONDARY_WINNER':
+              $badgeColor = 'primary';
+              break;
+            case 'EXACT_POINT':
+              $badgeColor = 'secondary';
+              break;
+          }
+        }
+      }
+
+      $purchasesData[] = [
+        'participant' => $participant,
+        'points' => $points,
+        'numbers' => $numbersArray,
+        'status' => $status,
+        'paid_by' => $paidBy,
+        'badge_color' => $badgeColor,
+      ];
+    }
+
+    // Get user info
+    $user = Auth::user();
+    $userName = $user->name;
+    $totalGames = count($purchasesData);
+
+    // Generate PDF
+    $pdf = Pdf::loadView('pdf.my_bets_report', compact(
+      'game',
+      'userName',
+      'totalGames',
+      'purchasesData'
+    ))->setPaper('a4', 'portrait');
+
+    // Sanitize filename - remove invalid characters
+    $sanitizedGameName = preg_replace('/[\/\\\\]/', '_', $game->name);
+    $filename = 'minhas_apostas_' . $sanitizedGameName . '_' . date('Y-m-d') . '.pdf';
+    
+    return $pdf->download($filename);
+  }
 
   /**
    * Display the classification for a specific game.

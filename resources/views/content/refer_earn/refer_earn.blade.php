@@ -97,6 +97,45 @@
         <h5 class="card-header">Bônus de Indicação</h5>
         <div class="row mt-3">
             <div class="col-12">
+                @php
+                    $formatUserLabel = function ($user) {
+                        return $user->name;
+                    };
+                    $selectedUser = isset($users) ? $users->firstWhere('id', request('user')) : null;
+                    $selectedUserLabel = $selectedUser ? $formatUserLabel($selectedUser) : '';
+                @endphp
+                <!-- Formulário de Filtro -->
+                <form action="{{ route('refer_earn-view') }}" method="GET" class="mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label d-flex justify-content-between">
+                                <span>Usuário</span>
+                            </label>
+                            <input type="text" id="userFilterInputReferEarn" class="form-control"
+                                placeholder="Digite o nome do usuário"
+                                list="userFilterOptionsReferEarn" autocomplete="off" value="{{ $selectedUserLabel }}">
+                            <input type="hidden" name="user" id="userFilterHiddenReferEarn" value="{{ request('user') }}">
+                            <datalist id="userFilterOptionsReferEarn">
+                                @if (isset($users))
+                                    @foreach ($users as $user)
+                                        @php
+                                            $userLabel = $formatUserLabel($user);
+                                        @endphp
+                                        <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
+                                    @endforeach
+                                @endif
+                            </datalist>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" type="submit">Aplicar Filtro</button>
+                        </div>
+                        @if (request('user'))
+                            <div class="col-md-2">
+                                <a href="{{ route('refer_earn-view') }}" class="btn btn-outline-secondary w-100">Limpar Filtro</a>
+                            </div>
+                        @endif
+                    </div>
+                </form>
                 <div class="table-responsive">
                     @if (session('success'))
                         <div class="alert alert-success">{{ session('success') }}</div>
@@ -150,19 +189,59 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">Nenhum registro encontrado.</td>
+                                <td colspan="{{ auth()->user()->role->level_id == 'admin' ? '8' : '7' }}" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bx bx-info-circle me-2"></i>
+                                        @if (request('user'))
+                                            Nenhum registro encontrado para o usuário selecionado. 
+                                            <a href="{{ route('refer_earn-view') }}" class="text-primary">Limpar filtro</a> para ver todos os registros.
+                                        @else
+                                            Nenhum registro encontrado.
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                     <!-- Controles de paginação -->
                     <div class="d-flex justify-content-center mt-4">
-                        {{ $referEarns->links('pagination::bootstrap-5') }}
+                        {{ $referEarns->appends(request()->all())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userInput = document.getElementById('userFilterInputReferEarn');
+            const userHiddenInput = document.getElementById('userFilterHiddenReferEarn');
+            const userDatalist = document.getElementById('userFilterOptionsReferEarn');
+
+            if (!userInput || !userHiddenInput || !userDatalist) {
+                return;
+            }
+
+            const syncUserHiddenValue = () => {
+                const inputValue = userInput.value.trim();
+                if (!inputValue) {
+                    userHiddenInput.value = '';
+                    return;
+                }
+
+                const matchingOption = Array.from(userDatalist.options).find(option => option.value === inputValue);
+                userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+            };
+
+            userInput.addEventListener('change', syncUserHiddenValue);
+            userInput.addEventListener('blur', syncUserHiddenValue);
+            userInput.addEventListener('input', () => {
+                if (!userInput.value.trim()) {
+                    userHiddenInput.value = '';
+                }
+            });
+        });
+    </script>
 
 @endsection

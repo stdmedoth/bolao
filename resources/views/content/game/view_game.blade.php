@@ -22,23 +22,27 @@
         ?>
         <div class="row px-2">
             <div class="col-12">
-                <h1 class="my-2 my-md-3 h4 h3-md">{{ $game->name }}</h1>
+                <h1 class="my-2 my-md-3 h4 h3-md text-primary">
+                    <i class="bx bx-trophy me-2"></i>{{ $game->name }}
+                </h1>
             </div>
         </div>
 
         @if ($errors->has('error'))
-            <div class="alert alert-danger mx-2">{{ $errors->first('error') }}</div>
+            <div class="alert alert-danger mx-2 border-danger shadow-sm">
+                <i class="bx bx-error-circle me-2"></i><strong>Erro:</strong> {{ $errors->first('error') }}
+            </div>
         @endif
         
         @if (session('error'))
-            <div class="alert alert-danger mx-2">
-                {{ session('error') }}
+            <div class="alert alert-danger mx-2 border-danger shadow-sm">
+                <i class="bx bx-error-circle me-2"></i><strong>Erro:</strong> {{ session('error') }}
             </div>
         @endif
             
         @if (session('success'))
-            <div class="alert alert-success mx-2">
-                {{ session('success') }}
+            <div class="alert alert-success mx-2 border-success shadow-sm">
+                <i class="bx bx-check-circle me-2"></i><strong>Sucesso:</strong> {{ session('success') }}
             </div>
         @endif
 
@@ -52,6 +56,11 @@
             <div class="col-12">
                 <div class="tab-content mt-2 mt-md-3 px-2" id="gameTabsContent">
                     {{-- @include('content.game.components.tab-details', ['tab' => $tab, 'game' => $game]) --}}
+                    @php
+                        $sellers = isset($users) ? $users->filter(function($user) { 
+                            return $user->role && $user->role->level_id === 'seller'; 
+                        }) : collect([]);
+                    @endphp
                     @include('content.game.components.tab-bet-form', [
                         'tab' => $tab,
                         'game' => $game,
@@ -62,14 +71,16 @@
                         'game' => $game,
                         'histories' => $histories,
                     ])
-                    @include('content.game.components.tab-my-bets', ['tab' => $tab, 'purchases' => $purchases])
-                    @include('content.game.components.tab-classifications', ['tab' => $tab, 'purchases' => $purchases, 'game' => $game, 'sellers' => $sellers])
+                    @include('content.game.components.tab-my-bets', ['tab' => $tab, 'purchases' => $purchases, 'users' => $users ?? []])
+                    @include('content.game.components.tab-classifications', ['tab' => $tab, 'purchases' => $purchases, 'game' => $game, 'users' => $users ?? []])
                     @include('content.game.components.tab-prizes', ['tab' => $tab, 'game' => $game])
                     @include('content.game.components.tab-rules', ['tab' => $tab])
                     @include('content.game.components.tab-winners', [
                         'tab' => $tab,
                         'winners' => $winners,
                         'user_awards' => $user_awards,
+                        'game' => $game,
+                        'users' => $users ?? [],
                     ])
                 </div>
             </div>

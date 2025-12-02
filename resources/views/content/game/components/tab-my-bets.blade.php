@@ -312,9 +312,9 @@
             /* Coluna de Pontos no mobile pequeno */
             .table-my-bets th:nth-child(3),
             .table-my-bets td:nth-child(3) {
-                width: 70px;
-                min-width: 70px;
-                max-width: 70px;
+                width: 90px;
+                min-width: 90px;
+                max-width: 90px;
                 font-size: 0.7rem;
                 padding: 3px 4px;
             }
@@ -395,11 +395,11 @@
     </style>
 
     @php
-        $formatSellerLabel = function ($seller) {
-            return $seller->name;
+        $formatUserLabel = function ($user) {
+            return $user->name;
         };
-        $selectedSeller = $sellers->firstWhere('id', request('seller'));
-        $selectedSellerLabel = $selectedSeller ? $formatSellerLabel($selectedSeller) : '';
+        $selectedUser = isset($users) ? $users->firstWhere('id', request('user')) : null;
+        $selectedUserLabel = $selectedUser ? $formatUserLabel($selectedUser) : '';
     @endphp
     <!-- Formulário de Pesquisa e Filtro -->
     <form action="{{ url('/concursos/' . $game->id) }}" method="GET" class="mb-4">
@@ -409,7 +409,7 @@
                 <div class="input-group">
                     <input type="text" name="search" class="form-control"
                         placeholder="Nome do concurso, números, telefone..." value="{{ request('search') }}">
-                    <button class="btn btn-primary" type="submit">Buscar</button>
+                    <button class="btn btn-primary" type="submit"><i class="bx bx-search me-1"></i>Buscar</button>
                 </div>
             </div>
 
@@ -427,27 +427,38 @@
 
             <div class="col-md-3">
                 <label class="form-label d-flex justify-content-between">
-                    <span>Vendedor</span>
+                    <span>Usuário</span>
                 </label>
-                <input type="text" id="sellerFilterInput" class="form-control"
-                    placeholder="Digite o nome do vendedor"
-                    list="sellerFilterOptions" autocomplete="off" value="{{ $selectedSellerLabel }}">
-                <input type="hidden" name="seller" id="sellerFilterHidden" value="{{ request('seller') }}">
-                <datalist id="sellerFilterOptions">
-                    @foreach ($sellers as $seller)
-                        @php
-                            $sellerLabel = $formatSellerLabel($seller);
-                        @endphp
-                        <option value="{{ $sellerLabel }}" data-id="{{ $seller->id }}"></option>
-                    @endforeach
+                <input type="text" id="userFilterInput" class="form-control"
+                    placeholder="Digite o nome do usuário"
+                    list="userFilterOptions" autocomplete="off" value="{{ $selectedUserLabel }}">
+                <input type="hidden" name="user" id="userFilterHidden" value="{{ request('user') }}">
+                <datalist id="userFilterOptions">
+                    @if (isset($users))
+                        @foreach ($users as $user)
+                            @php
+                                $userLabel = $formatUserLabel($user);
+                            @endphp
+                            <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
+                        @endforeach
+                    @endif
                 </datalist>
             </div>
 
             <div class="col-md-2">
-                <button class="btn btn-secondary w-100" type="submit">Aplicar Filtros</button>
+                <button class="btn btn-info w-100" type="submit"><i class="bx bx-filter me-1"></i>Aplicar Filtros</button>
             </div>
         </div>
     </form>
+
+    <!-- Botão de Download PDF -->
+    <div class="mb-3">
+        <a href="{{ route('game-my-bets-pdf', array_merge([$game->id], request()->query())) }}" 
+           class="btn btn-danger">
+            <i class="bx bx-download me-1"></i>Baixar PDF
+        </a>
+    </div>
+
     <div class="modal" tabindex="-1" id="modal_repeat_game">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -612,30 +623,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const sellerInput = document.getElementById('sellerFilterInput');
-            const sellerHiddenInput = document.getElementById('sellerFilterHidden');
-            const sellerDatalist = document.getElementById('sellerFilterOptions');
+            const userInput = document.getElementById('userFilterInput');
+            const userHiddenInput = document.getElementById('userFilterHidden');
+            const userDatalist = document.getElementById('userFilterOptions');
 
-            if (!sellerInput || !sellerHiddenInput || !sellerDatalist) {
+            if (!userInput || !userHiddenInput || !userDatalist) {
                 return;
             }
 
-            const syncSellerHiddenValue = () => {
-                const inputValue = sellerInput.value.trim();
+            const syncUserHiddenValue = () => {
+                const inputValue = userInput.value.trim();
                 if (!inputValue) {
-                    sellerHiddenInput.value = '';
+                    userHiddenInput.value = '';
                     return;
                 }
 
-                const matchingOption = Array.from(sellerDatalist.options).find(option => option.value === inputValue);
-                sellerHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+                const matchingOption = Array.from(userDatalist.options).find(option => option.value === inputValue);
+                userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
             };
 
-            sellerInput.addEventListener('change', syncSellerHiddenValue);
-            sellerInput.addEventListener('blur', syncSellerHiddenValue);
-            sellerInput.addEventListener('input', () => {
-                if (!sellerInput.value.trim()) {
-                    sellerHiddenInput.value = '';
+            userInput.addEventListener('change', syncUserHiddenValue);
+            userInput.addEventListener('blur', syncUserHiddenValue);
+            userInput.addEventListener('input', () => {
+                if (!userInput.value.trim()) {
+                    userHiddenInput.value = '';
                 }
             });
         });
@@ -654,14 +665,16 @@
                                 aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
-                            <select name="seller" class="form-select">
+                            <select name="user" class="form-select">
                                 <option value="">Todos</option>
-                                @foreach ($sellers as $seller)
-                                    <option value="{{ $seller->id }}"
-                                        {{ request('seller') == $seller->id ? 'selected' : '' }}>
-                                        {{ $seller->name }}
-                                    </option>
-                                @endforeach
+                                @if (isset($users))
+                                    @foreach ($users as $user)
+                                        <option value="{{ $user->id }}"
+                                            {{ request('user') == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -781,8 +794,35 @@
                                     </div>
                                 </td>
 
-                                <td><span
-                                        class="fw-bold text-primary">{{ $purchase->status == 'PAID' ? $purchase->points : '' }}</span>
+                                <td>
+                                    
+                                    @if($purchase->status == 'PAID')
+                                        @php
+                                            $badgeColor = 'secondary';
+                                            $userAward = $purchase->userAwards->first();
+                                            if ($userAward) {
+                                                $gameAward = $userAward->game_award;
+                                                $conditionType = $gameAward->condition_type;
+                                                switch ($conditionType) {
+                                                    case 'WINNER':
+                                                        $badgeColor = 'danger';
+                                                        break;
+                                                    case 'SECONDARY_WINNER':
+                                                        $badgeColor = 'primary';
+                                                        break;
+                                                    case 'EXACT_POINT':
+                                                        $badgeColor = 'secondary';
+                                                        break;
+                                                }
+                                            }
+
+                                        @endphp
+                                        <span class="badge bg-{{$badgeColor}} fw-bold fs-6">
+                                            {{ $purchase->points }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="my-bets-numbers-container">
@@ -806,7 +846,19 @@
 
 
                                 <td>
-                                    <span class="badge bg-label-primary me-1">{{ __($purchase->status) }}</span>
+                                    @php
+                                        $statusColors = [
+                                            'PAID' => 'bg-success',
+                                            'PENDING' => 'bg-warning text-dark',
+                                            'CANCELED' => 'bg-danger',
+                                            'FINISHED' => 'bg-info'
+                                        ];
+                                        $statusColor = $statusColors[$purchase->status] ?? 'bg-secondary';
+                                    @endphp
+                                    <span class="badge {{ $statusColor }} me-1">
+                                        <i class="bx {{ $purchase->status == 'PAID' ? 'bx-check-circle' : ($purchase->status == 'PENDING' ? 'bx-time' : ($purchase->status == 'CANCELED' ? 'bx-x-circle' : 'bx-check')) }} me-1"></i>
+                                        {{ __($purchase->status) }}
+                                    </span>
                                 </td>
 
                                 <!-- Quem é pagou ? -->
@@ -879,7 +931,7 @@
             </table>
             <!-- Controles de paginação -->
             <div class="d-flex justify-content-center mt-4">
-                {{ $purchases->appends(request()->all())->links('pagination::bootstrap-5') }}
+                {{ $purchases->appends(request()->all())->links('pagination.custom') }}
             </div>
 
         </div>

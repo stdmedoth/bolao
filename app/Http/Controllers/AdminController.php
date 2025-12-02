@@ -122,7 +122,6 @@ class AdminController extends Controller
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'document' => 'nullable|string|max:255|unique:users',
-      'balance' => 'required|numeric|min:0',
       'game_credit' => 'required|numeric|min:0',
       'game_credit_limit' => 'nullable|numeric|min:0',
       'comission_percent' => 'required|numeric|min:0|max:100',
@@ -135,7 +134,6 @@ class AdminController extends Controller
     ]);
 
     $formatFloatInputs = [
-      'balance',
       'game_credit',
       'comission_percent'
     ];
@@ -189,7 +187,6 @@ class AdminController extends Controller
 
     // Converter valores formatados (vírgula) para formato numérico antes da validação
     $formatFloatInputs = [
-      'balance',
       'game_credit',
       'game_credit_limit',
       'comission_percent'
@@ -223,7 +220,6 @@ class AdminController extends Controller
           'max:255',
           Rule::unique('users')->ignore($user->id),
         ],
-        'balance' => 'required|numeric|min:0',
         'game_credit' => 'required|numeric|min:0',
         'game_credit_limit' => 'nullable|numeric|min:0',
         'comission_percent' => 'required|numeric|min:0|max:100',
@@ -239,7 +235,6 @@ class AdminController extends Controller
         'email.email' => 'O email deve ser um endereço de email válido.',
         'email.unique' => 'Este email já está em uso.',
         'document.string' => 'O documento deve ser uma string.',
-        'balance.required' => 'O campo saldo é obrigatório.',
         'game_credit.required' => 'O campo crédito do jogo é obrigatório.',
         'game_credit_limit.string' => 'O limite de crédito do jogo deve ser uma string.',
         'comission_percent.required' => 'A porcentagem de comissão é obrigatória.',
@@ -250,7 +245,7 @@ class AdminController extends Controller
     );
 
     // Converter valores validados para float para garantir que sejam salvos corretamente
-    $numericFields = ['balance', 'game_credit', 'game_credit_limit', 'comission_percent'];
+    $numericFields = ['game_credit', 'game_credit_limit', 'comission_percent'];
     foreach ($numericFields as $field) {
       if (isset($validatedData[$field])) {
         $validatedData[$field] = (float) $validatedData[$field];

@@ -48,15 +48,26 @@
         ];
     @endphp
 
+        @php
+            $tabIcons = [
+                'tab-classifications' => 'bx-trophy',
+                'tab-bet-form' => 'bx-plus-circle',
+                'tab-mybets' => 'bx-list-check',
+                'tab-results' => 'bx-bar-chart',
+                'tab-winners' => 'bx-award',
+                'tab-prizes' => 'bx-gift',
+                'tab-rules' => 'bx-book',
+            ];
+        @endphp
         @foreach ($tabs as $id => $label)
             <li class="nav-item" role="presentation">
-                <a class="nav-link {{ $tab == $id ? 'active' : '' }}" id="{{ $id }}-tab" data-bs-toggle="tab"
+                <a class="nav-link {{ $tab == $id ? 'active text-primary fw-bold' : 'text-secondary' }}" id="{{ $id }}-tab" data-bs-toggle="tab"
                     href="#{{ str_replace('tab-', '', $id) }}" role="tab"
                     aria-controls="{{ str_replace('tab-', '', $id) }}" 
                     aria-selected="{{ $tab == $id ? 'true' : 'false' }}"
                     aria-label="{{ $label }}"
                 >
-                    {{ $label }}
+                    <i class="bx {{ $tabIcons[$id] ?? 'bx-circle' }} me-1"></i>{{ $label }}
                 </a>
             </li>
         @endforeach

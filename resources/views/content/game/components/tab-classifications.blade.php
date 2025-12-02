@@ -221,9 +221,9 @@
             /* Participantes no mobile pequeno */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
-                width: 170px;
-                min-width: 170px;
-                max-width: 170px;
+                width: 150px;
+                min-width: 150px;
+                max-width: 150px;
                 font-size: 0.5rem;
                 padding: 2px 1px 2px 2px;
                 white-space: nowrap;
@@ -234,9 +234,9 @@
             /* Números no mobile pequeno */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
-                width: 145px;
-                min-width: 145px;
-                max-width: 145px;
+                width: 135px;
+                min-width: 135px;
+                max-width: 135px;
                 font-size: 0.35rem;
                 padding: 2px 2px 2px 2px;
             }
@@ -244,9 +244,9 @@
             /* Pontos mínimo no mobile pequeno */
             .table-classifications th:nth-child(3),
             .table-classifications td:nth-child(3) {
-                width: 20px;
-                min-width: 30px;
-                max-width: 30px;
+                width: 100px;
+                min-width: 100px;
+                max-width: 100px;
                 font-size: 0.4rem;
                 padding: 2px 2px 2px 2px;
             }
@@ -407,13 +407,13 @@
                 <div class="input-group">
                     <input type="text" name="search" class="form-control"
                         placeholder="Pesquisar por nome, números..." value="{{ request('search') }}">
-                    <button class="btn btn-primary" type="submit">Buscar</button>
+                    <button class="btn btn-primary" type="submit"><i class="bx bx-search me-1"></i>Buscar</button>
                 </div>
             </div>
             <div class="col-md-8">
                 <!-- Grid de Dezenas Sorteadas - Compacto -->
                 <div class="numbers-grid-compact">
-                    <div class="grid-title-compact">Dezenas Sorteadas</div>
+                    <div class="grid-title-compact text-primary fw-bold"><i class="bx bx-target-lock me-1"></i>Dezenas Sorteadas</div>
                     <div class="numbers-grid">
                         @for($i = 0; $i <= 99; $i++)
                             @php
@@ -444,19 +444,21 @@
                 <form method="GET">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="filtroVendedorModalLabel">Filtrar por Vendedor</h5>
+                            <h5 class="modal-title" id="filtroVendedorModalLabel">Filtrar por Usuário</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
-                            <select name="seller" class="form-select">
+                            <select name="user" class="form-select">
                                 <option value="">Todos</option>
-                                @foreach ($sellers as $seller)
-                                    <option value="{{ $seller->id }}"
-                                        {{ request('seller') == $seller->id ? 'selected' : '' }}>
-                                        {{ $seller->name }}
-                                    </option>
-                                @endforeach
+                                @if (isset($users))
+                                    @foreach ($users as $user)
+                                        <option value="{{ $user->id }}"
+                                            {{ request('user') == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -503,12 +505,12 @@
     <div class="card">
         <div class="table-responsive">
             <table class="table table-classifications">
-                <thead>
+                <thead class="table-primary">
                     <tr>
-                        <th>Participantes</th>
-                        <th>Números</th>
-                        <th>Pts</th>
-                        <th>Ações</th>
+                        <th><i class="bx bx-user me-1"></i>Participantes</th>
+                        <th><i class="bx bx-hash me-1"></i>Números</th>
+                        <th><i class="bx bx-star me-1"></i>Pts</th>
+                        <th><i class="bx bx-cog me-1"></i>Ações</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
@@ -548,9 +550,34 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-primary">
-                                        {{ $classification->status == 'PAID' ? $classification->points : '-' }}
-                                    </span>
+                                    @if($classification->status == 'PAID')
+                                        @php
+                                            $badgeColor = 'secondary';
+                                            $userAward = $classification->userAwards->first();
+                                            if ($userAward) {
+                                                $gameAward = $userAward->game_award;
+                                                $conditionType = $gameAward->condition_type;
+                                                switch ($conditionType) {
+                                                    case 'WINNER':
+                                                        $badgeColor = 'danger';
+                                                        break;
+                                                    case 'SECONDARY_WINNER':
+                                                        $badgeColor = 'primary';
+                                                        break;
+                                                    case 'EXACT_POINT':
+                                                        $badgeColor = 'secondary';
+                                                        break;
+                                                }
+                                            }
+
+                                        @endphp
+
+                                        <span class="badge bg-{{ $badgeColor }} fw-bold fs-6">
+                                            {{ $classification->points }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-info" 

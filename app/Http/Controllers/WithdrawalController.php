@@ -37,9 +37,16 @@ class WithdrawalController extends Controller
     $amount = $request->amount;
     $pix_key_type = $request->pix_key_type;
 
-    // Verifica se o usuário tem saldo suficiente
-    if ($user->balance < $amount) {
-      return redirect('/saque')->withErrors(['error' => 'Saldo insuficiente para o saque.']);
+    // Calcula saldo disponível para saque (apenas o que está acima do limite inicial)
+    $debt = $user->credit_debt;
+    $availableBalance = $user->available_balance;
+
+    // Verifica se o usuário tem saldo suficiente para saque
+    if ($availableBalance < $amount) {
+      if ($debt > 0) {
+        return redirect('/saque')->withErrors(['error' => "Você está devendo R$ " . number_format($debt, 2, ',', '.') . " em crédito. Não é possível sacar enquanto estiver devendo. Saldo disponível: R$ 0,00"]);
+      }
+      return redirect('/saque')->withErrors(['error' => "Saldo insuficiente para saque. Você só pode sacar valores acima do seu limite de crédito inicial (R$ " . number_format($user->game_credit_limit, 2, ',', '.') . "). Saldo disponível: R$ " . number_format($availableBalance, 2, ',', '.')]);
     }
 
     // Instancia o cliente Asaas
@@ -61,8 +68,8 @@ class WithdrawalController extends Controller
       return redirect('/saque')->withErrors(['error' => array_map(fn($e) => $e->description, $transfer->errors)]);
     }
 
-    // Deduz o saldo do usuário
-    $user->balance -= $amount;
+    // Deduz o saldo do usuário (game_credit)
+    $user->game_credit -= $amount;
     if (!$user->pix_key) $user->pix_key = $pix_key;
     if (!$user->pix_key_type) $user->pix_key_type = $pix_key_type;
     $user->save();

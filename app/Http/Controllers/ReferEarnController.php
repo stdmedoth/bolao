@@ -13,7 +13,7 @@ class ReferEarnController extends Controller
   /**
    * Display a listing of the resource.
    */
-  public function index()
+  public function index(Request $request)
   {
     //
     $refered_qnt = ReferEarn::where('refer_user_id', Auth::user()->id)
@@ -43,6 +43,11 @@ class ReferEarnController extends Controller
       ],
     ];
 
+    // Buscar todos os usuários (vendedores e apostadores) para o filtro
+    $users = User::whereHas('role', function ($query) {
+      $query->whereIn('level_id', ['seller', 'gambler']);
+    })->get();
+
     $data = [
       'refered_qnt' => $refered_qnt,
       'refered_qnt_bought' => $refered_qnt_bought,
@@ -50,12 +55,26 @@ class ReferEarnController extends Controller
       'code' => base64_encode('refered_by_' . Auth::user()->id),
       'referEarns' => $referEarns,
       'statusTranslations' => $statusTranslations,
+      'users' => $users,
     ];
 
-    if (Auth::user()->role->level_id == 'admin') {
-      $referEarns = ReferEarn::with(['referUser', 'invitedUser'])->paginate(5);
+    // Filter by user if provided (filters by refer_user_id or invited_user_id)
+    if ($request->has('user') && $request->user != '') {
+      $referEarnsBuilder = ReferEarn::with(['referUser', 'invitedUser']);
+      $referEarnsBuilder = $referEarnsBuilder->where(function ($query) use ($request) {
+        $query->where('refer_user_id', $request->user)
+          ->orWhere('invited_user_id', $request->user);
+      });
+      
+      $referEarns = $referEarnsBuilder->paginate(5);
+      $data['referEarns'] = $referEarns;
+    } elseif (Auth::user()->role->level_id == 'admin') {
+      // Se for admin e não houver filtro, mostra todos
+      $referEarnsBuilder = ReferEarn::with(['referUser', 'invitedUser']);
+      $referEarns = $referEarnsBuilder->paginate(5);
       $data['referEarns'] = $referEarns;
     }
+    // Se não for admin e não houver filtro, mantém o comportamento padrão (já definido acima)
 
     return view('content.refer_earn.refer_earn', $data);
   }

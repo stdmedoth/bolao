@@ -37,7 +37,8 @@ class UserAwardController extends Controller
 
     $user = User::find($purchase->paid_by_user_id);
 
-    $user->balance += $user_award->amount;
+    // Prêmio vai direto para game_credit (saldo único)
+    $user->game_credit += $user_award->amount;
     $user->save();
 
 
@@ -71,7 +72,8 @@ class UserAwardController extends Controller
     $purchase = Purchase::find($user_award->purchase_id);
     $user = User::find($purchase->paid_by_user_id);
 
-    $user->balance -= $user_award->amount;
+    // Estorna o prêmio (reverte do game_credit)
+    $user->game_credit -= $user_award->amount;
     $user->save();
 
 
