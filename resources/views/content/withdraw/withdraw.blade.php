@@ -77,38 +77,12 @@
             <div class="card-body">
                 @php
                     $user = auth()->user();
-                    $creditDebt = $user->credit_debt;
                     $availableBalance = $user->available_balance;
                 @endphp
                 
-                @php
-                    $gameCredit = $user->game_credit ?? 0;
-                    $gameCreditLimit = $user->game_credit_limit ?? 0;
-                @endphp
-                
-                @if($creditDebt > 0)
-                    <div class="alert alert-warning">
-                        <strong>Atenção!</strong> Você está devendo R$ {{ number_format($creditDebt, 2, ',', '.') }} em crédito.
-                        <br><br>
-                        <strong>Informações do saldo:</strong>
-                        <ul class="mb-0">
-                            <li>Limite de crédito inicial: <strong>R$ {{ number_format($gameCreditLimit, 2, ',', '.') }}</strong></li>
-                            <li>Saldo atual (crédito mais saldo): <strong>R$ {{ number_format($gameCredit, 2, ',', '.') }}</strong></li>
-                            <li>Dívida: <strong>R$ {{ number_format($creditDebt, 2, ',', '.') }}</strong></li>
-                            <li>Saldo disponível para saque: <strong>R$ 0,00</strong> (não pode sacar enquanto estiver devendo)</li>
-                        </ul>
-                    </div>
-                @else
-                    <div class="alert alert-info">
-                        <strong>Informações do saldo:</strong>
-                        <ul class="mb-0">
-                            <li>Limite de crédito inicial: <strong>R$ {{ number_format($gameCreditLimit, 2, ',', '.') }}</strong> (não pode ser sacado)</li>
-                            <li>Saldo atual (crédito mais saldo): <strong>R$ {{ number_format($gameCredit, 2, ',', '.') }}</strong></li>
-                            <li>Saldo disponível para saque: <strong>R$ {{ number_format($availableBalance, 2, ',', '.') }}</strong></li>
-                        </ul>
-                        <small class="d-block mt-2">* O limite de crédito é dado pelo vendedor e não pode ser sacado. Apenas valores acima do limite podem ser sacados.</small>
-                    </div>
-                @endif
+                <div class="alert alert-info">
+                    <strong>Saldo disponível para saque: R$ {{ number_format($availableBalance, 2, ',', '.') }}</strong>
+                </div>
 
                 <form action="{{ route('transactions.saque') }}" method="POST">
                     @csrf

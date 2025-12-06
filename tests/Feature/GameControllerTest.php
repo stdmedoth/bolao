@@ -1,24 +1,54 @@
 <?php
 
-namespace Tests\Unit\Http\Controllers;
+namespace Tests\Feature;
 
 use App\Http\Controllers\GameController;
 use App\Models\Game;
 use Illuminate\Support\Collection;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use RefreshDatabase;
 
 
 class GameControllerTest extends TestCase
 {
+  use RefreshDatabase;
 
   /** @test */
   public function it_fetches_games_with_status_opened_or_closed_and_excludes_current_game()
   {
-    // Arrange: create games with different statuses
-    $gameOpened = Game::factory()->create(['status' => 'OPENED']);
-    $gameClosed = Game::factory()->create(['status' => 'CLOSED']);
-    $gameFinished = Game::factory()->create(['status' => 'FINISHED']);
+    // Arrange: create games with different statuses (sem factory, criando diretamente)
+    $gameOpened = Game::create([
+      'name' => 'Jogo Aberto',
+      'game_id' => 'TEST001',
+      'price' => 10,
+      'status' => 'OPENED',
+      'round' => 1,
+      'active' => true,
+      'open_at' => now(),
+      'close_at' => now()->addDays(1),
+    ]);
+    
+    $gameClosed = Game::create([
+      'name' => 'Jogo Fechado',
+      'game_id' => 'TEST002',
+      'price' => 10,
+      'status' => 'CLOSED',
+      'round' => 1,
+      'active' => true,
+      'open_at' => now(),
+      'close_at' => now()->addDays(1),
+    ]);
+    
+    $gameFinished = Game::create([
+      'name' => 'Jogo Finalizado',
+      'game_id' => 'TEST003',
+      'price' => 10,
+      'status' => 'FINISHED',
+      'round' => 1,
+      'active' => true,
+      'open_at' => now(),
+      'close_at' => now()->addDays(1),
+    ]);
 
     // Simulate current game
     $currentGame = $gameOpened;

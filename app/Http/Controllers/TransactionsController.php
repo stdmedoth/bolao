@@ -144,10 +144,13 @@ class TransactionsController extends Controller
       $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
       
       if ($isSellerFilter) {
-        // Se for vendedor, mostra apenas transações relacionadas a purchases onde ele foi o vendedor
-        // Isso garante que PAY_PURCHASE mostre apenas jogos dos apostadores dele, não todos os jogos onde participou
-        $builder = $builder->whereHas('purchase', function ($query) use ($selectedUserId) {
-          $query->where('seller_id', $selectedUserId);
+        // Se for vendedor, mostra:
+        // 1) Transações relacionadas a purchases onde ele foi o vendedor
+        // 2) OU transações do próprio vendedor (user_id) que não têm purchase (DEPOSIT, WITHDRAWAL, REFER_EARN, etc.)
+        $builder = $builder->where(function ($query) use ($selectedUserId) {
+          $query->whereHas('purchase', function ($q) use ($selectedUserId) {
+            $q->where('seller_id', $selectedUserId);
+          })->orWhere('user_id', $selectedUserId);
         });
       } else {
         // Se for apostador ou outro tipo, filtra apenas por user_id da transação
@@ -602,10 +605,13 @@ class TransactionsController extends Controller
       $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
       
       if ($isSellerFilter) {
-        // Se for vendedor, mostra apenas transações relacionadas a purchases onde ele foi o vendedor
-        // Isso garante que PAY_PURCHASE mostre apenas jogos dos apostadores dele, não todos os jogos onde participou
-        $builder = $builder->whereHas('purchase', function ($query) use ($selectedUserId) {
-          $query->where('seller_id', $selectedUserId);
+        // Se for vendedor, mostra:
+        // 1) Transações relacionadas a purchases onde ele foi o vendedor
+        // 2) OU transações do próprio vendedor (user_id) que não têm purchase (DEPOSIT, WITHDRAWAL, REFER_EARN, etc.)
+        $builder = $builder->where(function ($query) use ($selectedUserId) {
+          $query->whereHas('purchase', function ($q) use ($selectedUserId) {
+            $q->where('seller_id', $selectedUserId);
+          })->orWhere('user_id', $selectedUserId);
         });
       } else {
         // Se for apostador ou outro tipo, filtra apenas por user_id da transação
