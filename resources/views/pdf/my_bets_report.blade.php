@@ -41,8 +41,9 @@
             background-color: white;
             color: black;
             font-size: 20px;
-            font-family: 'Arial Black', sans-serif; 
-            font-weight: 900; /* Peso máximo */
+            font-family: 'Arial Black', sans-serif;
+            font-weight: 900;
+            /* Peso máximo */
             margin-bottom: 10px;
             white-space: nowrap;
         }
@@ -52,24 +53,30 @@
             padding: 5px 100px;
             border-radius: 5px;
             background-color: white;
-            color: #0000CD; /* Azul mais forte (MediumBlue) ou #2604cc */
+            color: #0000CD;
+            /* Azul mais forte (MediumBlue) ou #2604cc */
             font-size: 18px;
             font-family: Arial, Helvetica, sans-serif;
-            font-weight: 900; /* Peso máximo */
+            font-weight: 900;
+            /* Peso máximo */
             margin-bottom: 10px;
             white-space: nowrap;
         }
 
         .header-info {
             font-size: 16px;
-            color: #00FF00; /* Verde neon puro (Lime) para destacar no vermelho */
+            color: #00FF00;
+            /* Verde neon puro (Lime) para destacar no vermelho */
             font-family: Arial, Helvetica, sans-serif;
             vertical-align: middle;
             margin-top: 8px;
-            font-weight: 900; /* Peso máximo */
-            text-transform: uppercase; /* Transforma em MAIÚSCULO igual a imagem */
+            font-weight: 900;
+            /* Peso máximo */
+            text-transform: uppercase;
+            /* Transforma em MAIÚSCULO igual a imagem */
             white-space: nowrap;
-            text-shadow: 1px 1px 0 #000; /* Opcional: dá um contorno leve para leitura */
+            text-shadow: 1px 1px 0 #000;
+            /* Opcional: dá um contorno leve para leitura */
         }
 
         .header-info-row {
@@ -237,7 +244,7 @@
                 <tr>
                     <td>{{ $purchase['participant'] }}</td>
                     <td style="text-align: center;">
-                        @if($purchase['points'] > 0 && $purchase['status'] == 'PAID')
+                        @if ($purchase['status'] == 'PAID')
                             <span class="badge badge-{{ $purchase['badge_color'] }}">{{ $purchase['points'] }}</span>
                         @else
                             <span style="color: #6c757d;">-</span>
@@ -245,7 +252,7 @@
                     </td>
                     <td style="text-align: center;">
                         <div class="numbers-container">
-                            @foreach($purchase['numbers'] as $numData)
+                            @foreach ($purchase['numbers'] as $numData)
                                 <span class="number-ball {{ $numData['isHit'] ? 'hit' : 'miss' }}">
                                     {{ $numData['number'] }}
                                 </span>
@@ -258,10 +265,10 @@
                                 'PAID' => 'Pago',
                                 'PENDING' => 'Pendente',
                                 'CANCELED' => 'Cancelado',
-                                'FINISHED' => 'Finalizado'
+                                'FINISHED' => 'Finalizado',
                             ];
                             $statusLabel = $statusLabels[$purchase['status']] ?? $purchase['status'];
-                            
+
                             $statusBadge = 'badge-secondary';
                             if ($purchase['status'] === 'PAID') {
                                 $statusBadge = 'badge-success';

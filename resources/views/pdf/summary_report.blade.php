@@ -277,20 +277,6 @@
                 <div class="info-label">Total de Jogos:</div>
                 <div class="info-value">{{ $userInfo['total_games'] }}</div>
             </div>
-            @if ($userInfo['game_credit_limit'] > 0)
-                <div class="info-row">
-                    <div class="info-label">Limite Inicial de Crédito:</div>
-                    <div class="info-value">R$ {{ number_format($userInfo['game_credit_limit'], 2, ',', '.') }}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Crédito Atual:</div>
-                    <div class="info-value">R$ {{ number_format($userInfo['game_credit'], 2, ',', '.') }}</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Saldo Devedor:</div>
-                    <div class="info-value">R$ {{ number_format($userInfo['credit_debt'], 2, ',', '.') }}</div>
-                </div>
-            @endif
         </div>
     </div>
 
@@ -314,17 +300,17 @@
     <!-- Resumo Financeiro -->
     <div class="summary-cards">
         <div class="summary-card income">
-            <h4>Total de Entradas</h4>
-            <div class="amount">R$ {{ number_format($totalIncome, 2, ',', '.') }}</div>
+            <h4>Limite Inicial de Crédito</h4>
+            <div class="amount">R$ {{ number_format($userInfo['game_credit_limit'], 2, ',', '.') }}</div>
         </div>
         <div class="summary-card outcome">
-            <h4>Total de Saídas</h4>
-            <div class="amount">R$ {{ number_format($totalOutcome, 2, ',', '.') }}</div>
+            <h4>Crédito Atual</h4>
+            <div class="amount">R$ {{ number_format($userInfo['game_credit'], 2, ',', '.') }}</div>
         </div>
         <div class="summary-card net">
-            <h4>Saldo Líquido</h4>
-            <div class="amount {{ $net >= 0 ? 'text-success' : 'text-danger' }}">
-                R$ {{ number_format($net, 2, ',', '.') }}
+            <h4>Saldo Devedor</h4>
+            <div class="amount {{ $userInfo['credit_debt'] >= 0 ? 'text-success' : 'text-danger' }}">
+                R$ {{ number_format($userInfo['credit_debt'], 2, ',', '.') }}
             </div>
         </div>
     </div>

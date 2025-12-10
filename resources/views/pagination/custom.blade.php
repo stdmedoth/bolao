@@ -121,5 +121,18 @@
                 </li>
             @endif
         </ul>
+        
+        {{-- Informação de quantidade de jogos --}}
+        @if ($paginator->total() > 0)
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    @if ($paginator->total() == 1)
+                        Mostrando 1 jogo
+                    @else
+                        Mostrando {{ $paginator->firstItem() }} - {{ $paginator->lastItem() }} de {{ $paginator->total() }} jogos
+                    @endif
+                </small>
+            </div>
+        @endif
     </nav>
 @endif

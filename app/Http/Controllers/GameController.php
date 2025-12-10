@@ -199,7 +199,7 @@ class GameController extends Controller
       ->where('round', $round)
       ->orderBy('points', 'desc')
       ->orderBy('created_at', 'desc');
-    
+
 
     if ($request->has('search') && $request->search != '') {
       $classificationsBuilder = $classificationsBuilder->where(function ($q) use ($request) {
@@ -214,14 +214,14 @@ class GameController extends Controller
           });
       });
     }
-      
+
     $classifications = $classificationsBuilder->paginate(20, ['*'], 'classifications_page');
 
     foreach ($purchases as $key => $purchase) {
       // Usa os pontos já calculados no banco de dados
       $points = $purchase->points;
       $matchedNumbers = [];
-      
+
       // Só calcula matched_numbers se a compra está paga/finalizada
       if (in_array($purchase->status, ["PAID", "FINISHED"])) {
         $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
@@ -236,7 +236,7 @@ class GameController extends Controller
     foreach ($classifications as $key => $classification) {
       $points = $classification->points;
       $matchedNumbers = [];
-      
+
       // Só calcula matched_numbers se a compra está paga/finalizada
       if (in_array($classification->status, ["PAID", "FINISHED"])) {
         $purchaseNumbers = array_map('intval', explode(' ', $classification->numbers));
@@ -609,7 +609,7 @@ class GameController extends Controller
       // Usa os pontos já calculados no banco de dados
       $points = $purchase->points;
       $matchedNumbers = [];
-      
+
       // Só calcula matched_numbers se a compra está paga/finalizada
       if (in_array($purchase->status, ["PAID", "FINISHED"])) {
         $purchaseNumbers = array_map('intval', explode(' ', $purchase->numbers));
@@ -687,7 +687,7 @@ class GameController extends Controller
     // Sanitize filename - remove invalid characters
     $sanitizedGameName = preg_replace('/[\/\\\\]/', '_', $game->name);
     $filename = 'minhas_apostas_' . $sanitizedGameName . '_' . date('Y-m-d') . '.pdf';
-    
+
     return $pdf->download($filename);
   }
 

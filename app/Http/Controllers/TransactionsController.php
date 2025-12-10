@@ -97,7 +97,21 @@ class TransactionsController extends Controller
 
     // Filter by user if not admin (non-admin users only see their own transactions)
     if (Auth::user()->role->level_id !== 'admin') {
-      $builder = $builder->where('user_id', Auth::user()->id);
+      // Se for vendedor, inclui também transações PAY_PURCHASE onde purchase.seller_id = vendedor
+      // (jogos criados pelos apostadores vinculados)
+      if (Auth::user()->role->level_id === 'seller') {
+        $builder = $builder->where(function ($query) {
+          $query->where('user_id', Auth::user()->id)
+            ->orWhere(function ($q) {
+              $q->where('type', 'PAY_PURCHASE')
+                ->whereHas('purchase', function ($purchaseQuery) {
+                  $purchaseQuery->where('seller_id', Auth::user()->id);
+                });
+            });
+        });
+      } else {
+        $builder = $builder->where('user_id', Auth::user()->id);
+      }
     }
 
     // Apply month filter:
@@ -107,14 +121,14 @@ class TransactionsController extends Controller
       $month = $hasSelectedMonth ? (int)$request->month : (int)date('n'); // current month as default
       $year = date('Y'); // Current year
       $selectedMonth = $month;
-      
+
       // Calculate start and end dates for the selected month
       $startDate = date('Y-m-01', mktime(0, 0, 0, $month, 1, $year));
       $lastDay = date('t', mktime(0, 0, 0, $month, 1, $year)); // Get last day of month
       $endDate = date('Y-m-' . $lastDay, mktime(0, 0, 0, $month, 1, $year));
-      
+
       $builder = $builder->whereDate('created_at', '>=', $startDate)
-                         ->whereDate('created_at', '<=', $endDate);
+        ->whereDate('created_at', '<=', $endDate);
     }
 
     // Apply date filters (for backward compatibility)
@@ -134,15 +148,21 @@ class TransactionsController extends Controller
     $selectedUserId = Auth::user()->id;
     $hasUserFilter = false;
     $isSellerFilter = false;
-    
+
+    // Verifica se o usuário logado é vendedor (quando acessa diretamente, sem filtro de admin)
+    if (Auth::user()->role->level_id === 'seller') {
+      $selectedUser = Auth::user();
+      $isSellerFilter = true;
+    }
+
     if (Auth::user()->role->level_id === 'admin' && $request->has('user_id') && $request->user_id != '') {
       $selectedUserId = $request->user_id;
       $hasUserFilter = true;
       $selectedUser = User::find($selectedUserId);
-      
+
       // Verifica se o usuário é vendedor
       $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
-      
+
       if ($isSellerFilter) {
         // Se for vendedor, mostra:
         // 1) Transações relacionadas a purchases onde ele foi o vendedor
@@ -175,8 +195,6 @@ class TransactionsController extends Controller
           $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
         }
       }
-    } elseif ((!$request->has('game_id') || $request->game_id == '') && Auth::user()->role->level_id !== 'admin' && $games->last()) {
-      $builder = $builder->where('game_id', $games->first()->id);
     }
 
     // Get all transactions for summary with relationships
@@ -184,7 +202,7 @@ class TransactionsController extends Controller
 
     // Get selected user info
     $selectedUser = User::find($selectedUserId);
-    
+
     // Get user info (inclui informações de limite de crédito para manter coerência com a plataforma)
     $userInfo = [
       'name' => $selectedUser->name ?? 'N/A',
@@ -272,14 +290,14 @@ class TransactionsController extends Controller
         $shouldCountGame = true;
         // Se há filtro de vendedor, conta jogos onde o vendedor é o selecionado (purchase.seller_id)
         // Se há filtro de apostador, conta jogos onde o apostador é o selecionado (purchase.user_id)
-        if ($hasUserFilter && $purchase) {
+        if ($purchase) {
           if ($isSellerFilter) {
             $shouldCountGame = ($purchase->seller_id == $selectedUserId);
-          } else {
+          } elseif ($hasUserFilter) {
             $shouldCountGame = ($purchase->user_id == $selectedUserId);
           }
         }
-        
+
         if ($shouldCountGame) {
           $uniqueGames[$gameId] = $gameName;
         }
@@ -288,6 +306,12 @@ class TransactionsController extends Controller
       // Conta o total de jogos (purchases) para transações PAY_PURCHASE
       if ($type === 'PAY_PURCHASE' && $purchase) {
         $shouldCountPurchase = true;
+
+        //Se a purchase não tiver status PAID, não conta como jogo pago
+        if ($purchase->status != 'PAID') {
+          continue;
+        }
+
         // Se há filtro de vendedor, conta purchases onde o vendedor é o selecionado
         if ($isSellerFilter) {
           $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
@@ -302,7 +326,7 @@ class TransactionsController extends Controller
         }
         // Se não há filtro específico mas é admin, conta todas as purchases (sem filtro)
         // (já está como true por padrão)
-        
+
         if ($shouldCountPurchase) {
           $totalGamesCount++;
         }
@@ -310,20 +334,22 @@ class TransactionsController extends Controller
 
       // 1) Agrupamento de pagamentos de jogos por concurso
       if ($type === 'PAY_PURCHASE' && $gameId && $purchase) {
+
+
         // Verifica se deve agrupar este jogo baseado no filtro
         $shouldGroup = true;
-        
+
         // Se há filtro de vendedor, só agrupa jogos onde o vendedor da purchase corresponde ao vendedor selecionado
         if ($isSellerFilter) {
           $shouldGroup = ($purchase->seller_id == $selectedUserId);
-          
+
           // Quando filtrar por vendedor, agrupa por concurso E usuário (apostador)
           if ($shouldGroup) {
             $groupKey = $gameId . '_' . $purchase->user_id; // Chave composta: game_id + user_id
-            
+
             // Verifica se o vendedor criou o jogo (é o paid_by_user_id)
             $isCreator = ($purchase->paid_by_user_id == $selectedUserId);
-            
+
             if (!isset($groupedByGame['game_payments'][$groupKey])) {
               $groupedByGame['game_payments'][$groupKey] = [
                 'game_name' => $gameName,
@@ -343,7 +369,7 @@ class TransactionsController extends Controller
         elseif ($hasUserFilter) {
           $shouldGroup = ($purchase->user_id == $selectedUserId);
         }
-        
+
         if ($shouldGroup) {
           // Agrupamento normal (apenas por game_id) quando não for filtro de vendedor
           if (!isset($groupedByGame['game_payments'][$gameId])) {
@@ -362,6 +388,11 @@ class TransactionsController extends Controller
 
       // 2) Agrupamento de comissão do vendedor por concurso
       if ($type === 'PAY_PURCHASE_COMISSION' && $purchase && $gameId) {
+
+        if ($purchase->status != 'PAID') {
+          continue;
+        }
+
         // Comissão do vendedor: user da transação é o seller da compra
         if ($purchase->seller_id == $transaction->user_id) {
           if (!isset($groupedByGame['seller_commissions'][$gameId])) {
@@ -434,7 +465,8 @@ class TransactionsController extends Controller
           $rowTypeLabel = $transaction->description;
           break;
         case 'CUSTOM_OUTCOME':
-          $rowTypeLabel = 'Saída personalizada';
+          //$rowTypeLabel = 'Saída personalizada';
+          $rowTypeLabel = $transaction->description;
           break;
         case 'PAY_PURCHASE':
           $rowTypeLabel = 'Pagamento de jogos';
@@ -476,7 +508,7 @@ class TransactionsController extends Controller
     $rows = [];
 
     // Pagamentos de jogos por concurso
-    foreach ($groupedByGame['game_payments'] as $gameId => $data) {
+    foreach ($groupedByGame['game_payments'] as $key => $data) {
       // Se for filtro de vendedor, verifica se ele criou o jogo
       if ($isSellerFilter) {
         // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
@@ -485,7 +517,7 @@ class TransactionsController extends Controller
       } else {
         $typeLabel = 'Pagamento de jogos';
       }
-      
+
       $rows[] = [
         'type' => $typeLabel,
         'game_name' => $data['game_name'],
@@ -562,7 +594,21 @@ class TransactionsController extends Controller
 
     // Filter by user if not admin
     if (Auth::user()->role->level_id !== 'admin') {
-      $builder = $builder->where('user_id', Auth::user()->id);
+      // Se for vendedor, inclui também transações PAY_PURCHASE onde purchase.seller_id = vendedor
+      // (jogos criados pelos apostadores vinculados)
+      if (Auth::user()->role->level_id === 'seller') {
+        $builder = $builder->where(function ($query) {
+          $query->where('user_id', Auth::user()->id)
+            ->orWhere(function ($q) {
+              $q->where('type', 'PAY_PURCHASE')
+                ->whereHas('purchase', function ($purchaseQuery) {
+                  $purchaseQuery->where('seller_id', Auth::user()->id);
+                });
+            });
+        });
+      } else {
+        $builder = $builder->where('user_id', Auth::user()->id);
+      }
     }
 
     // Apply month filter
@@ -570,13 +616,13 @@ class TransactionsController extends Controller
       $month = $hasSelectedMonth ? (int)$request->month : (int)date('n');
       $year = date('Y');
       $selectedMonth = $month;
-      
+
       $startDate = date('Y-m-01', mktime(0, 0, 0, $month, 1, $year));
       $lastDay = date('t', mktime(0, 0, 0, $month, 1, $year));
       $endDate = date('Y-m-' . $lastDay, mktime(0, 0, 0, $month, 1, $year));
-      
+
       $builder = $builder->whereDate('created_at', '>=', $startDate)
-                         ->whereDate('created_at', '<=', $endDate);
+        ->whereDate('created_at', '<=', $endDate);
     }
 
     if ($hasExplicitStart) {
@@ -595,15 +641,21 @@ class TransactionsController extends Controller
     $selectedUserId = Auth::user()->id;
     $hasUserFilter = false;
     $isSellerFilter = false;
-    
+
+    // Verifica se o usuário logado é vendedor (quando acessa diretamente, sem filtro de admin)
+    if (Auth::user()->role->level_id === 'seller') {
+      $selectedUser = Auth::user();
+      $isSellerFilter = true;
+    }
+
     if (Auth::user()->role->level_id === 'admin' && $request->has('user_id') && $request->user_id != '') {
       $selectedUserId = $request->user_id;
       $hasUserFilter = true;
       $selectedUser = User::find($selectedUserId);
-      
+
       // Verifica se o usuário é vendedor
       $isSellerFilter = $selectedUser && $selectedUser->role_user_id == 2;
-      
+
       if ($isSellerFilter) {
         // Se for vendedor, mostra:
         // 1) Transações relacionadas a purchases onde ele foi o vendedor
@@ -632,8 +684,6 @@ class TransactionsController extends Controller
           $builder = $builder->whereDate('created_at', '>=', $lastClosedHistory->created_at);
         }
       }
-    } elseif ((!$request->has('game_id') || $request->game_id == '') && Auth::user()->role->level_id !== 'admin' && $games->last()) {
-      $builder = $builder->where('game_id', $games->first()->id);
     }
 
     // Get all transactions for summary with relationships (no pagination)
@@ -641,7 +691,7 @@ class TransactionsController extends Controller
 
     // Get selected user info
     $selectedUser = User::find($selectedUserId);
-    
+
     $userInfo = [
       'name' => $selectedUser->name ?? 'N/A',
       'comission_percent' => ($selectedUser->comission_percent ?? 0) * 100,
@@ -717,14 +767,14 @@ class TransactionsController extends Controller
         $shouldCountGame = true;
         // Se há filtro de vendedor, conta jogos onde o vendedor é o selecionado (purchase.seller_id)
         // Se há filtro de apostador, conta jogos onde o apostador é o selecionado (purchase.user_id)
-        if ($hasUserFilter && $purchase) {
+        if ($purchase) {
           if ($isSellerFilter) {
             $shouldCountGame = ($purchase->seller_id == $selectedUserId);
-          } else {
+          } elseif ($hasUserFilter) {
             $shouldCountGame = ($purchase->user_id == $selectedUserId);
           }
         }
-        
+
         if ($shouldCountGame) {
           $uniqueGames[$gameId] = $gameName;
         }
@@ -733,6 +783,13 @@ class TransactionsController extends Controller
       // Conta o total de jogos (purchases) para transações PAY_PURCHASE
       if ($type === 'PAY_PURCHASE' && $purchase) {
         $shouldCountPurchase = true;
+
+
+        //Se a purchase não tiver status PAID, não conta como jogo pago
+        if ($purchase->status != 'PAID') {
+          continue;
+        }
+
         // Se há filtro de vendedor, conta purchases onde o vendedor é o selecionado
         if ($isSellerFilter) {
           $shouldCountPurchase = ($purchase->seller_id == $selectedUserId);
@@ -747,7 +804,7 @@ class TransactionsController extends Controller
         }
         // Se não há filtro específico mas é admin, conta todas as purchases (sem filtro)
         // (já está como true por padrão)
-        
+
         if ($shouldCountPurchase) {
           $totalGamesCount++;
         }
@@ -757,18 +814,18 @@ class TransactionsController extends Controller
       if ($type === 'PAY_PURCHASE' && $gameId && $purchase) {
         // Verifica se deve agrupar este jogo baseado no filtro
         $shouldGroup = true;
-        
+
         // Se há filtro de vendedor, só agrupa jogos onde o vendedor da purchase corresponde ao vendedor selecionado
         if ($isSellerFilter) {
           $shouldGroup = ($purchase->seller_id == $selectedUserId);
-          
+
           // Quando filtrar por vendedor, agrupa por concurso E usuário (apostador)
           if ($shouldGroup) {
             $groupKey = $gameId . '_' . $purchase->user_id; // Chave composta: game_id + user_id
-            
+
             // Verifica se o vendedor criou o jogo (é o paid_by_user_id)
             $isCreator = ($purchase->paid_by_user_id == $selectedUserId);
-            
+
             if (!isset($groupedByGame['game_payments'][$groupKey])) {
               $groupedByGame['game_payments'][$groupKey] = [
                 'game_name' => $gameName,
@@ -788,7 +845,7 @@ class TransactionsController extends Controller
         elseif ($hasUserFilter) {
           $shouldGroup = ($purchase->user_id == $selectedUserId);
         }
-        
+
         if ($shouldGroup) {
           // Agrupamento normal (apenas por game_id) quando não for filtro de vendedor
           if (!isset($groupedByGame['game_payments'][$gameId])) {
@@ -807,6 +864,11 @@ class TransactionsController extends Controller
 
       // 2) Agrupamento de comissão do vendedor por concurso
       if ($type === 'PAY_PURCHASE_COMISSION' && $purchase && $gameId) {
+
+        if ($purchase->status != 'PAID') {
+          continue;
+        }
+
         if ($purchase->seller_id == $transaction->user_id) {
           if (!isset($groupedByGame['seller_commissions'][$gameId])) {
             $groupedByGame['seller_commissions'][$gameId] = [
@@ -898,7 +960,7 @@ class TransactionsController extends Controller
     $userInfo['total_games'] = $totalGamesCount;
 
     $rows = [];
-    foreach ($groupedByGame['game_payments'] as $gameId => $data) {
+    foreach ($groupedByGame['game_payments'] as $key => $data) {
       // Se for filtro de vendedor, verifica se ele criou o jogo
       if ($isSellerFilter) {
         // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
@@ -907,7 +969,7 @@ class TransactionsController extends Controller
       } else {
         $typeLabel = 'Pagamento de jogos';
       }
-      
+
       $rows[] = [
         'type' => $typeLabel,
         'game_name' => $data['game_name'],
@@ -942,7 +1004,7 @@ class TransactionsController extends Controller
     $filterInfo = [
       'game' => $request->has('game_id') && $request->game_id != 'all' ? $games->firstWhere('id', $request->game_id) : null,
       'month' => $selectedMonth,
-      'seller' => $request->has('seller') && $request->seller != '' ? $sellers->firstWhere('id', $request->seller) : null,
+      'seller' => $request->has('seller') && $request->seller != '' ? $users->firstWhere('id', $request->seller) : null,
     ];
 
     $pdf = Pdf::loadView('pdf.summary_report', compact(

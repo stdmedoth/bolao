@@ -68,7 +68,7 @@
                 height: auto;
                 min-height: 40px;
             }
-            
+
             .number-ball {
                 margin: 1px;
             }
@@ -187,11 +187,11 @@
             .modal-body {
                 padding: 20px;
             }
-            
+
             .modal-header {
                 padding: 15px 20px;
             }
-            
+
             .modal-title {
                 font-size: 1.1rem;
             }
@@ -201,21 +201,21 @@
             .modal-body {
                 padding: 15px;
             }
-            
+
             .modal-header {
                 padding: 12px 15px;
             }
-            
+
             .modal-title {
                 font-size: 1rem;
             }
-            
+
             .detail-row {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
             }
-            
+
             .detail-label {
                 font-weight: 600;
                 color: #374151;
@@ -291,27 +291,27 @@
             table.table-winners {
                 min-width: 600px;
             }
-            
+
             .table-winners thead th {
                 padding: 10px 8px;
                 font-size: 0.85rem;
             }
-            
+
             .table-winners tbody td {
                 padding: 10px 8px;
                 font-size: 0.85rem;
             }
-            
+
             .number-ball {
                 width: 20px;
                 height: 20px;
                 font-size: 9px;
             }
-            
+
             .numbers-container {
                 max-width: 280px;
             }
-            
+
             /* Ticket intermediário no tablet */
             .table-winners th:nth-child(1),
             .table-winners td:nth-child(1) {
@@ -326,7 +326,7 @@
                 vertical-align: middle;
                 padding: 10px 6px;
             }
-            
+
             /* Pontos menor no mobile */
             .table-winners th:nth-child(4),
             .table-winners td:nth-child(4) {
@@ -354,38 +354,38 @@
             table.table-winners {
                 min-width: 500px;
             }
-            
+
             .table-winners thead th {
                 padding: 8px 6px;
                 font-size: 0.8rem;
             }
-            
+
             .table-winners tbody td {
                 padding: 8px 6px;
                 font-size: 0.8rem;
             }
-            
+
             .number-ball {
                 width: 18px;
                 height: 18px;
                 font-size: 8px;
                 margin: 0.5px;
             }
-            
+
             .numbers-container {
                 max-width: 220px;
             }
-            
+
             .status-badge {
                 font-size: 9px;
                 padding: 2px 6px;
             }
-            
+
             .prize-type-badge {
                 font-size: 9px;
                 padding: 2px 6px;
             }
-            
+
             /* Ticket pequeno no mobile */
             .table-winners th:nth-child(1),
             .table-winners td:nth-child(1) {
@@ -400,7 +400,7 @@
                 text-overflow: ellipsis;
                 vertical-align: middle;
             }
-            
+
             /* Pontos mínimo no mobile pequeno */
             .table-winners th:nth-child(4),
             .table-winners td:nth-child(4) {
@@ -452,11 +452,11 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="form-label d-flex justify-content-between">
-                    <span>Usuário</span>
+                    <span>Participantes</span>
                 </label>
                 <input type="text" id="userFilterInputWinners" class="form-control"
-                    placeholder="Digite o nome do usuário"
-                    list="userFilterOptionsWinners" autocomplete="off" value="{{ $selectedUserLabel }}">
+                    placeholder="Digite o nome do participante" list="userFilterOptionsWinners" autocomplete="off"
+                    value="{{ $selectedUserLabel }}">
                 <input type="hidden" name="user" id="userFilterHiddenWinners" value="{{ request('user') }}">
                 <datalist id="userFilterOptionsWinners">
                     @if (isset($users))
@@ -474,7 +474,8 @@
             </div>
             @if (request('user'))
                 <div class="col-md-2">
-                    <a href="{{ url('/concursos/' . $game->id . '?tab=tab-winners') }}" class="btn btn-outline-secondary w-100">Limpar Filtro</a>
+                    <a href="{{ url('/concursos/' . $game->id . '?tab=tab-winners') }}"
+                        class="btn btn-outline-secondary w-100">Limpar Filtro</a>
                 </div>
             @endif
         </div>
@@ -488,33 +489,33 @@
             <h4 class="text-muted">Nenhum ganhador encontrado</h4>
             <p class="text-muted">
                 @if (request('user'))
-                    Não há ganhadores para o usuário selecionado. Tente outro filtro ou limpe o filtro para ver todos os ganhadores.
+                    Não há ganhadores para o usuário selecionado. Tente outro filtro ou limpe o filtro para ver todos os
+                    ganhadores.
                 @else
                     Os prêmios serão distribuídos após o fechamento do jogo.
                 @endif
             </p>
         </div>
     @else
-
         <div class="table-responsive">
-        <div class="table-winners-wrapper">
-            <table class="table table-winners mb-0">
-                <thead>
-                    <tr>
-                        <th>Ticket</th>
-                        <th>Participantes</th>
-                        <th>Prêmio</th>
-                        <th>Pontos</th>
-                        <th>Status</th>
-                        @if ($isAdmin)
-                            <th>Pago Por</th>
-                        @endif
-                        <th>Números</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($winners as $index => $winner)
+            <div class="table-winners-wrapper">
+                <table class="table table-winners mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Participantes</th>
+                            <th>Prêmio</th>
+                            <th>Pontos</th>
+                            <th>Status</th>
+                            @if ($isAdmin)
+                                <th>Pago Por</th>
+                            @endif
+                            <th>Números</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($winners as $index => $winner)
                             @php
                                 $rowClass = '';
                                 if ($winner->game_award->condition_type == 'WINNER') {
@@ -548,14 +549,16 @@
                             <tr class="winner-row {{ $rowClass }}">
                                 <td>
                                     <strong>#{{ $winner->purchase->identifier }}</strong>
-                            </td>
+                                </td>
                                 <td>
                                     <div>
                                         <div class="mb-2">
                                             <div class="small text-muted mb-1">Apostador:</div>
-                                            <div class="fw-bold text-primary">{{ $winner->purchase->gambler_name }}</div>
+                                            <div class="fw-bold text-primary">{{ $winner->purchase->gambler_name }}
+                                            </div>
                                             @if ($isAdmin && $winner->purchase->gambler_phone)
-                                                <small class="text-muted">{{ $winner->purchase->gambler_phone }}</small>
+                                                <small
+                                                    class="text-muted">{{ $winner->purchase->gambler_phone }}</small>
                                             @endif
                                         </div>
                                         <div>
@@ -571,20 +574,23 @@
                                         <div class="fw-bold text-success mb-1">
                                             R$ {{ number_format($winner->user_award->amount, 2, ',', '.') }}
                                         </div>
-                                        <span class="prize-type-badge 
-                                            @if($winner->game_award->condition_type == 'WINNER') winner
+                                        <span
+                                            class="prize-type-badge
+                                            @if ($winner->game_award->condition_type == 'WINNER') winner
                                             @elseif($winner->game_award->condition_type == 'SECONDARY_WINNER') secondary
                                             @else exact @endif">
                                             @switch($winner->game_award->condition_type)
                                                 @case('WINNER')
                                                     1º Lugar
-                                                    @break
+                                                @break
+
                                                 @case('SECONDARY_WINNER')
                                                     2º Lugar
-                                                    @break
+                                                @break
+
                                                 @case('EXACT_POINT')
                                                     {{ $winner->game_award->exact_point_value }} pts
-                                                    @break
+                                                @break
                                             @endswitch
                                         </span>
                                         <div class="small text-muted mt-1">{{ $winner->game_award->name }}</div>
@@ -619,7 +625,8 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-1">
-                                        <button class="info-icon" data-bs-toggle="modal" data-bs-target="#winnerModal{{ $index }}" title="Ver detalhes">
+                                        <button class="info-icon" data-bs-toggle="modal"
+                                            data-bs-target="#winnerModal{{ $index }}" title="Ver detalhes">
                                             <i class="bx bx-info-circle"></i>
                                         </button>
                                         @if ($isAdmin)
@@ -629,75 +636,87 @@
                                                 <i class="bx bx-check"></i>
                                             </a>
                                             @if ($winner->status == 'PAID')
-                                    <a href="{{ route('user_award-withdraw', $winner->id) }}"
-                                                    class="btn btn-warning btn-sm"
-                                                    title="Estornar prêmio">
+                                                <a href="{{ route('user_award-withdraw', $winner->id) }}"
+                                                    class="btn btn-warning btn-sm" title="Estornar prêmio">
                                                     <i class="bx bx-undo"></i>
-                                    </a>
-                                @endif
+                                                </a>
+                                            @endif
                                         @endif
                                     </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
 
                             <!-- Modal de Detalhes -->
-                            <div class="modal fade" id="winnerModal{{ $index }}" tabindex="-1" aria-labelledby="winnerModalLabel{{ $index }}" aria-hidden="true">
+                            <div class="modal fade" id="winnerModal{{ $index }}" tabindex="-1"
+                                aria-labelledby="winnerModalLabel{{ $index }}" aria-hidden="true">
                                 <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="winnerModalLabel{{ $index }}">
                                                 <i class="bx bx-trophy me-2"></i>Detalhes do Bilhete Vencedor
                                             </h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="detail-row">
                                                         <span class="detail-label">Número do Ticket:</span>
-                                                        <span class="detail-value fw-bold">#{{ $winner->purchase->identifier }}</span>
+                                                        <span
+                                                            class="detail-value fw-bold">#{{ $winner->purchase->identifier }}</span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Nome do Apostador:</span>
-                                                        <span class="detail-value">{{ $winner->purchase->gambler_name }}</span>
+                                                        <span
+                                                            class="detail-value">{{ $winner->purchase->gambler_name }}</span>
                                                     </div>
                                                     @if ($isAdmin)
                                                         <div class="detail-row">
                                                             <span class="detail-label">Telefone:</span>
-                                                            <span class="detail-value">{{ $winner->purchase->gambler_phone ?? 'Não informado' }}</span>
+                                                            <span
+                                                                class="detail-value">{{ $winner->purchase->gambler_phone ?? 'Não informado' }}</span>
                                                         </div>
                                                     @endif
                                                     <div class="detail-row">
                                                         <span class="detail-label">Vendedor:</span>
-                                                        <span class="detail-value">{{ in_array($winner->purchase->seller->role->level_id, ['seller']) ? $winner->purchase->seller->name : 'Banca Central' }}</span>
+                                                        <span
+                                                            class="detail-value">{{ in_array($winner->purchase->seller->role->level_id, ['seller']) ? $winner->purchase->seller->name : 'Banca Central' }}</span>
                                                     </div>
                                                     @if ($isAdmin)
                                                         <div class="detail-row">
                                                             <span class="detail-label">Pago Por:</span>
-                                                            <span class="detail-value">{{ $winner->purchase->paid_by_user->name ?? 'N/A' }}</span>
+                                                            <span
+                                                                class="detail-value">{{ $winner->purchase->paid_by_user->name ?? 'N/A' }}</span>
                                                         </div>
                                                     @endif
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="detail-row">
                                                         <span class="detail-label">Prêmio:</span>
-                                                        <span class="detail-value fw-bold text-success">R$ {{ number_format($winner->user_award->amount, 2, ',', '.') }}</span>
+                                                        <span class="detail-value fw-bold text-success">R$
+                                                            {{ number_format($winner->user_award->amount, 2, ',', '.') }}</span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Pontuação:</span>
-                                                        <span class="detail-value fw-bold text-primary">{{ $winner->userPoint }} pontos</span>
+                                                        <span
+                                                            class="detail-value fw-bold text-primary">{{ $winner->userPoint }}
+                                                            pontos</span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Valor da Aposta:</span>
-                                                        <span class="detail-value">R$ {{ number_format($winner->purchase->price, 2, ',', '.') }}</span>
+                                                        <span class="detail-value">R$
+                                                            {{ number_format($winner->purchase->price, 2, ',', '.') }}</span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Data da Aposta:</span>
-                                                        <span class="detail-value">{{ $winner->purchase->created_at->format('d/m/Y H:i') }}</span>
+                                                        <span
+                                                            class="detail-value">{{ $winner->purchase->created_at->format('d/m/Y H:i') }}</span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Status:</span>
-                                                        <span class="status-badge {{ strtolower($winner->status) }}">{{ $statusText }}</span>
+                                                        <span
+                                                            class="status-badge {{ strtolower($winner->status) }}">{{ $statusText }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -716,15 +735,18 @@
                                                             $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
                                                             $isHit = in_array($number, $modalMatchedNumbers);
                                                         @endphp
-                                                        <span class="number-ball {{ $isHit ? 'hit' : 'miss' }}" style="width: 40px; height: 40px; font-size: 16px;">
+                                                        <span class="number-ball {{ $isHit ? 'hit' : 'miss' }}"
+                                                            style="width: 40px; height: 40px; font-size: 16px;">
                                                             {{ $paddedNumber }}
                                                         </span>
                                                     @endforeach
                                                 </div>
                                                 <div class="mt-3">
                                                     <small class="text-muted">
-                                                        <span class="badge bg-warning text-dark me-2">Acertados: {{ $winner->userPoint }}</span>
-                                                        <span class="badge bg-secondary me-2">Errados: {{ 11 - $winner->userPoint }}</span>
+                                                        <span class="badge bg-warning text-dark me-2">Acertados:
+                                                            {{ $winner->userPoint }}</span>
+                                                        <span class="badge bg-secondary me-2">Errados:
+                                                            {{ 11 - $winner->userPoint }}</span>
                                                         <span class="badge bg-primary">Total: 11</span>
                                                     </small>
                                                 </div>
@@ -742,13 +764,17 @@
                                                         @switch($winner->game_award->condition_type)
                                                             @case('WINNER')
                                                                 <span class="badge bg-warning text-dark">1º Lugar</span>
-                                                                @break
+                                                            @break
+
                                                             @case('SECONDARY_WINNER')
                                                                 <span class="badge bg-secondary">2º Lugar</span>
-                                                                @break
+                                                            @break
+
                                                             @case('EXACT_POINT')
-                                                                <span class="badge bg-info">Ponto Exato ({{ $winner->game_award->exact_point_value }})</span>
-                                                                @break
+                                                                <span class="badge bg-info">Ponto Exato
+                                                                    ({{ $winner->game_award->exact_point_value }})
+                                                                </span>
+                                                            @break
                                                         @endswitch
                                                     </span>
                                                 </div>
@@ -757,9 +783,9 @@
                                     </div>
                                 </div>
                             </div>
-                    @endforeach
-                </tbody>
-            </table>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -785,7 +811,8 @@
                     return;
                 }
 
-                const matchingOption = Array.from(userDatalist.options).find(option => option.value === inputValue);
+                const matchingOption = Array.from(userDatalist.options).find(option => option.value ===
+                    inputValue);
                 userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
             };
 
