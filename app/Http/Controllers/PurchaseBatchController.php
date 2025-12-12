@@ -338,6 +338,9 @@ class PurchaseBatchController extends Controller
             "description" => $description,
           ]
         );
+        $seller->game_credit = $seller->game_credit + $comission;
+        $seller->save();
+
         $purchase->load('paid_by_user');
         $description = Transactions::generateDescription('PAY_PURCHASE', $purchase->price, [
           'purchase' => $purchase,

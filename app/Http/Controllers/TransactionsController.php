@@ -307,8 +307,12 @@ class TransactionsController extends Controller
       if ($type === 'PAY_PURCHASE' && $purchase) {
         $shouldCountPurchase = true;
 
-        //Se a purchase não tiver status PAID, não conta como jogo pago
-        if ($purchase->status != 'PAID') {
+        // Se tiver um 'PAY_PURCHASE_WITHDRAWAL' depois de ter sido criada
+        $withdrawal = Transactions::where('purchase_id', $purchase->id)
+          ->where('type', 'PAY_PURCHASE_WITHDRAWAL')
+          ->where('created_at', '>', $transaction->created_at)
+          ->first();
+        if ($withdrawal) {
           continue;
         }
 
@@ -389,7 +393,14 @@ class TransactionsController extends Controller
       // 2) Agrupamento de comissão do vendedor por concurso
       if ($type === 'PAY_PURCHASE_COMISSION' && $purchase && $gameId) {
 
-        if ($purchase->status != 'PAID') {
+
+        // Se tiver um 'PAY_PURCHASE_COMISSION_WITHDRAWAL' depois de ter sido criada
+        $withdrawal = Transactions::where('purchase_id', $purchase->id)
+          ->where('type', 'PAY_PURCHASE_COMISSION_WITHDRAWAL')
+          ->where('created_at', '>', $transaction->created_at)
+          ->first();
+
+        if ($withdrawal) {
           continue;
         }
 
@@ -785,8 +796,12 @@ class TransactionsController extends Controller
         $shouldCountPurchase = true;
 
 
-        //Se a purchase não tiver status PAID, não conta como jogo pago
-        if ($purchase->status != 'PAID') {
+        // Se tiver um 'PAY_PURCHASE_WITHDRAWAL' depois de ter sido criada
+        $withdrawal = Transactions::where('purchase_id', $purchase->id)
+          ->where('type', 'PAY_PURCHASE_WITHDRAWAL')
+          ->where('created_at', '>', $transaction->created_at)
+          ->first();
+        if ($withdrawal) {
           continue;
         }
 
@@ -865,7 +880,13 @@ class TransactionsController extends Controller
       // 2) Agrupamento de comissão do vendedor por concurso
       if ($type === 'PAY_PURCHASE_COMISSION' && $purchase && $gameId) {
 
-        if ($purchase->status != 'PAID') {
+        // Se tiver um 'PAY_PURCHASE_COMISSION_WITHDRAWAL' depois de ter sido criada
+        $withdrawal = Transactions::where('purchase_id', $purchase->id)
+          ->where('type', 'PAY_PURCHASE_COMISSION_WITHDRAWAL')
+          ->where('created_at', '>', $transaction->created_at)
+          ->first();
+
+        if ($withdrawal) {
           continue;
         }
 
