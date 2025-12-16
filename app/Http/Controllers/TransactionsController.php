@@ -358,7 +358,8 @@ class TransactionsController extends Controller
               $groupedByGame['game_payments'][$groupKey] = [
                 'game_name' => $gameName,
                 'user_name' => $purchase->user ? $purchase->user->name : 'N/A',
-                'is_creator' => $isCreator, // Flag para identificar se o vendedor criou
+                'is_creator' => $isCreator, // Flag para identificar se o vendedor pagou
+                'payer_role' => $purchase->paid_by_user->role ? $purchase->paid_by_user->role->level_id : 'N/A',
                 'count' => 0,
                 'total' => 0,
               ];
@@ -431,6 +432,15 @@ class TransactionsController extends Controller
           $rowTypeLabel = 'Adição de Credito';
           break;
         case 'PAY_AWARD':
+
+          $withdrawal = Transactions::where('purchase_id', $purchase->id)
+            ->where('type', 'PAY_AWARD_WITHDRAWAL')
+            ->where('created_at', '>', $transaction->created_at)
+            ->first();
+          if ($withdrawal) {
+            continue;
+          }
+
           // Prêmio: usa sempre o estado atual do UserAward.
           // Se o prêmio foi estornado, o UserAward deixa de estar "PAID" e,
           // portanto, não será considerado no resumo.
@@ -439,7 +449,7 @@ class TransactionsController extends Controller
           // Se não houver purchase vinculada, não conseguimos identificar o prêmio; ignora.
           if (!$purchase || !$gameId) {
             // pula esta transação e segue para a próxima do foreach
-            continue 2;
+            continue 2; // sai do switch e do foreach
           }
 
           // Usa os userAwards já carregados na compra
@@ -452,8 +462,9 @@ class TransactionsController extends Controller
           // Se não houver prêmio pago associado (por exemplo, foi estornado),
           // não exibe esta transação no resumo.
           if (!$userAward) {
-            continue 2;
+            continue 2; // sai do switch e do foreach
           }
+
 
           // Monta o nome do prêmio
           $rowTypeLabel = 'Prêmio';
@@ -524,7 +535,10 @@ class TransactionsController extends Controller
       if ($isSellerFilter) {
         // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
         // Se não criou, mostra "Jogo do Apostador"
-        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
+
+        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : ($data['payer_role'] === 'admin' ? 'Jogo do Administrador' : 'Jogo do Apostador');
+
+        //$typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
       } else {
         $typeLabel = 'Pagamento de jogos';
       }
@@ -846,6 +860,7 @@ class TransactionsController extends Controller
                 'game_name' => $gameName,
                 'user_name' => $purchase->user ? $purchase->user->name : 'N/A',
                 'is_creator' => $isCreator, // Flag para identificar se o vendedor criou
+                'payer_role' => $purchase->user->role ? $purchase->user->role->level_id : 'N/A',
                 'count' => 0,
                 'total' => 0,
               ];
@@ -985,8 +1000,10 @@ class TransactionsController extends Controller
       // Se for filtro de vendedor, verifica se ele criou o jogo
       if ($isSellerFilter) {
         // Se o vendedor criou o jogo (paid_by_user_id), mostra "Pagamento de jogos"
-        // Se não criou, mostra "Jogo do Apostador"
-        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
+        // Se não criou, e o criador for um apostador, mostra "Jogo do Apostador", se for um administrador, mostra "Jogo do Administrador"
+        $typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : ($data['payer_role'] === 'admin' ? 'Jogo do Administrador' : 'Jogo do Apostador');
+
+        //$typeLabel = (isset($data['is_creator']) && $data['is_creator']) ? 'Pagamento de jogos' : 'Jogo do Apostador';
       } else {
         $typeLabel = 'Pagamento de jogos';
       }

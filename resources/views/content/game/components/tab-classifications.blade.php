@@ -553,22 +553,18 @@
                                     @if($classification->status == 'PAID')
                                         @php
                                             $badgeColor = 'secondary';
-                                            $userAward = $classification->userAwards->first();
-                                            if ($userAward) {
-                                                $gameAward = $userAward->game_award;
-                                                $conditionType = $gameAward->condition_type;
-                                                switch ($conditionType) {
-                                                    case 'WINNER':
-                                                        $badgeColor = 'danger';
-                                                        break;
-                                                    case 'SECONDARY_WINNER':
-                                                        $badgeColor = 'primary';
-                                                        break;
-                                                    case 'EXACT_POINT':
-                                                        $badgeColor = 'secondary';
-                                                        break;
-                                                }
+                                            $top1 = $top3Points[0] ?? 0;
+                                            $top2 = $top3Points[1] ?? 0;
+                                            $top3 = $top3Points[2] ?? 0;
+
+                                            if ($classification->points == $top1) {
+                                                $badgeColor = 'danger';
+                                            } elseif ($classification->points == $top2) {
+                                                $badgeColor = 'info';
+                                            } elseif ($classification->points == $top3) {
+                                                $badgeColor = 'secondary';
                                             }
+
 
                                         @endphp
 

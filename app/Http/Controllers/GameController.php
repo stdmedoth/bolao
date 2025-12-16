@@ -93,6 +93,20 @@ class GameController extends Controller
 
     $gameHistories = $gameHistoriesBuilder->paginate(20, ['*'], 'game_histories_page');
 
+    // pegar os pontos dos top 3 maiores pontuacoes, agrupando por pontos
+    $top3Points = Purchase::where('game_id', $game->id)
+      ->select('points')
+      ->where('status', 'PAID')
+      ->where('round', $round)
+      ->orderBy('points', 'DESC')
+      ->groupBy('points')
+      ->get();
+
+    $top3Points = $top3Points->pluck('points')->toArray();
+    $top3Points = array_unique($top3Points);
+    $top3Points = array_slice($top3Points, 0, 3);
+    
+
     // Reunir todos os números adicionados desde a última abertura
     $allAddedNumbers = GameHistory::where('game_id', $game->id)
       ->where('type', 'ADDING_NUMBER')
@@ -248,8 +262,6 @@ class GameController extends Controller
     }
 
 
-
-
     $games = Game::select(['id', 'status', 'name'])->whereIn('status', ['OPENED', 'CLOSED'])->whereNotIn('id', [$game->id])->get();
 
     $winner_award = $game->awards()->where('condition_type', 'WINNER')
@@ -265,7 +277,8 @@ class GameController extends Controller
       'winner_award' => $winner_award,
       'users' => $users,
       'classifications' => $classifications,
-      'uniqueNumbers' => $uniqueNumbers
+      'uniqueNumbers' => $uniqueNumbers,
+      'top3Points' => $top3Points ?? []
     ]);
   }
 
