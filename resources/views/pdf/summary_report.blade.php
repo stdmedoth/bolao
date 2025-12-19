@@ -303,11 +303,11 @@
             <h4>Limite Inicial de Crédito</h4>
             <div class="amount">R$ {{ number_format($userInfo['game_credit_limit'], 2, ',', '.') }}</div>
         </div>
-        <div class="summary-card outcome">
+        <div class="summary-card income">
             <h4>Crédito Atual</h4>
             <div class="amount">R$ {{ number_format($userInfo['game_credit'], 2, ',', '.') }}</div>
         </div>
-        <div class="summary-card net">
+        <div class="summary-card outcome">
             <h4>Saldo Devedor</h4>
             <div class="amount {{ $userInfo['credit_debt'] >= 0 ? 'text-success' : 'text-danger' }}">
                 R$ {{ number_format($userInfo['credit_debt'], 2, ',', '.') }}

@@ -67,7 +67,8 @@
                 });
 
                 document.querySelector('form').addEventListener('submit', (e) => {
-                    const rawValue = amountInput.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+                    const rawValue = amountInput.value.replace('.', '').replace(',', '.');
+                    console.log(rawValue)
                     amountInput.value = rawValue; // Envia como float-friendly (e.g., "1234.56")
                 });
             });
@@ -79,7 +80,7 @@
                     $user = auth()->user();
                     $availableBalance = $user->available_balance;
                 @endphp
-                
+
                 <div class="alert alert-info">
                     <strong>Saldo disponível para saque: R$ {{ number_format($availableBalance, 2, ',', '.') }}</strong>
                 </div>
@@ -89,7 +90,8 @@
                     <div class="form-group">
                         <label for="amount" class="form-label">Valor do Saque</label>
                         <input class="form-control" id="amount" name="amount" type="text"
-                            placeholder="Digite o valor" value="{{ session('amount', old('amount')) ?? '0,00' }}" required>
+                            placeholder="Digite o valor"
+                            value="{{ session('amount', number_format(old('amount'), 2, ',', '.')) ?? '0,00' }}" required>
                         <small class="text-danger" id="error-message" style="display: none;">O valor deve ser no
                             mínimo R$ 5,00.</small>
                     </div>

@@ -105,7 +105,7 @@ class GameController extends Controller
     $top3Points = $top3Points->pluck('points')->toArray();
     $top3Points = array_unique($top3Points);
     $top3Points = array_slice($top3Points, 0, 3);
-    
+
 
     // Reunir todos os números adicionados desde a última abertura
     $allAddedNumbers = GameHistory::where('game_id', $game->id)
@@ -215,16 +215,16 @@ class GameController extends Controller
       ->orderBy('created_at', 'desc');
 
 
-    if ($request->has('search') && $request->search != '') {
+    if ($request->has('searchClassification') && $request->searchClassification != '') {
       $classificationsBuilder = $classificationsBuilder->where(function ($q) use ($request) {
         $q->whereHas('game', function ($gameq) use ($request) {
-          $gameq->where('name', 'like', '%' . $request->search . '%');
-        })->orWhere('numbers', 'like', '%' . $request->search . '%')
-          ->orWhere('gambler_name', 'like', '%' . $request->search . '%')
-          ->orWhere('gambler_phone', 'like', '%' . $request->search . '%')
-          ->orWhere('identifier', 'like', '%' . $request->search . '%')
+          $gameq->where('name', 'like', '%' . $request->searchClassification . '%');
+        })->orWhere('numbers', 'like', '%' . $request->searchClassification . '%')
+          ->orWhere('gambler_name', 'like', '%' . $request->searchClassification . '%')
+          ->orWhere('gambler_phone', 'like', '%' . $request->searchClassification . '%')
+          ->orWhere('identifier', 'like', '%' . $request->searchClassification . '%')
           ->orWhereHas('seller', function ($sellerq) use ($request) {
-            $sellerq->where('name', 'like', '%' . $request->search . '%');
+            $sellerq->where('name', 'like', '%' . $request->searchClassification . '%');
           });
       });
     }
@@ -676,6 +676,7 @@ class GameController extends Controller
 
       $purchasesData[] = [
         'participant' => $participant,
+        'identifier' => $purchase->identifier,
         'points' => $points,
         'numbers' => $numbersArray,
         'status' => $status,

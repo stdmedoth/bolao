@@ -32,6 +32,9 @@ class UserAwardController extends Controller
 
   public function pay(Request $request, $id)
   {
+    if (Auth::user()->role->level_id !== 'admin') {
+      return redirect()->back()->with('error', 'Você não tem permissão para pagar prêmios.');
+    }
     $user_award = UserAwards::find($id);
     $purchase = Purchase::find($user_award->purchase_id);
 
@@ -55,6 +58,7 @@ class UserAwardController extends Controller
         "type" => 'PAY_AWARD',
         "game_id" => $user_award->game_id,
         "purchase_id" => $user_award->purchase_id,
+        "user_award_id" => $user_award->id,
         "amount" => $user_award->amount,
         "user_id" => $user->id,
         "description" => $description,
@@ -67,6 +71,10 @@ class UserAwardController extends Controller
 
   public function withdraw(Request $request, $id)
   {
+    if (Auth::user()->role->level_id !== 'admin') {
+      return redirect()->back()->with('error', 'Você não tem permissão para estornar prêmios.');
+    }
+
     $user_award = UserAwards::find($id);
 
     $purchase = Purchase::find($user_award->purchase_id);
@@ -90,6 +98,7 @@ class UserAwardController extends Controller
         "type" => 'PAY_AWARD_WITHDRAWAL',
         "game_id" => $user_award->game_id,
         "purchase_id" => $user_award->purchase_id,
+        "user_award_id" => $user_award->id,
         "amount" => $user_award->amount,
         "user_id" => $user->id,
         "description" => $description,

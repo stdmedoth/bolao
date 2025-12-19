@@ -163,6 +163,7 @@ Route::middleware('auth:web')->group(function () {
   Route::get('/financeiro/resumo', [TransactionsController::class, 'summary'])->name('finances.summary');
   Route::get('/financeiro/resumo/pdf', [TransactionsController::class, 'summaryPdf'])->name('finances.summary.pdf');
   Route::post('/financeiro/lancamento', [TransactionsController::class, 'store'])->name('finances.transaction.store');
+  Route::delete('/financeiro/lancamento/{transaction}', [TransactionsController::class, 'destroy'])->name('finances.transaction.destroy');
 
   Route::get('/indique_ganhe/estornar/{id}', [ReferEarnController::class, 'payback'])->name('refer_earns_payback');
   Route::get('/indique_ganhe/pagar/{id}', [ReferEarnController::class, 'pay'])->name('refer_earns_pay');

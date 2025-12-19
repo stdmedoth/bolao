@@ -199,6 +199,19 @@
         .text-center {
             text-align: center;
         }
+
+        .participants {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .participants .participant-name {
+            font-size: 0.75rem;
+        }
+
+        .participants .participant-info {
+            font-size: 0.55rem;
+        }
     </style>
 </head>
 
@@ -242,7 +255,13 @@
         <tbody>
             @forelse($purchasesData as $purchase)
                 <tr>
-                    <td>{{ $purchase['participant'] }}</td>
+                    <td>
+
+                        <div class="participants">
+                            <span class="participant-name">{{ Str::limit($purchase['participant'], 20) }}</span><br>
+                            <small class="participant-info">Ticket: {{ $purchase['identifier'] }}</small>
+                        </div>
+                    </td>
                     <td style="text-align: center;">
                         @if ($purchase['status'] == 'PAID')
                             <span class="badge badge-{{ $purchase['badge_color'] }}">{{ $purchase['points'] }}</span>

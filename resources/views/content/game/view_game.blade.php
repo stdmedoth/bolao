@@ -17,6 +17,19 @@
 
 
 @section('content')
+
+    <style>
+        /* Cor padrão para todas as abas (Inativas) */
+        .nav-tabs .nav-link {
+            color: var(--bs-secondary) !important;
+        }
+
+        /* Cor para a aba que o Bootstrap marcar como ativa */
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary) !important;
+        }
+    </style>
+
     <div class="container-fluid px-0">
         <?php $tab = session('tab') ?? (old('tab') ?? 'tab-classifications');
         ?>
@@ -33,13 +46,13 @@
                 <i class="bx bx-error-circle me-2"></i><strong>Erro:</strong> {{ $errors->first('error') }}
             </div>
         @endif
-        
+
         @if (session('error'))
             <div class="alert alert-danger mx-2 border-danger shadow-sm">
                 <i class="bx bx-error-circle me-2"></i><strong>Erro:</strong> {{ session('error') }}
             </div>
         @endif
-            
+
         @if (session('success'))
             <div class="alert alert-success mx-2 border-success shadow-sm">
                 <i class="bx bx-check-circle me-2"></i><strong>Sucesso:</strong> {{ session('success') }}
@@ -51,15 +64,17 @@
                 @include('content.game.components.tab-menu', ['tab' => $tab])
             </div>
         </div>
-        
+
         <div class="row">
             <div class="col-12">
                 <div class="tab-content mt-2 mt-md-3 px-2" id="gameTabsContent">
                     {{-- @include('content.game.components.tab-details', ['tab' => $tab, 'game' => $game]) --}}
                     @php
-                        $sellers = isset($users) ? $users->filter(function($user) { 
-                            return $user->role && $user->role->level_id === 'seller'; 
-                        }) : collect([]);
+                        $sellers = isset($users)
+                            ? $users->filter(function ($user) {
+                                return $user->role && $user->role->level_id === 'seller';
+                            })
+                            : collect([]);
                     @endphp
                     @include('content.game.components.tab-bet-form', [
                         'tab' => $tab,
@@ -71,8 +86,17 @@
                         'game' => $game,
                         'histories' => $histories,
                     ])
-                    @include('content.game.components.tab-my-bets', ['tab' => $tab, 'purchases' => $purchases, 'users' => $users ?? []])
-                    @include('content.game.components.tab-classifications', ['tab' => $tab, 'purchases' => $purchases, 'game' => $game, 'users' => $users ?? []])
+                    @include('content.game.components.tab-my-bets', [
+                        'tab' => $tab,
+                        'purchases' => $purchases,
+                        'users' => $users ?? [],
+                    ])
+                    @include('content.game.components.tab-classifications', [
+                        'tab' => $tab,
+                        'purchases' => $purchases,
+                        'game' => $game,
+                        'users' => $users ?? [],
+                    ])
                     @include('content.game.components.tab-prizes', ['tab' => $tab, 'game' => $game])
                     @include('content.game.components.tab-rules', ['tab' => $tab])
                     @include('content.game.components.tab-winners', [
@@ -89,7 +113,7 @@
 
     <script>
         window.backendSelectedTab = @json(session('tab'));
-        
+
         // Script global para bloquear botões após submit
         document.addEventListener('DOMContentLoaded', function() {
             // Seleciona todos os botões com classe btn-loadonclick na página

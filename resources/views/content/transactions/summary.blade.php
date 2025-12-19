@@ -312,12 +312,16 @@
                         <th><i class="bx bx-money me-1"></i>Total</th>
                         <th><i class="bx bx-user me-1"></i>Usuário</th>
                         <th><i class="bx bx-category me-1"></i>Categoria</th>
+                        @if (auth()->user()->role->level_id == 'admin')
+                            <th><i class="bx bx-cog me-1"></i>Ações</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($summaryRows as $row)
                         @php
                             $isIncome = $row['category'] === 'income';
+                            $isCustom = isset($row['is_custom']) && $row['is_custom'];
                         @endphp
                         <tr>
                             <td><strong class="text-dark">{{ $row['type'] }}</strong></td>
@@ -341,10 +345,28 @@
                                     {{ $isIncome ? 'Entrada' : 'Saída' }}
                                 </span>
                             </td>
+                            @if (auth()->user()->role->level_id == 'admin')
+                                <td>
+                                    @if ($isCustom && isset($row['transaction_id']))
+                                        <form action="{{ route('finances.transaction.destroy', $row['transaction_id']) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este lançamento personalizado? Esta ação irá ajustar o saldo do usuário.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="filter_game_id" value="{{ request('game_id', '') }}">
+                                            <input type="hidden" name="filter_month" value="{{ request('month', '') }}">
+                                            <input type="hidden" name="filter_user_id" value="{{ request('user_id', '') }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
+                            <td colspan="{{ auth()->user()->role->level_id == 'admin' ? 7 : 6 }}" class="text-center text-muted py-4">
                                 <i class="bx bx-info-circle me-2"></i>Nenhum registro encontrado para os filtros selecionados.
                             </td>
                         </tr>

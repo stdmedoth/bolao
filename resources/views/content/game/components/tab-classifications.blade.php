@@ -8,12 +8,12 @@
             table-layout: fixed;
             font-size: 0.85rem;
         }
-        
+
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         .numbers-container {
             max-width: 350px;
         }
@@ -135,7 +135,7 @@
                 max-width: 110px;
                 height: 18px;
             }
-            
+
             /* Coluna de participantes no tablet */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
@@ -148,7 +148,7 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
-            
+
             /* Coluna de números no tablet */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
@@ -158,7 +158,7 @@
                 font-size: 0.45rem;
                 padding: 2px 6px 2px 6px;
             }
-            
+
             /* Pontos no tablet */
             .table-classifications th:nth-child(3),
             .table-classifications td:nth-child(3) {
@@ -168,7 +168,7 @@
                 font-size: 0.6rem;
                 padding: 2px 1px;
             }
-            
+
             /* Ações no tablet */
             .table-classifications th:nth-child(4),
             .table-classifications td:nth-child(4) {
@@ -178,22 +178,22 @@
                 font-size: 0.6rem;
                 padding: 2px 1px;
             }
-            
+
             /* Botão de ações no tablet */
             .table-classifications .btn-sm {
                 padding: 1px 3px;
                 font-size: 0.4rem;
             }
-            
+
             .table-classifications .btn-sm i {
                 font-size: 0.5rem;
             }
-            
+
             /* Texto do vendedor no tablet */
             .table-classifications .text-muted {
                 font-size: 0.35rem;
             }
-            
+
             .classification-number-ball {
                 width: 12px;
                 height: 12px;
@@ -206,18 +206,18 @@
                 max-width: 105px;
                 height: 16px;
             }
-            
+
             .classification-number-ball {
                 width: 15px;
                 height: 15px;
                 font-size: 0.50rem;
             }
-            
+
             .prize-type-badge {
                 font-size: 5px;
                 padding: 1px 1px;
             }
-            
+
             /* Participantes no mobile pequeno */
             .table-classifications th:nth-child(1),
             .table-classifications td:nth-child(1) {
@@ -230,7 +230,7 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
-            
+
             /* Números no mobile pequeno */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
@@ -240,7 +240,7 @@
                 font-size: 0.35rem;
                 padding: 2px 2px 2px 2px;
             }
-            
+
             /* Pontos mínimo no mobile pequeno */
             .table-classifications th:nth-child(3),
             .table-classifications td:nth-child(3) {
@@ -250,7 +250,7 @@
                 font-size: 0.4rem;
                 padding: 2px 2px 2px 2px;
             }
-            
+
             /* Ações mínimo no mobile pequeno */
             .table-classifications th:nth-child(4),
             .table-classifications td:nth-child(4) {
@@ -260,22 +260,23 @@
                 font-size: 0.4rem;
                 padding: 2px 1px;
             }
-            
+
             /* Botão de ações no mobile pequeno */
             .table-classifications .btn-sm {
                 padding: 1px 2px;
                 font-size: 0.3rem;
             }
-            
+
             .table-classifications .btn-sm i {
                 font-size: 0.4rem;
             }
-            
+
             /* Texto do vendedor no mobile pequeno */
             .table-classifications .text-muted {
                 font-size: 0.3rem;
             }
         }
+
         /* Grid de dezenas - ultra compacto */
         .numbers-grid-compact {
             background-color: #f8f9fa;
@@ -334,7 +335,7 @@
                 grid-template-columns: repeat(20, 1fr);
                 gap: 1px;
             }
-            
+
             .number-cell {
                 height: 14px;
                 font-size: 0.55rem;
@@ -346,7 +347,7 @@
                 grid-template-columns: repeat(15, 1fr);
                 gap: 1px;
             }
-            
+
             .number-cell {
                 height: 12px;
                 font-size: 0.5rem;
@@ -405,23 +406,24 @@
             <div class="col-md-4">
                 <!-- Campo de pesquisa -->
                 <div class="input-group">
-                    <input type="text" name="search" class="form-control"
-                        placeholder="Pesquisar por nome, números..." value="{{ request('search') }}">
+                    <input type="text" name="searchClassification" class="form-control"
+                        placeholder="Pesquisar por nome, números..." value="{{ request('searchClassification') }}">
                     <button class="btn btn-primary" type="submit"><i class="bx bx-search me-1"></i>Buscar</button>
                 </div>
             </div>
             <div class="col-md-8">
                 <!-- Grid de Dezenas Sorteadas - Compacto -->
                 <div class="numbers-grid-compact">
-                    <div class="grid-title-compact text-primary fw-bold"><i class="bx bx-target-lock me-1"></i>Dezenas Sorteadas</div>
+                    <div class="grid-title-compact text-primary fw-bold"><i class="bx bx-target-lock me-1"></i>Dezenas
+                        Sorteadas</div>
                     <div class="numbers-grid">
-                        @for($i = 0; $i <= 99; $i++)
+                        @for ($i = 0; $i <= 99; $i++)
                             @php
                                 $paddedNumber = str_pad($i, 2, '0', STR_PAD_LEFT);
                                 $isDrawn = false;
-                                
+
                                 // Usar os números únicos do jogo (números sorteados)
-                                if(isset($uniqueNumbers) && !empty($uniqueNumbers)) {
+                                if (isset($uniqueNumbers) && !empty($uniqueNumbers)) {
                                     $isDrawn = in_array($i, $uniqueNumbers);
                                 }
                             @endphp
@@ -433,7 +435,7 @@
                 </div>
             </div>
 
-  
+
         </div>
     </form>
 
@@ -516,20 +518,25 @@
                 <tbody class="table-border-bottom-0">
                     @if ($classifications->isEmpty())
                         <tr>
-                            <td colspan="4" class="text-center text-muted">Não há apostas para esse jogo com os filtros especificados.</td>
+                            <td colspan="4" class="text-center text-muted">Não há apostas para esse jogo com os
+                                filtros especificados.</td>
                         </tr>
                     @else
                         @foreach ($classifications as $index => $classification)
                             <tr>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-bold text-primary">{{ Str::limit($classification->gambler_name, 20) }}</span>
+                                        <span
+                                            class="fw-bold text-primary">{{ Str::limit($classification->gambler_name, 20) }}</span>
                                         @if (in_array($classification->seller->role->level_id, ['seller']))
-                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: {{ Str::limit($classification->seller->name, 20) }}</small>
+                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor:
+                                                {{ Str::limit($classification->seller->name, 20) }}</small>
                                         @else
-                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: Banca Central</small>
+                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: Banca
+                                                Central</small>
                                         @endif
-                                        <small class="text-muted" style="font-size: 0.5rem;">Ticket: {{ $classification->identifier }}</small>
+                                        <small class="text-muted" style="font-size: 0.5rem;">Ticket:
+                                            {{ $classification->identifier }}</small>
                                     </div>
                                 </td>
                                 <td>
@@ -541,7 +548,9 @@
                                         @foreach ($displayNumbers as $number)
                                             @php
                                                 $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
-                                                $isHit = in_array($number, $matchedNumbers) && $classification->status == 'PAID';
+                                                $isHit =
+                                                    in_array($number, $matchedNumbers) &&
+                                                    $classification->status == 'PAID';
                                             @endphp
                                             <div class="classification-number-ball {{ $isHit ? 'hit' : 'miss' }}">
                                                 {{ $paddedNumber }}
@@ -550,7 +559,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($classification->status == 'PAID')
+                                    @if ($classification->status == 'PAID')
                                         @php
                                             $badgeColor = 'secondary';
                                             $top1 = $top3Points[0] ?? 0;
@@ -565,7 +574,6 @@
                                                 $badgeColor = 'secondary';
                                             }
 
-
                                         @endphp
 
                                         <span class="badge bg-{{ $badgeColor }} fw-bold fs-6">
@@ -576,9 +584,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-outline-info" 
-                                            onclick="openClassificationModal('{{ $classification->id }}')"
-                                            title="Ver detalhes">
+                                    <button type="button" class="btn btn-sm btn-outline-info"
+                                        onclick="openClassificationModal('{{ $classification->id }}')"
+                                        title="Ver detalhes">
                                         <i class="bx bx-info-circle"></i>
                                     </button>
                                 </td>
@@ -587,7 +595,7 @@
                     @endif
                 </tbody>
             </table>
-            
+
             <!-- Controles de paginação -->
             <div class="d-flex justify-content-center mt-4">
                 {{ $classifications->appends(request()->all())->links('pagination.custom') }}
@@ -596,7 +604,8 @@
     </div>
 
     <!-- Modal de Detalhes -->
-    <div class="modal fade" id="classificationModal" tabindex="-1" aria-labelledby="classificationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="classificationModal" tabindex="-1" aria-labelledby="classificationModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -636,7 +645,7 @@
                 // Buscar a linha que contém o ID específico
                 const tableRows = document.querySelectorAll('tbody tr');
                 let targetRow = null;
-                
+
                 // Procurar pela linha que contém o botão com o ID específico
                 for (let row of tableRows) {
                     const button = row.querySelector('button[onclick*="' + classificationId + '"]');
@@ -645,42 +654,42 @@
                         break;
                     }
                 }
-                
+
                 if (!targetRow) {
                     console.error('Linha não encontrada para o ID:', classificationId);
                     alert('Erro: Linha não encontrada');
                     return;
                 }
-                
+
                 // Extrair dados da linha da tabela
                 const cells = targetRow.querySelectorAll('td');
-                
+
                 if (cells.length < 4) {
                     console.error('Número insuficiente de células:', cells.length);
                     alert('Erro: Dados da linha incompletos');
                     return;
                 }
-                
+
                 // Extrair dados com verificações de segurança
                 // Agora a primeira célula é participantes (com ticket dentro)
                 const gamblerElement = cells[0] ? cells[0].querySelector('.fw-bold') : null;
                 const gamblerName = gamblerElement ? gamblerElement.textContent.trim() : 'N/A';
-                
+
                 // Extrair ticket da primeira célula (participantes)
                 const ticketElement = cells[0] ? cells[0].querySelector('small[style*="font-size: 0.5rem"]') : null;
                 const ticket = ticketElement ? ticketElement.textContent.replace('Ticket: ', '').trim() : 'N/A';
-                
+
                 // Extrair números da segunda célula
                 const numbersContainer = cells[1] ? cells[1].querySelector('.classification-numbers-container') : null;
-                
+
                 // Extrair pontos da terceira célula
                 const points = cells[2] ? cells[2].textContent.trim() : '0';
-                
+
                 // Status não existe mais, vamos determinar baseado nos pontos
                 const status = points === '-' ? 'Pendente' : 'Pago';
                 const numbers = [];
                 const matchedNumbers = [];
-                
+
                 if (numbersContainer) {
                     const numberBalls = numbersContainer.querySelectorAll('.classification-number-ball');
                     numberBalls.forEach(ball => {
@@ -691,7 +700,7 @@
                         }
                     });
                 }
-                
+
                 // Debug: verificar dados extraídos
                 console.log('Dados extraídos para ID:', classificationId, {
                     ticket,
@@ -701,7 +710,7 @@
                     numbers,
                     matchedNumbers
                 });
-                
+
                 // Verificar se os elementos do modal existem
                 const modalTicket = document.getElementById('modal-ticket');
                 const modalGambler = document.getElementById('modal-gambler');
@@ -710,40 +719,41 @@
                 const modalNumbers = document.getElementById('modal-numbers');
                 const modalHits = document.getElementById('modal-hits');
                 const modalMisses = document.getElementById('modal-misses');
-                
-                if (!modalTicket || !modalGambler || !modalPoints || !modalStatus || !modalNumbers || !modalHits || !modalMisses) {
+
+                if (!modalTicket || !modalGambler || !modalPoints || !modalStatus || !modalNumbers || !modalHits || !
+                    modalMisses) {
                     console.error('Elementos do modal não encontrados');
                     alert('Erro: Elementos do modal não encontrados');
                     return;
                 }
-                
+
                 // Preencher informações básicas
                 modalTicket.textContent = ticket;
                 modalGambler.textContent = gamblerName;
                 modalPoints.textContent = points === '-' ? '-' : points;
                 modalStatus.textContent = status;
-                
+
                 // Números
                 modalNumbers.innerHTML = '';
-                
+
                 if (numbers.length > 0) {
                     numbers.forEach(number => {
                         // Verificar se o número está na lista de números acertados
                         const isHit = matchedNumbers.includes(parseInt(number)) && status !== 'Pendente';
-                        
+
                         const numberBall = document.createElement('div');
                         numberBall.className = `classification-number-ball ${isHit ? 'hit' : 'miss'}`;
                         numberBall.textContent = number;
                         modalNumbers.appendChild(numberBall);
                     });
                 }
-                
+
                 // Estatísticas
                 const hits = points === '-' ? 0 : parseInt(points) || 0;
                 const misses = 11 - hits;
                 modalHits.textContent = hits;
                 modalMisses.textContent = misses;
-                
+
                 // Mostrar modal
                 const modalElement = document.getElementById('classificationModal');
                 if (modalElement) {
@@ -753,7 +763,7 @@
                     console.error('Modal não encontrado');
                     alert('Erro: Modal não encontrado');
                 }
-                
+
             } catch (error) {
                 console.error('Erro ao abrir modal:', error);
                 alert('Erro ao abrir detalhes: ' + error.message);

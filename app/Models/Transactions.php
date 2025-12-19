@@ -19,7 +19,8 @@ class Transactions extends Model
     "user_id",
     "game_id",
     "purchase_id",
-  ];
+    "user_award_id",
+  ];  
 
 
   protected $with = [
