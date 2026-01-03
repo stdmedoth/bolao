@@ -7,6 +7,7 @@ use App\Models\Purchase;
 use App\Models\ReferEarn;
 use App\Models\Transactions;
 use App\Models\User;
+use App\Services\ReferEarnService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -84,76 +85,108 @@ class PurchaseController extends Controller
       return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta já estava paga!');
     }
 
-    $user = User::find($purchase->user_id);
-
     $role_level_id = Auth::user()->role->level_id;
+    $isAdmin = $role_level_id == 'admin';
 
-    if (!in_array($role_level_id, ['admin'])) {
-
-      if ($role_level_id == 'seller' && ($purchase->user_id !== Auth::user()->id)) {
-        $user = User::find(Auth::user()->id);
+    // Determina quem criou a aposta e de quem deve ser debitado o saldo
+    // Regra: Sempre debita de quem criou a aposta (purchase->user_id)
+    // Se o criador for admin, debita do vendedor vinculado (purchase->seller_id)
+    $creatorUser = User::find($purchase->user_id);
+    $creatorRole = $creatorUser->role->level_id;
+    
+    // Se quem criou foi admin, debita do vendedor vinculado
+    if ($creatorRole == 'admin') {
+      $sellerId = $purchase->seller_id;
+      if (!$sellerId) {
+        return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))
+          ->withErrors(['error' => "Não é possível pagar: a compra não possui vendedor vinculado."]);
       }
-
-      if ($user->game_credit < $purchase->price) {
+      $creatorUser = User::find($sellerId);
+      $creatorRole = $creatorUser->role->level_id;
+    }
+    
+    // Calcula o valor a ser debitado
+    // Sempre debita o valor completo do jogo
+    $amountToPay = $purchase->price;
+    
+    // Verifica saldo e debita
+    if ($creatorUser->game_credit < $amountToPay) {
+      if ($isAdmin) {
+        return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))
+          ->withErrors(['error' => "O usuário responsável não tem crédito suficiente para realizar a operação"]);
+      } else {
         return redirect()->route('transactions.deposito')
-          ->with('amount', $purchase->price)
+          ->with('amount', $amountToPay)
           ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
-
-
-      $user->game_credit -= $purchase->price;
-      $user->save();
-
-      // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha indicação apenas na PRIMEIRA compra
-      if ($role_level_id == 'gambler') {
-        if ($user->invited_by_id) {
-          // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
-          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
-            ->where('status', 'PAID')
-            ->exists();
-          
-          // Se NÃO tem compras pagas anteriores, esta é a primeira
-          if (!$has_previous_paid_purchases) {
-            $refer = ReferEarn::where(
-              'refer_user_id',
-              $user->invited_by_id
-            )->where(
-              'invited_user_id',
-              $user->id
-            )->where(
-              'earn_paid',
-              FALSE
-            )->first();
-            if ($refer) {
-              $refer->invited_user_bought = TRUE;
-              $refer->save();
-            }
+    }
+    
+    $creatorUser->game_credit -= $amountToPay;
+    $creatorUser->save();
+    
+    // Se quem criou foi apostador, verifica indicação (apenas na primeira compra paga)
+    if ($creatorRole == 'gambler') {
+      if ($creatorUser->invited_by_id) {
+        $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
+          ->where('status', 'PAID')
+          ->exists();
+        
+        if (!$has_previous_paid_purchases) {
+          $refer = ReferEarn::where(
+            'refer_user_id',
+            $creatorUser->invited_by_id
+          )->where(
+            'invited_user_id',
+            $creatorUser->id
+          )->where(
+            'earn_paid',
+            FALSE
+          )->first();
+          if ($refer) {
+            $refer->invited_user_bought = TRUE;
+            $refer->save();
+            // Pagamento automático do ReferEarn
+            ReferEarnService::payAutomatically($refer);
           }
         }
+      }
+    }
 
-        // Se estiver sendo pago pelo apostador, o vendedor que convidou o apostador ganha uma porcentagem em cima da venda
-        if ($user->seller_id) {
-          $seller = User::find($user->seller_id);
-          $comission = $purchase->price * $seller->comission_percent;
-          $purchase->load('game');
-          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-            'purchase' => $purchase,
-            'seller' => $seller,
-            'user' => $seller,
-          ]);
-          Transactions::create(
-            [
-              "type" => 'PAY_PURCHASE_COMISSION',
-              "game_id" => $purchase->game_id,
-              "purchase_id" => $purchase->id,
-              "amount" => $comission,
-              "user_id" => $user->seller_id,
-              "description" => $description,
-            ]
-          );
-          $seller->game_credit = $seller->game_credit + $comission;
-          $seller->save();
-        }
+    // Paga comissão ao vendedor vinculado
+    // Regra: Vendedor sempre recebe comissão quando a aposta é paga, se houver vendedor vinculado
+    $purchase->load('game');
+    $payingUser = Auth::user();
+    $sellerId = $purchase->seller_id;
+    
+    // Determina se o vendedor deve receber comissão
+    $shouldPayCommission = false;
+    if ($sellerId) {
+      // Sempre paga comissão quando há vendedor vinculado
+      $shouldPayCommission = true;
+    }
+    
+    // Paga comissão ao vendedor vinculado
+    if ($shouldPayCommission) {
+      $seller = User::find($sellerId);
+      if ($seller) {
+        $comission = $purchase->price * $seller->comission_percent;
+        $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+          'purchase' => $purchase,
+          'seller' => $seller,
+          'user' => $seller,
+        ]);
+        Transactions::create(
+          [
+            "type" => 'PAY_PURCHASE_COMISSION',
+            "game_id" => $purchase->game_id,
+            "purchase_id" => $purchase->id,
+            "amount" => $comission,
+            "user_id" => $sellerId,
+            "description" => $description,
+          ]
+        );
+        $seller->game_credit = $seller->game_credit + $comission;
+        $seller->save();
       }
     }
 
@@ -177,28 +210,6 @@ class PurchaseController extends Controller
       ]
     );
 
-    if ($role_level_id == 'seller') {
-      $comission = $purchase->price * $user->comission_percent;
-      $purchase->load('game');
-      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-        'purchase' => $purchase,
-        'seller' => $user,
-        'user' => $user,
-      ]);
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE_COMISSION',
-          "game_id" => $purchase->game_id,
-          "purchase_id" => $purchase->id,
-          "amount" => $comission,
-          "user_id" => $user->id,
-          "description" => $description,
-        ]
-      );
-      $user->game_credit = $user->game_credit + $comission;
-      $user->save();
-    }
-
     return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta paga com sucesso!');
   }
 
@@ -213,42 +224,70 @@ class PurchaseController extends Controller
       return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta já estava pendente!');
     }
 
-    $user = User::find($purchase->paid_by_user_id);
+    // Determina quem realmente teve o saldo debitado (criador ou vendedor se criador for admin)
+    // Mesma lógica usada no método pay()
+    $creatorUser = User::find($purchase->user_id);
+    $creatorRole = $creatorUser->role->level_id;
+    
+    // Se quem criou foi admin, o saldo foi debitado do vendedor vinculado
+    if ($creatorRole == 'admin') {
+      $sellerId = $purchase->seller_id;
+      if (!$sellerId) {
+        return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))
+          ->withErrors(['error' => "Não é possível estornar: a compra não possui vendedor vinculado."]);
+      }
+      $creatorUser = User::find($sellerId);
+      $creatorRole = $creatorUser->role->level_id;
+    }
+    
+    // Calcula o valor a ser estornado (sempre o valor completo do jogo)
+    $amountToRefund = $purchase->price;
 
-    $role_level_id = $user->role->level_id;
+    // Estorna o saldo para quem realmente teve o saldo debitado
+    $creatorUser->game_credit += $amountToRefund;
+    $creatorUser->save();
 
-    if (!in_array($role_level_id, ['admin'])) {
-
-      $user->game_credit += $purchase->price;
-      $user->save();
-
-      // Se estiver sendo cancelado pelo apostador, remove indicação apenas se esta era a primeira compra
-      if (in_array($role_level_id, ['gambler'])) {
-        // Verifica se esta é a primeira compra paga do apostador (ANTES de marcar como PENDING)
-        $purchase_qnt = Purchase::where('user_id', $user->id)
-          ->where('status', 'PAID')
-          ->count();
-        
-        // Se esta é a primeira compra (count = 1), remove a indicação
-        if ($purchase_qnt == 1 && $user->invited_by_id) {
-          $refer = ReferEarn::where(
-            'refer_user_id',
-            $user->invited_by_id
-          )->where(
-            'invited_user_id',
-            $user->id
-          )->where(
-            'earn_paid',
-            FALSE
-          )->first();
-          if ($refer) {
-            $refer->invited_user_bought = FALSE;
-            $refer->save();
+    // Se quem criou foi apostador, remove indicação apenas se esta era a primeira compra
+    if ($creatorRole == 'gambler') {
+      // Verifica se esta é a primeira compra paga do apostador (ANTES de marcar como PENDING)
+      $purchase_qnt = Purchase::where('user_id', $creatorUser->id)
+        ->where('status', 'PAID')
+        ->count();
+      
+      // Se esta é a primeira compra (count = 1), remove a indicação
+      if ($purchase_qnt == 1 && $creatorUser->invited_by_id) {
+        $refer = ReferEarn::where(
+          'refer_user_id',
+          $creatorUser->invited_by_id
+        )->where(
+          'invited_user_id',
+          $creatorUser->id
+        )->where(
+          'earn_paid',
+          FALSE
+        )->first();
+        if ($refer) {
+          // Verifica se já foi pago antes de estornar
+          $wasPaid = $refer->earn_paid;
+          $refer->invited_user_bought = FALSE;
+          $refer->save();
+          // Estorno automático do ReferEarn se já estava pago
+          if ($wasPaid) {
+            ReferEarnService::refundAutomatically($refer);
           }
         }
+      }
+    }
 
-        if ($user->seller_id) {
-          $seller = User::find($user->seller_id);
+    // Estorna comissão do vendedor vinculado se foi paga
+    $sellerId = $purchase->seller_id;
+    if ($sellerId) {
+      // Sempre estorna comissão quando há vendedor vinculado (agora sempre recebe comissão)
+      $shouldRefundCommission = true;
+      
+      if ($shouldRefundCommission) {
+        $seller = User::find($sellerId);
+        if ($seller) {
           $comission = $purchase->price * $seller->comission_percent;
           $purchase->load('game');
           $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION_WITHDRAWAL', $comission, [
@@ -261,7 +300,7 @@ class PurchaseController extends Controller
               "game_id" => $purchase->game_id,
               "purchase_id" => $purchase->id,
               "amount" => $comission,
-              "user_id" => $user->seller_id,
+              "user_id" => $sellerId,
               "description" => $description,
             ]
           );
@@ -272,43 +311,21 @@ class PurchaseController extends Controller
     }
 
     $purchase->status = "PENDING";
-
     $purchase->paid_by_user_id = NULL;
     $purchase->save();
 
-    if (in_array($role_level_id, ['seller'])) {
-      $comission = $purchase->price * $user->comission_percent;
-      $purchase->load('game');
-      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION_WITHDRAWAL', $comission, [
-        'purchase' => $purchase,
-        'user' => $user,
-      ]);
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE_COMISSION_WITHDRAWAL',
-          "game_id" => $purchase->game_id,
-          "purchase_id" => $purchase->id,
-          "amount" => $comission,
-          "user_id" => $user->id,
-          "description" => $description,
-        ]
-      );
-      $user->game_credit = $user->game_credit - $comission;
-      $user->save();
-    }
-
     $purchase->load(['game', 'paid_by_user']);
-    $description = Transactions::generateDescription('PAY_PURCHASE_WITHDRAWAL', $purchase->price, [
+    $description = Transactions::generateDescription('PAY_PURCHASE_WITHDRAWAL', $amountToRefund, [
       'purchase' => $purchase,
-      'user' => $user,
+      'user' => $creatorUser,
     ]);
     Transactions::create(
       [
         "type" => 'PAY_PURCHASE_WITHDRAWAL',
         "game_id" => $purchase->game_id,
         "purchase_id" => $purchase->id,
-        "amount" => $purchase->price,
-        "user_id" => $user->id,
+        "amount" => $amountToRefund,
+        "user_id" => $creatorUser->id,
         "description" => $description,
       ]
     );
@@ -363,66 +380,49 @@ class PurchaseController extends Controller
 
     //$quantity = count($array);
 
-    $user = User::find($request->user_id);
+    $gamblerUser = User::find($request->user_id);
     $role_level_id = Auth::user()->role->level_id;
+    $isAdmin = $role_level_id == 'admin';
 
-    // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
+    // Quando seller paga, usa o seller como pagador, senão usa o apostador
+    $payingUser = $gamblerUser;
     if ($role_level_id == 'seller') {
-      $price = $purchase->price - $purchase->price * $user->comission_percent;
+      $payingUser = Auth::user();
     }
 
-
+    // Calcula o preço base do jogo
     $quantity = 1;
     $game = Game::find($request->game_id);
-    $price = $game->price * $quantity;
+    $basePrice = $game->price * $quantity;
 
+    // Define o preço da compra (sempre o preço completo do jogo)
     $purchase->quantity = $quantity;
-    $purchase->price = $price;
-
+    $purchase->price = $basePrice;
     $purchase->round = $game->round;
 
     // Salvando a compra no banco de dados
     $purchase->save();
 
-    if (!in_array($role_level_id, ['admin'])) {
-      if ($user->game_credit < $price) {
+    // Processa débito de crédito
+    if (!$isAdmin) {
+      // Lógica para não-admin
+      // Calcula o valor a ser debitado do usuário (sempre o valor completo)
+      $amountToPay = $basePrice;
+
+      if ($payingUser->game_credit < $amountToPay) {
         return redirect()->back()->with(['success' => 'Compra realizada com sucesso! Aguardando pagamento...', 'tab' => 'tab-mybets']);
       }
 
-      $user->game_credit -= $price;
-      $user->save();
+      $payingUser->game_credit -= $amountToPay;
+      $payingUser->save();
 
-      // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
+      // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha indicação apenas na PRIMEIRA compra
       if ($role_level_id == 'gambler') {
-        // Usa o seller_id do request (enviado pelo formulário) ou do usuário
-        $sellerId = $request->seller_id ?? $user->seller_id;
-        if ($sellerId) {
-          $seller = User::find($sellerId);
-          $comission = $purchase->price * $seller->comission_percent;
-          $purchase->load('game');
-          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-            'purchase' => $purchase,
-            'seller' => $seller,
-            'user' => $seller,
-          ]);
-          Transactions::create(
-            [
-              "type" => 'PAY_PURCHASE_COMISSION',
-              "game_id" => $purchase->game_id,
-              "purchase_id" => $purchase->id,
-              "amount" => $comission,
-              "user_id" => $sellerId,
-              "description" => $description,
-            ]
-          );
-          $seller->game_credit = $seller->game_credit + $comission;
-          $seller->save();
-        }
-
         // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
-        if ($user->invited_by_id && $purchase->price >= 10.00) {
+        if ($gamblerUser->invited_by_id && $purchase->price >= 10.00) {
+
           // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
-          $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
+          $has_previous_paid_purchases = Purchase::where('user_id', $gamblerUser->id)
             ->where('status', 'PAID')
             ->exists();
           
@@ -430,10 +430,10 @@ class PurchaseController extends Controller
           if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
               'refer_user_id',
-              $user->invited_by_id
+              $gamblerUser->invited_by_id
             )->where(
               'invited_user_id',
-              $user->id
+              $gamblerUser->id
             )->where(
               'earn_paid',
               FALSE
@@ -441,37 +441,111 @@ class PurchaseController extends Controller
             if ($refer) {
               $refer->invited_user_bought = TRUE;
               $refer->save();
+              // Pagamento automático do ReferEarn
+              ReferEarnService::payAutomatically($refer);
             }
           }
         }
       }
+    } else {
+      // NOVA LÓGICA: Quando admin cria, debita de quem está criando a compra (user_id do request)
+      // Se quem criou foi admin, debita do vendedor do jogo
+      $creatorUser = User::find($request->user_id);
+      $creatorRole = $creatorUser->role->level_id;
+      
+      // Se quem criou foi admin, debita do vendedor
+      if ($creatorRole == 'admin') {
+        $sellerId = $request->seller_id ?? $purchase->seller_id;
+        if (!$sellerId) {
+          return redirect()->back()->withErrors(['error' => "Não é possível criar a compra: não foi informado o vendedor vinculado."]);
+        }
+        $creatorUser = User::find($sellerId);
+        $creatorRole = $creatorUser->role->level_id;
+      }
+      
+      // Calcula o valor a ser debitado (sempre o valor completo)
+      $amountToPay = $basePrice;
+      
+      // Verifica saldo e debita
+      if ($creatorUser->game_credit < $amountToPay) {
+        return redirect()->back()->withErrors(['error' => "O usuário responsável não tem crédito suficiente para realizar a operação"]);
+      }
+      
+      $creatorUser->game_credit -= $amountToPay;
+      $creatorUser->save();
+      
+      // Se quem criou foi apostador, verifica indicação
+      if ($creatorRole == 'gambler') {
+        if ($creatorUser->invited_by_id && $purchase->price >= 10.00) {
+          $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
+            ->where('status', 'PAID')
+            ->exists();
+          
+          if (!$has_previous_paid_purchases) {
+            $refer = ReferEarn::where(
+              'refer_user_id',
+              $creatorUser->invited_by_id
+            )->where(
+              'invited_user_id',
+              $creatorUser->id
+            )->where(
+              'earn_paid',
+              FALSE
+            )->first();
+            if ($refer) {
+              $refer->invited_user_bought = TRUE;
+              $refer->save();
+              // Pagamento automático do ReferEarn
+              ReferEarnService::payAutomatically($refer);
+            }
+          }
+        }
+      }
+      
+      // Quando admin cria, o pagador é quem criou a compra (ou vendedor se admin)
+      $payingUser = $creatorUser;
+    }
+
+    // Paga comissão ao vendedor vinculado
+    // Regra: Vendedor sempre recebe comissão quando a aposta é paga, se houver vendedor vinculado
+    $sellerId = $request->seller_id ?? $purchase->seller_id;
+    
+    // Determina se o vendedor deve receber comissão
+    $shouldPayCommission = false;
+    if ($sellerId) {
+      // Sempre paga comissão quando há vendedor vinculado
+      $shouldPayCommission = true;
+    }
+    
+    // Paga comissão ao vendedor vinculado
+    if ($shouldPayCommission) {
+      $seller = User::find($sellerId);
+      if ($seller) {
+        $comission = $purchase->price * $seller->comission_percent;
+        $purchase->load('game');
+        $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+          'purchase' => $purchase,
+          'seller' => $seller,
+          'user' => $seller,
+        ]);
+        Transactions::create(
+          [
+            "type" => 'PAY_PURCHASE_COMISSION',
+            "game_id" => $purchase->game_id,
+            "purchase_id" => $purchase->id,
+            "amount" => $comission,
+            "user_id" => $sellerId,
+            "description" => $description,
+          ]
+        );
+        $seller->game_credit = $seller->game_credit + $comission;
+        $seller->save();
+      }
     }
 
     $purchase->status = "PAID";
-    $purchase->paid_by_user_id = $user->id;
+    $purchase->paid_by_user_id = $payingUser->id;
     $purchase->save();
-
-    if ($role_level_id == 'seller') {
-      $comission = $purchase->price * $user->comission_percent;
-      $purchase->load('game');
-      $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-        'purchase' => $purchase,
-        'seller' => $user,
-        'user' => $user,
-      ]);
-      Transactions::create(
-        [
-          "type" => 'PAY_PURCHASE_COMISSION',
-          "game_id" => $purchase->game_id,
-          "purchase_id" => $purchase->id,
-          "amount" => $comission,
-          "user_id" => $user->id,
-          "description" => $description,
-        ]
-      );
-      $user->game_credit = $user->game_credit + $comission;
-      $user->save();
-    }
 
     $purchase->load(['game', 'paid_by_user']);
     $description = Transactions::generateDescription('PAY_PURCHASE', $purchase->price, [
@@ -591,60 +665,46 @@ class PurchaseController extends Controller
         $newPurchase->repeated_from_purchase_id = $old_purchase->id; // Marca que foi criada por repetição (para rastreamento)
         $newPurchase->numbers = $normalizedNumbers; // Garante que os números estejam normalizados
 
-        // Se estiver sendo pago pelo vendedor, a compra fica mais barata, o apostador paga menos credito
-        if ($role_level_id == 'seller') {
-          $price = $old_purchase->price - $old_purchase->price * $user->comission_percent;
-        }
-
+        // Calcula o preço base do jogo
         $quantity = 1;
         $game = Game::find($request->repeat_game_id);
-        $price = $game->price * $quantity;
+        $basePrice = $game->price * $quantity;
 
+        // Define o preço da compra (sempre o preço completo do jogo)
+        // Quando admin repete, mantém o user_id da compra original
+        // Quando não-admin repete, usa o user_id de quem está repetindo
         $newPurchase->quantity = $quantity;
-        $newPurchase->user_id = $user->id;
-        $newPurchase->price = $price;
+        if ($role_level_id == 'admin') {
+          $newPurchase->user_id = $old_purchase->user_id;
+        } else {
+          $newPurchase->user_id = $user->id;
+        }
+        $newPurchase->price = $basePrice;
 
         // Salvando a compra no banco de dados
         $newPurchase->save();
 
-        if (!in_array($role_level_id, ['admin'])) {
-          if ($user->game_credit < $price) {
+        $isAdmin = $role_level_id == 'admin';
+
+        // Processa débito de crédito
+        if (!$isAdmin) {
+          // Lógica para não-admin
+          // Calcula o valor a ser debitado do usuário (sempre o valor completo)
+          $amountToPay = $basePrice;
+
+          if ($user->game_credit < $amountToPay) {
             $failed_count++;
             continue;
           }
 
-          $user->game_credit -= $price;
+          $user->game_credit -= $amountToPay;
           $user->save();
-          $total_price += $price;
+          $total_price += $amountToPay;
 
-          // Se estiver sendo pago pelo apostador, o vendedor vinculado ganha comissão em TODA compra
+          // Se estiver sendo pago pelo apostador, o usuario que convidou o apostador ganha indicação apenas na PRIMEIRA compra
           if ($role_level_id == 'gambler') {
-            if ($user->seller_id) {
-              $seller = User::find($user->seller_id);
-
-              $comission = $newPurchase->price * $seller->comission_percent;
-              $newPurchase->load('game');
-              $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-                'purchase' => $newPurchase,
-                'seller' => $seller,
-                'user' => $seller,
-              ]);
-              Transactions::create(
-                [
-                  "type" => 'PAY_PURCHASE_COMISSION',
-                  "game_id" => $newPurchase->game_id,
-                  "purchase_id" => $newPurchase->id,
-                  "amount" => $comission,
-                  "user_id" => $user->seller_id,
-                  "description" => $description,
-                ]
-              );
-              $seller->game_credit = $seller->game_credit + $comission;
-              $seller->save();
-            }
-
             // Adiciona o bonus de indicação apenas na PRIMEIRA compra com valor mínimo
-            if ($user->invited_by_id && $price >= 10.00) {
+            if ($user->invited_by_id && $basePrice >= 10.00) {
               // Verifica se é a primeira compra paga do apostador (ANTES de marcar como PAID)
               $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
                 ->where('status', 'PAID')
@@ -665,36 +725,115 @@ class PurchaseController extends Controller
                 if ($refer) {
                   $refer->invited_user_bought = TRUE;
                   $refer->save();
+                  // Pagamento automático do ReferEarn
+                  ReferEarnService::payAutomatically($refer);
                 }
               }
             }
           }
+          
+          $newPurchase->status = "PAID";
+          $newPurchase->paid_by_user_id = $user->id;
+        } else {
+          // NOVA LÓGICA: Quando admin repete, debita de quem está repetindo (user_id da nova compra)
+          // Se quem criou foi admin, debita do vendedor do jogo
+          $creatorUser = User::find($newPurchase->user_id);
+          $creatorRole = $creatorUser->role->level_id;
+          
+          // Se quem criou foi admin, debita do vendedor
+          if ($creatorRole == 'admin') {
+            $sellerId = $newPurchase->seller_id;
+            if (!$sellerId) {
+              $failed_count++;
+              continue;
+            }
+            $creatorUser = User::find($sellerId);
+            $creatorRole = $creatorUser->role->level_id;
+          }
+          
+          // Calcula o valor a ser debitado (sempre o valor completo)
+          $amountToPay = $basePrice;
+          
+          // Verifica saldo e debita
+          if ($creatorUser->game_credit < $amountToPay) {
+            $failed_count++;
+            continue;
+          }
+          
+          $creatorUser->game_credit -= $amountToPay;
+          $creatorUser->save();
+          $total_price += $amountToPay;
+          
+          // Se quem criou foi apostador, verifica indicação
+          if ($creatorRole == 'gambler') {
+            if ($creatorUser->invited_by_id && $basePrice >= 10.00) {
+              $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
+                ->where('status', 'PAID')
+                ->exists();
+              
+              if (!$has_previous_paid_purchases) {
+                $refer = ReferEarn::where(
+                  'refer_user_id',
+                  $creatorUser->invited_by_id
+                )->where(
+                  'invited_user_id',
+                  $creatorUser->id
+                )->where(
+                  'earn_paid',
+                  FALSE
+                )->first();
+                if ($refer) {
+                  $refer->invited_user_bought = TRUE;
+                  $refer->save();
+                  // Pagamento automático do ReferEarn
+                  ReferEarnService::payAutomatically($refer);
+                }
+              }
+            }
+          }
+          
+          // Quando admin repete, o pagador é quem criou a nova compra (ou vendedor se admin)
+          $newPurchase->status = "PAID";
+          $newPurchase->paid_by_user_id = $creatorUser->id;
         }
-
-        $newPurchase->status = "PAID";
-        $newPurchase->paid_by_user_id = $user->id;
+        
         $newPurchase->save();
 
-        if ($role_level_id == 'seller') {
-          $comission = $newPurchase->price * $user->comission_percent;
-          $newPurchase->load('game');
-          $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
-            'purchase' => $newPurchase,
-            'seller' => $user,
-            'user' => $user,
-          ]);
-          Transactions::create(
-            [
-              "type" => 'PAY_PURCHASE_COMISSION',
-              "game_id" => $newPurchase->game_id,
-              "purchase_id" => $newPurchase->id,
-              "amount" => $comission,
-              "user_id" => $user->id,
-              "description" => $description,
-            ]
-          );
-          $user->game_credit = $user->game_credit + $comission;
-          $user->save();
+        // Paga comissão ao vendedor vinculado
+        // Regra: Vendedor sempre recebe comissão quando a aposta é paga, se houver vendedor vinculado
+        $sellerId = $newPurchase->seller_id;
+        
+        // Determina se o vendedor deve receber comissão
+        $shouldPayCommission = false;
+        if ($sellerId) {
+          // Sempre paga comissão quando há vendedor vinculado
+          $shouldPayCommission = true;
+        }
+        
+        // Paga comissão ao vendedor vinculado
+        if ($shouldPayCommission) {
+          $seller = User::find($sellerId);
+          if ($seller) {
+            $comission = $newPurchase->price * $seller->comission_percent;
+            $newPurchase->load('game');
+            $description = Transactions::generateDescription('PAY_PURCHASE_COMISSION', $comission, [
+              'purchase' => $newPurchase,
+              'seller' => $seller,
+              'user' => $seller,
+            ]);
+            Transactions::create(
+              [
+                "type" => 'PAY_PURCHASE_COMISSION',
+                "game_id" => $newPurchase->game_id,
+                "purchase_id" => $newPurchase->id,
+                "amount" => $comission,
+                "user_id" => $sellerId,
+                "description" => $description,
+              ]
+            );
+            $seller->game_credit = $seller->game_credit + $comission;
+            $seller->save();
+          }
         }
 
         $newPurchase->load(['game', 'paid_by_user']);

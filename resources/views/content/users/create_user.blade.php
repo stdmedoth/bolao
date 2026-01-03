@@ -26,6 +26,7 @@
             </div>
         @endif
 
+
         <!-- Exibição da mensagem de erro geral -->
         @if ($errors->has('error'))
             <div class="alert alert-danger">
@@ -151,7 +152,7 @@
                     <select class="form-control" name="active_refer_earn">
                         <option value="1" {{ old('active_refer_earn') == 1 ? 'selected' : '' }}>Sim</option>
                         <option value="0" {{ old('active_refer_earn') == 0 ? 'selected' : '' }}>Não</option>
-                        @error('invited_by_id')
+                        @error('active_refer_earn')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </select>
@@ -166,6 +167,10 @@
                             <input type="text" edited="false" class="form-control" id="game_credit" inputmode="numeric"
                                 name="game_credit" placeholder="Digite o valor"
                                 value="{{ session('', old('game_credit')) }}" required>
+
+                            @error('game_credit')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
 
                         <script>
@@ -198,6 +203,10 @@
                             <input type="text" class="form-control" id="game_credit_limit" inputmode="numeric"
                                 name="game_credit_limit" placeholder="Digite o valor"
                                 value="{{ session('game_credit_limit', old('game_credit_limit')) }}">
+
+                            @error('game_credit_limit')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
 
                         <script>
@@ -238,6 +247,9 @@
                     <input type="text" class="form-control" id="comission_percent" inputmode="comission_percent"
                         name="comission_percent" placeholder="Digite o valor"
                         value="{{ session('comission_percent', old('comission_percent')) }}" required>
+                    @error('comission_percent')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
                 </div>
 
                 <script>

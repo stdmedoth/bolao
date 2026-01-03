@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+if (!function_exists('generate_identifier')) {
+    function generate_identifier(): string {
+        $numbers = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $letter = chr(random_int(65, 90));
+        return $numbers . $letter;
+    }
+}
+
 class AwardsAndResultsTest extends TestCase
 {
     use RefreshDatabase;
@@ -31,11 +39,12 @@ class AwardsAndResultsTest extends TestCase
         ]);
         
         // Criar admin
+        $adminRoleId = DB::table('role_users')->where('level_id', 'admin')->value('id');
         User::create([
             'name' => 'Admin',
             'email' => 'admin@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 1,
+            'role_user_id' => $adminRoleId,
             'phone' => '11999999999',
             'game_credit' => 10000,
             'comission_percent' => 0,
@@ -70,17 +79,20 @@ class AwardsAndResultsTest extends TestCase
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11988888888',
             'game_credit' => 100,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
         ]);
 
         // Criar compra com números que vão acertar
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $purchase = Purchase::create([
             'gambler_name' => 'Apostador',
             'gambler_phone' => '11988888888',
@@ -90,9 +102,10 @@ class AwardsAndResultsTest extends TestCase
             'status' => 'PAID',
             'game_id' => $game->id,
             'user_id' => $gambler->id,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
             'round' => 1,
             'paid_by_user_id' => $gambler->id,
+            'identifier' => generate_identifier(),
         ]);
 
         // Adicionar números sorteados (5 acertos)
@@ -101,6 +114,7 @@ class AwardsAndResultsTest extends TestCase
             'type' => 'ADDING_NUMBER',
             'numbers' => '01 02 03 04 05',
             'round' => 1,
+            'description' => 'Números sorteados',
         ]);
 
         // Processar prêmios (simulando o que o AdminController faz)
@@ -148,17 +162,20 @@ class AwardsAndResultsTest extends TestCase
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11977777777',
             'game_credit' => 0,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
         ]);
 
         // Criar compra
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $purchase = Purchase::create([
             'gambler_name' => 'Apostador',
             'gambler_phone' => '11977777777',
@@ -168,9 +185,10 @@ class AwardsAndResultsTest extends TestCase
             'status' => 'PAID',
             'game_id' => $game->id,
             'user_id' => $gambler->id,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
             'round' => 1,
             'paid_by_user_id' => $gambler->id,
+            'identifier' => generate_identifier(),
         ]);
 
         // Criar prêmio
@@ -245,20 +263,23 @@ class AwardsAndResultsTest extends TestCase
         ]);
 
         // Criar 3 apostadores
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $gamblers = [];
         for ($i = 1; $i <= 3; $i++) {
             $gamblers[] = User::create([
                 'name' => "Apostador {$i}",
                 'email' => "apostador{$i}@test.com",
                 'password' => Hash::make('password'),
-                'role_user_id' => 3,
+                'role_user_id' => $gamblerRoleId,
                 'phone' => "1190000000{$i}",
                 'game_credit' => 100,
-                'seller_id' => 1,
+                'seller_id' => $adminId,
             ]);
         }
 
         // Criar 3 compras com os mesmos números (todos vão acertar)
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $purchases = [];
         foreach ($gamblers as $gambler) {
             $purchases[] = Purchase::create([
@@ -270,9 +291,10 @@ class AwardsAndResultsTest extends TestCase
                 'status' => 'PAID',
                 'game_id' => $game->id,
                 'user_id' => $gambler->id,
-                'seller_id' => 1,
+                'seller_id' => $adminId,
                 'round' => 1,
                 'paid_by_user_id' => $gambler->id,
+                'identifier' => generate_identifier(),
             ]);
         }
 
@@ -319,17 +341,20 @@ class AwardsAndResultsTest extends TestCase
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11966666666',
             'game_credit' => 100,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
         ]);
 
         // Criar compra
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $purchase = Purchase::create([
             'gambler_name' => 'Apostador',
             'gambler_phone' => '11966666666',
@@ -339,9 +364,10 @@ class AwardsAndResultsTest extends TestCase
             'status' => 'PAID',
             'game_id' => $game->id,
             'user_id' => $gambler->id,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
             'round' => 1,
             'paid_by_user_id' => $gambler->id,
+            'identifier' => generate_identifier(),
         ]);
 
         // Adicionar números sorteados
@@ -350,6 +376,7 @@ class AwardsAndResultsTest extends TestCase
             'type' => 'ADDING_NUMBER',
             'numbers' => '01 02 03 04 05',
             'round' => 1,
+            'description' => 'Números sorteados',
         ]);
 
         // Calcular pontos

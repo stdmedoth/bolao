@@ -12,6 +12,7 @@ use App\Models\Purchase;
 use App\Models\ReferEarn;
 use App\Models\Transactions;
 use App\Models\UserAwards;
+use App\Services\ReferEarnService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -117,6 +118,20 @@ class AdminController extends Controller
       abort(403, 'Você não tem permissão para criar usuários.');
     }
 
+    $requestData = $request->all();
+    $formatFloatInputs = [
+      'game_credit',
+      'game_credit_limit',
+      'comission_percent'
+    ];
+    foreach ($formatFloatInputs as $formatFloatInput) {
+      if (isset($requestData[$formatFloatInput]) && is_string($requestData[$formatFloatInput])) {
+        $requestData[$formatFloatInput] = str_replace(".", "", $requestData[$formatFloatInput]);
+        $requestData[$formatFloatInput] = str_replace(",", ".", $requestData[$formatFloatInput]);
+      }
+    }
+    $request->merge($requestData);
+
     // Validação dos dados de entrada
     $validatedData = $request->validate([
       'name' => 'required|string|max:255',
@@ -131,30 +146,24 @@ class AdminController extends Controller
       'role_user_id' => 'required|exists:role_users,id',
       'invited_by_id' => 'nullable|exists:users,id',
       'seller_id' => 'nullable|exists:users,id',
+    ], [
+      'name.required' => 'O campo nome é obrigatório.',
+      'name.string' => 'O nome deve ser uma string.',
+      'email.email' => 'O email deve ser um endereço de email válido.',
+      'email.unique' => 'Este email já está em uso.',
+      'document.string' => 'O documento deve ser uma string.',
+      'game_credit.required' => 'O campo crédito do jogo é obrigatório.',
+      'game_credit_limit.string' => 'O limite de crédito do jogo deve ser uma string.',
+      'comission_percent.required' => 'A porcentagem de comissão é obrigatória.',
+      'phone.string' => 'O telefone deve ser uma string.',
+      'role_user_id.exists' => 'O papel do usuário selecionado não existe.',
+      'invited_by_id.exists' => 'O usuário referenciador não existe.',
     ]);
 
-    $formatFloatInputs = [
-      'game_credit',
-      'comission_percent'
-    ];
-    foreach ($formatFloatInputs as $formatFloatInput) {
-      if (isset($validatedData[$formatFloatInput]) && is_string($validatedData[$formatFloatInput])) {
-        $validatedData[$formatFloatInput] = str_replace(".", "", $validatedData[$formatFloatInput]);
-        $validatedData[$formatFloatInput] = str_replace(",", ".", $validatedData[$formatFloatInput]);
-      }
-    }
-
-    // Formata game_credit_limit apenas se estiver presente
-    if (isset($validatedData['game_credit_limit']) && is_string($validatedData['game_credit_limit'])) {
-      $validatedData['game_credit_limit'] = str_replace(".", "", $validatedData['game_credit_limit']);
-      $validatedData['game_credit_limit'] = str_replace(",", ".", $validatedData['game_credit_limit']);
-    }
-
-    $validatedData['game_credit_limit'] = $validatedData['game_credit'];
 
     // Validação customizada para seller_id
-    if (!$this->validateSellerId($validatedData['seller_id'] ?? null)) {
-      return back()->withErrors(['seller_id' => 'O vendedor selecionado não é um vendedor válido.']);
+    if (!$this->validateSellerId($validatedData['invited_by_id'] ?? null)) {
+      return back()->withErrors(['invited_by_id' => 'O vendedor selecionado não é um vendedor válido.']);
     }
 
     try {
@@ -426,7 +435,7 @@ class AdminController extends Controller
     }
 
     $game = Game::findOrFail($id);
-    
+
     $game->status = 'OPENED';
     $game->round = $game->round + 1;
 
@@ -784,7 +793,7 @@ class AdminController extends Controller
 
     // Validação
     $validatedData = $request->validate([
-      "description" => "string|nullable", 
+      "description" => "string|nullable",
       "result_numbers" => "string|nullable",
     ]);
 
@@ -1120,6 +1129,8 @@ class AdminController extends Controller
     if ($referEarn) {
       $referEarn->invited_user_bought = true;
       $referEarn->save();
+      // Pagamento automático do ReferEarn
+      ReferEarnService::payAutomatically($referEarn);
     }
   }
 

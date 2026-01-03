@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+if (!function_exists('generate_identifier')) {
+    function generate_identifier(): string {
+        $numbers = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $letter = chr(random_int(65, 90));
+        return $numbers . $letter;
+    }
+}
+
 class TransactionsSummaryTest extends TestCase
 {
     use RefreshDatabase;
@@ -31,11 +39,12 @@ class TransactionsSummaryTest extends TestCase
         ]);
         
         // Criar admin
+        $adminRoleId = DB::table('role_users')->where('level_id', 'admin')->value('id');
         User::create([
             'name' => 'Admin',
             'email' => 'admin@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 1,
+            'role_user_id' => $adminRoleId,
             'phone' => '11999999999',
             'game_credit' => 10000,
             'comission_percent' => 0,
@@ -48,22 +57,24 @@ class TransactionsSummaryTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
 
         // Criar vendedor
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'phone' => '11988888888',
             'game_credit' => 1000,
             'comission_percent' => 0.15,
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11977777777',
             'game_credit' => 500,
             'seller_id' => $seller->id,
@@ -94,6 +105,7 @@ class TransactionsSummaryTest extends TestCase
             'user_id' => $gambler->id,
             'seller_id' => $seller->id,
             'round' => 1,
+            'identifier' => generate_identifier(),
         ]);
 
         // Pagar compra
@@ -161,22 +173,24 @@ class TransactionsSummaryTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
 
         // Criar vendedor
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'phone' => '11966666666',
             'game_credit' => 0,
             'comission_percent' => 0.1,
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11955555555',
             'game_credit' => 1000,
             'seller_id' => $seller->id,
@@ -208,6 +222,7 @@ class TransactionsSummaryTest extends TestCase
                 'user_id' => $gambler->id,
                 'seller_id' => $seller->id,
                 'round' => 1,
+                'identifier' => generate_identifier(),
             ]);
 
             $this->actingAs($gambler)->get("/purchase/pay/{$purchase->id}");
@@ -236,14 +251,16 @@ class TransactionsSummaryTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11944444444',
             'game_credit' => 500,
-            'seller_id' => 1,
+            'seller_id' => $adminId,
         ]);
 
         // Criar 2 jogos
@@ -270,6 +287,7 @@ class TransactionsSummaryTest extends TestCase
         ]);
 
         // Criar compras em cada jogo
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         for ($i = 1; $i <= 2; $i++) {
             Purchase::create([
                 'gambler_name' => 'Apostador',
@@ -280,8 +298,9 @@ class TransactionsSummaryTest extends TestCase
                 'status' => 'PENDING',
                 'game_id' => $game1->id,
                 'user_id' => $gambler->id,
-                'seller_id' => 1,
+                'seller_id' => $adminId,
                 'round' => 1,
+                'identifier' => generate_identifier(),
             ]);
         }
 
@@ -295,8 +314,9 @@ class TransactionsSummaryTest extends TestCase
                 'status' => 'PENDING',
                 'game_id' => $game2->id,
                 'user_id' => $gambler->id,
-                'seller_id' => 1,
+                'seller_id' => $adminId,
                 'round' => 1,
+                'identifier' => generate_identifier(),
             ]);
         }
 
@@ -332,22 +352,24 @@ class TransactionsSummaryTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
 
         // Criar vendedor
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'phone' => '11933333333',
             'game_credit' => 0,
             'comission_percent' => 0.2,
         ]);
 
         // Criar apostador
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11922222222',
             'game_credit' => 500,
             'seller_id' => $seller->id,
@@ -378,6 +400,7 @@ class TransactionsSummaryTest extends TestCase
                 'user_id' => $gambler->id,
                 'seller_id' => $seller->id,
                 'round' => 1,
+                'identifier' => generate_identifier(),
             ]);
 
             $this->actingAs($gambler)->get("/purchase/pay/{$purchase->id}");
@@ -402,22 +425,24 @@ class TransactionsSummaryTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
 
         // Criar vendedor
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'phone' => '11911111111',
             'game_credit' => 0,
             'comission_percent' => 0.15,
         ]);
 
         // Criar apostador indicado
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $gambler = User::create([
             'name' => 'Apostador',
             'email' => 'apostador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11900000000',
             'game_credit' => 1000,
             'seller_id' => $seller->id,
@@ -457,6 +482,7 @@ class TransactionsSummaryTest extends TestCase
             'user_id' => $gambler->id,
             'seller_id' => $seller->id,
             'round' => 1,
+            'identifier' => generate_identifier(),
         ]);
 
             $this->actingAs($gambler)->get("/purchase/pay/{$purchase->id}");

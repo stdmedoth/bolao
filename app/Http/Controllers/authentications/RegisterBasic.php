@@ -4,6 +4,7 @@ namespace App\Http\Controllers\authentications;
 
 use App\Http\Controllers\Controller;
 use App\Models\ReferEarn;
+use App\Models\RoleUser;
 use App\Models\User;
 use App\Rules\Cpf;
 use Illuminate\Http\Request;
@@ -48,7 +49,13 @@ class RegisterBasic extends Controller
     $seller = $refered_by_user && $refered_by_user->role->level_id == 'seller' ? $refered_by_user : null;
     
     // Se não há vendedor específico, usa o admin como vendedor padrão
-    $defaultSeller = User::where('role_user_id', 1)->first(); // Admin
+    $adminRole = \App\Models\RoleUser::where('level_id', 'admin')->first();
+    $defaultSeller = $adminRole ? User::where('role_user_id', $adminRole->id)->first() : null;
+
+    $gamblerRole = \App\Models\RoleUser::where('level_id', 'gambler')->first();
+    if (!$gamblerRole || !$defaultSeller) {
+      return Redirect::back()->withErrors(['error' => 'Erro ao buscar roles do sistema.']);
+    }
 
     try {
       // Criação do usuário com os dados validados
@@ -60,7 +67,7 @@ class RegisterBasic extends Controller
         'password' => Hash::make($validatedData['password']),
         'invited_by_id' => $request->input('refered_by_id'),
         'seller_id' => $seller ? $seller->id : $defaultSeller->id,
-        'role_user_id' => 3,
+        'role_user_id' => $gamblerRole->id,
       ]);
 
       if ($request->input('refered_by_id')) {

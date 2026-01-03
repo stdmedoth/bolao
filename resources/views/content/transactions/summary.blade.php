@@ -329,8 +329,13 @@
                             <td><span class="badge bg-secondary">{{ $row['quantity'] }}</span></td>
                             <td class="{{ $isIncome ? 'text-success' : 'text-danger' }} fw-bold">
                                 <i class="bx {{ $isIncome ? 'bx-arrow-down text-success' : 'bx-arrow-up text-danger' }} me-1"></i>
-                                {{ $isIncome ? 'R$' : '-R$' }}
-                                {{ number_format($row['total'], 2, ',', '.') }}
+                                @if($row['total'] > 0)
+                                    {{ $isIncome ? 'R$' : '-R$' }}
+                                    {{ number_format($row['total'], 2, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                                
                             </td>
                             <td>
                                 @if(isset($row['user_name']) && $row['user_name'])

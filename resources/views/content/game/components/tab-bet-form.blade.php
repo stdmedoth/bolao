@@ -30,19 +30,37 @@
                     </div>
 
                     @if (auth()->user()->role->level_id == 'admin')
+                        @php
+                            $formatSellerLabel = function ($seller) {
+                                return $seller->name;
+                            };
+                            $selectedSellerId = old('seller_id');
+                            $selectedSeller = null;
+                            $selectedSellerLabel = '';
+                            
+                            if ($selectedSellerId) {
+                                if ($selectedSellerId == auth()->user()->id) {
+                                    $selectedSellerLabel = 'Banca Central';
+                                } else {
+                                    $selectedSeller = $sellers->firstWhere('id', $selectedSellerId);
+                                    $selectedSellerLabel = $selectedSeller ? $formatSellerLabel($selectedSeller) : '';
+                                }
+                            }
+                        @endphp
                         <div class="form-group">
                             <label for="seller_id">Local do jogo</label>
-                            <select class="form-control" name="seller_id" required>
-                                <option value="">Selecionar um Local</option>
-                                <option value="{{ auth()->user()->id }}"
-                                    {{ old('seller_id') == auth()->user()->id ? 'selected' : '' }}>Banca Central
-                                </option>
-                                @foreach ($sellers as $seller)
-                                    <option value="{{ $seller->id }}"
-                                        {{ old('seller_id') == $seller->id ? 'selected' : '' }}>{{ $seller->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="text" id="sellerInput" class="form-control"
+                                placeholder="Digite o nome do vendedor" list="sellerOptions" autocomplete="off"
+                                value="{{ $selectedSellerLabel }}" required>
+                            <input type="hidden" name="seller_id" id="sellerHidden" value="{{ $selectedSellerId }}">
+                            <datalist id="sellerOptions">
+                                <option value="Banca Central" data-id="{{ auth()->user()->id }}"></option>
+                                @if (isset($sellers))
+                                    @foreach ($sellers as $seller)
+                                        <option value="{{ $formatSellerLabel($seller) }}" data-id="{{ $seller->id }}"></option>
+                                    @endforeach
+                                @endif
+                            </datalist>
                         </div>
                     @endif
 
@@ -119,5 +137,53 @@
         </div>
     @else
         <p class="text-muted">O jogo já está encerrado.</p>
+    @endif
+
+    @if (auth()->user()->role->level_id == 'admin')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const sellerInput = document.getElementById('sellerInput');
+                const sellerHiddenInput = document.getElementById('sellerHidden');
+                const sellerDatalist = document.getElementById('sellerOptions');
+                const betForm = document.getElementById('bet_form');
+
+                if (!sellerInput || !sellerHiddenInput || !sellerDatalist) {
+                    return;
+                }
+
+                const syncSellerHiddenValue = () => {
+                    const inputValue = sellerInput.value.trim();
+                    if (!inputValue) {
+                        sellerHiddenInput.value = '';
+                        return;
+                    }
+
+                    const matchingOption = Array.from(sellerDatalist.options).find(option => option.value ===
+                        inputValue);
+                    sellerHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+                };
+
+                sellerInput.addEventListener('change', syncSellerHiddenValue);
+                sellerInput.addEventListener('blur', syncSellerHiddenValue);
+                sellerInput.addEventListener('input', () => {
+                    if (!sellerInput.value.trim()) {
+                        sellerHiddenInput.value = '';
+                    }
+                });
+
+                // Validação antes de submeter o formulário
+                if (betForm) {
+                    betForm.addEventListener('submit', function(e) {
+                        syncSellerHiddenValue();
+                        if (!sellerHiddenInput.value) {
+                            e.preventDefault();
+                            sellerInput.focus();
+                            alert('Por favor, selecione um vendedor válido.');
+                            return false;
+                        }
+                    });
+                }
+            });
+        </script>
     @endif
 </div>

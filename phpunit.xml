@@ -22,8 +22,20 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
-        <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
-        <!-- <env name="DB_DATABASE" value=":memory:"/> -->
+        
+        <!-- Database: Usa MySQL do .env ao invés de SQLite -->
+        <!-- As variáveis DB_* do .env serão usadas automaticamente -->
+        <!-- Para usar um banco diferente para testes, descomente e ajuste abaixo: -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <!-- <env name="DB_DATABASE" value="bolao_test"/> -->
+        <!-- <env name="DB_HOST" value="127.0.0.1"/> -->
+        <!-- <env name="DB_USERNAME" value="laravel"/> -->
+        <!-- <env name="DB_PASSWORD" value="secret"/> -->
+        
+        <!-- ⚠️ ATENÇÃO: RefreshDatabase limpa/recria o banco durante os testes! -->
+        <!-- Se usar o banco de desenvolvimento, seus dados serão perdidos! -->
+        <!-- Recomendado: use um banco separado para testes (descomente DB_DATABASE acima) -->
+        
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

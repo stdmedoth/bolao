@@ -232,7 +232,8 @@ class TransactionsController extends Controller
     $totalOutcome = 0;
     $groupedByGame = [
       'game_payments' => [],
-      'seller_commissions' => [],    // Comissões do vendedor (agrupadas por concurso)
+      'seller_commissions' => [],    // Comissões do vendedor quando vendedor pagou (agrupadas por concurso)
+      'gambler_commissions_seller' => [], // Comissões do vendedor quando apostador pagou (agrupadas por concurso)
       'admin_commissions' => [],    // Comissões do administrador (agrupadas por concurso)
       'gambler_commissions' => [],   // Comissões do apostador (não agrupadas, ficam detalhadas)
     ];
@@ -470,6 +471,8 @@ class TransactionsController extends Controller
       $shouldGroup = ($purchase->seller_id == $selectedUserId);
       if ($shouldGroup) {
         $isCreator = ($purchase->paid_by_user_id == $selectedUserId);
+
+        if(!$purchase->paid_by_user) return true;
         $payerRole = $purchase->paid_by_user->role ? $purchase->paid_by_user->role->level_id : 'N/A';
         
         // Se o vendedor criou o jogo, agrupa por concurso + usuário
@@ -582,6 +585,39 @@ class TransactionsController extends Controller
     // Comissão do vendedor: agrupa sempre que a compra pertence ao seller filtrado,
     // ou quando o próprio seller recebeu a comissão
     if ($isSellerTarget || $isSellerCommission) {
+      // Verifica quem pagou o jogo para separar as comissões
+      $paidByUserId = $purchase->paid_by_user_id;
+      $paidByUser = $purchase->paid_by_user;
+      
+      // Se o vendedor pagou o jogo (criou o jogo), agrupa em seller_commissions
+      if ($paidByUserId == $selectedUserId) {
+        if (!isset($groupedByGame['seller_commissions'][$gameId])) {
+          $groupedByGame['seller_commissions'][$gameId] = [
+            'game_name' => $gameName,
+            'count' => 0,
+            'total' => 0,
+          ];
+        }
+        $groupedByGame['seller_commissions'][$gameId]['count']++;
+        $groupedByGame['seller_commissions'][$gameId]['total'] += $transaction->amount;
+        return true;
+      }
+      
+      // Se um apostador pagou o jogo, agrupa em gambler_commissions_seller
+      if ($paidByUser && $paidByUser->role && $paidByUser->role->level_id === 'gambler') {
+        if (!isset($groupedByGame['gambler_commissions_seller'][$gameId])) {
+          $groupedByGame['gambler_commissions_seller'][$gameId] = [
+            'game_name' => $gameName,
+            'count' => 0,
+            'total' => 0,
+          ];
+        }
+        $groupedByGame['gambler_commissions_seller'][$gameId]['count']++;
+        $groupedByGame['gambler_commissions_seller'][$gameId]['total'] += $transaction->amount;
+        return true;
+      }
+      
+      // Fallback: se não conseguir determinar, agrupa em seller_commissions (comportamento original)
       if (!isset($groupedByGame['seller_commissions'][$gameId])) {
         $groupedByGame['seller_commissions'][$gameId] = [
           'game_name' => $gameName,
@@ -589,7 +625,6 @@ class TransactionsController extends Controller
           'total' => 0,
         ];
       }
-
       $groupedByGame['seller_commissions'][$gameId]['count']++;
       $groupedByGame['seller_commissions'][$gameId]['total'] += $transaction->amount;
       return true;
@@ -746,10 +781,16 @@ class TransactionsController extends Controller
 
     // Adiciona pagamentos de jogos agrupados
     foreach ($groupedByGame['game_payments'] as $key => $data) {
+
+      $total = $data['total'];
       if ($isSellerFilter) {
         $typeLabel = (isset($data['is_creator']) && $data['is_creator']) 
           ? 'Pagamento de jogos' 
           : ($data['payer_role'] === 'admin' ? 'Jogo do Administrador' : 'Jogo do Apostador');
+
+          $total = (isset($data['is_creator']) && $data['is_creator']) 
+          ? $data['total']
+          : ($data['payer_role'] === 'admin' ? $data['total'] : 0);
       } else {
         $typeLabel = 'Pagamento de jogos';
       }
@@ -758,7 +799,7 @@ class TransactionsController extends Controller
         'type' => $typeLabel,
         'game_name' => $data['game_name'],
         'quantity' => $data['count'],
-        'total' => $data['total'],
+        'total' => $total,
         'category' => 'outcome',
         'user_name' => isset($data['user_name']) ? $data['user_name'] : null,
       ];
@@ -766,10 +807,21 @@ class TransactionsController extends Controller
 
     // Adiciona comissões agrupadas (apenas para vendedores e admin)
     if (Auth::user()->role->level_id !== 'gambler') {
-      // Comissões do vendedor (agrupadas por concurso)
+      // Comissões do vendedor quando vendedor pagou (agrupadas por concurso)
       foreach ($groupedByGame['seller_commissions'] as $gameId => $data) {
         $rows[] = [
           'type' => 'Comissão de jogos do vendedor',
+          'game_name' => $data['game_name'],
+          'quantity' => $data['count'],
+          'total' => $data['total'],
+          'category' => 'income',
+        ];
+      }
+      
+      // Comissões do vendedor quando apostador pagou (agrupadas por concurso)
+      foreach ($groupedByGame['gambler_commissions_seller'] as $gameId => $data) {
+        $rows[] = [
+          'type' => 'Comissão de jogos do apostador',
           'game_name' => $data['game_name'],
           'quantity' => $data['count'],
           'total' => $data['total'],

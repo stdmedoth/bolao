@@ -78,13 +78,60 @@ class GameController extends Controller
     //
     $game = Game::find($id);
     $user_awards_builder = UserAwards::where('game_id', $id);
-    // Buscar todos os usuários (vendedores e apostadores) para o filtro
+    $round = $game->round;
+
+    // Buscar todos os participantes únicos para o filtro
+    // 1. Buscar todos os vendedores
+    $sellers = User::with('role')->whereHas('role', function ($query) {
+      $query->where('level_id', 'seller');
+    })->get();
+
+    // 2. Buscar todos os gambler_names únicos das compras que têm prêmios (ganhadores)
+    $purchaseIdsWithAwards = UserAwards::where('game_id', $id)
+      ->where('round', $round)
+      ->pluck('purchase_id')
+      ->unique();
+
+    $uniqueGamblerNames = Purchase::whereIn('id', $purchaseIdsWithAwards)
+      ->whereNotNull('gambler_name')
+      ->where('gambler_name', '!=', '')
+      ->distinct()
+      ->pluck('gambler_name')
+      ->unique()
+      ->sort()
+      ->values();
+
+    // 3. Combinar em uma lista de participantes
+    $participants = collect();
+    
+    // Adicionar vendedores
+    foreach ($sellers as $seller) {
+      $participants->push([
+        'type' => 'seller',
+        'id' => $seller->id,
+        'name' => $seller->name,
+        'value' => 'seller:' . $seller->id,
+        'label' => 'Vendedor: ' . $seller->name
+      ]);
+    }
+
+    // Adicionar apostadores (gambler_names)
+    foreach ($uniqueGamblerNames as $gamblerName) {
+      $participants->push([
+        'type' => 'gambler',
+        'id' => null,
+        'name' => $gamblerName,
+        'value' => 'gambler:' . $gamblerName,
+        'label' => 'Apostador: ' . $gamblerName
+      ]);
+    }
+
+    // Manter $users para compatibilidade com outras partes do código
     $users = User::with('role')->whereHas('role', function ($query) {
       $query->whereIn('level_id', ['seller', 'gambler']);
     })->get();
 
     $winners = [];
-    $round = $game->round;
 
     // Pegar todos os números válidos desde a última abertura
     $gameHistoriesBuilder = GameHistory::where('game_id', $game->id)
@@ -116,12 +163,27 @@ class GameController extends Controller
 
     $uniqueNumbers = array_unique($allAddedNumbers);
 
-    // Filter by user if provided (filters by user_id for gambler or seller_id for seller)
+    // Filter by participant if provided (filters by seller_id, seller name, or gambler_name)
     if ($request->has('user') && $request->user != '') {
-      $user_awards_builder = $user_awards_builder->whereHas('purchase', function ($query) use ($request) {
-        $query->where(function ($q) use ($request) {
-          $q->where('user_id', $request->user)
-            ->orWhere('seller_id', $request->user);
+      $filterValue = $request->user;
+      
+      $user_awards_builder = $user_awards_builder->whereHas('purchase', function ($query) use ($filterValue) {
+        $query->where(function ($q) use ($filterValue) {
+          // Se o valor começa com "seller:", filtrar por seller_id
+          if (strpos($filterValue, 'seller:') === 0) {
+            $sellerId = str_replace('seller:', '', $filterValue);
+            $q->where('seller_id', $sellerId);
+          }
+          // Se o valor começa com "gambler:", filtrar por gambler_name
+          elseif (strpos($filterValue, 'gambler:') === 0) {
+            $gamblerName = str_replace('gambler:', '', $filterValue);
+            $q->where('gambler_name', $gamblerName);
+          }
+          // Compatibilidade com formato antigo (ID numérico)
+          else {
+            $q->where('user_id', $filterValue)
+              ->orWhere('seller_id', $filterValue);
+          }
         });
       });
     }
@@ -276,6 +338,7 @@ class GameController extends Controller
       'user_awards' => $user_awards,
       'winner_award' => $winner_award,
       'users' => $users,
+      'participants' => $participants,
       'classifications' => $classifications,
       'uniqueNumbers' => $uniqueNumbers,
       'top3Points' => $top3Points ?? []

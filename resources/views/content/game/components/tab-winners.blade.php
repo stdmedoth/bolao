@@ -439,11 +439,11 @@
 
     @php
         $isAdmin = auth()->check() && optional(auth()->user()->role)->level_id === 'admin';
-        $formatUserLabel = function ($user) {
-            return $user->name;
-        };
-        $selectedUser = isset($users) ? $users->firstWhere('id', request('user')) : null;
-        $selectedUserLabel = $selectedUser ? $formatUserLabel($selectedUser) : '';
+        $selectedParticipantValue = request('user', '');
+        $selectedParticipant = null;
+        if ($selectedParticipantValue && isset($participants)) {
+            $selectedParticipant = $participants->firstWhere('value', $selectedParticipantValue);
+        }
     @endphp
 
     <!-- Formulário de Filtro -->
@@ -454,20 +454,24 @@
                 <label class="form-label d-flex justify-content-between">
                     <span>Participantes</span>
                 </label>
-                <input type="text" id="userFilterInputWinners" class="form-control"
-                    placeholder="Digite o nome do participante" list="userFilterOptionsWinners" autocomplete="off"
-                    value="{{ $selectedUserLabel }}">
-                <input type="hidden" name="user" id="userFilterHiddenWinners" value="{{ request('user') }}">
-                <datalist id="userFilterOptionsWinners">
-                    @if (isset($users))
-                        @foreach ($users as $user)
-                            @php
-                                $userLabel = $formatUserLabel($user);
-                            @endphp
-                            <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
-                        @endforeach
-                    @endif
-                </datalist>
+                <div class="position-relative">
+                    <input type="text" id="participantSearchInputWinners" class="form-control"
+                        placeholder="Buscar participante..." autocomplete="off"
+                        value="{{ $selectedParticipant ? $selectedParticipant['label'] : '' }}">
+                    <input type="hidden" name="user" id="participantFilterHiddenWinners" value="{{ $selectedParticipantValue }}">
+                    <select id="participantSelectWinners" class="form-select" size="8" style="display: none; position: absolute; z-index: 1000; width: 100%; max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 0.375rem; background: white;">
+                        <option value="">Todos os participantes</option>
+                        @if (isset($participants))
+                            @foreach ($participants as $participant)
+                                <option value="{{ $participant['value'] }}" 
+                                    data-label="{{ $participant['label'] }}"
+                                    {{ $selectedParticipantValue === $participant['value'] ? 'selected' : '' }}>
+                                    {{ $participant['label'] }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
             </div>
             <div class="col-md-2">
                 <button class="btn btn-secondary w-100" type="submit">Aplicar Filtro</button>
@@ -794,33 +798,166 @@
         </div>
     @endif
 
+    <style>
+        .participant-search-container {
+            position: relative;
+        }
+
+        .participant-select-dropdown {
+            display: none;
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            background: white;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            margin-top: 2px;
+        }
+
+        .participant-select-dropdown.show {
+            display: block;
+        }
+
+        .participant-select-dropdown option {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .participant-select-dropdown option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .participant-select-dropdown option:checked {
+            background-color: #0d6efd;
+            color: white;
+        }
+    </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const userInput = document.getElementById('userFilterInputWinners');
-            const userHiddenInput = document.getElementById('userFilterHiddenWinners');
-            const userDatalist = document.getElementById('userFilterOptionsWinners');
+            const searchInput = document.getElementById('participantSearchInputWinners');
+            const hiddenInput = document.getElementById('participantFilterHiddenWinners');
+            const selectElement = document.getElementById('participantSelectWinners');
 
-            if (!userInput || !userHiddenInput || !userDatalist) {
+            if (!searchInput || !hiddenInput || !selectElement) {
                 return;
             }
 
-            const syncUserHiddenValue = () => {
-                const inputValue = userInput.value.trim();
-                if (!inputValue) {
-                    userHiddenInput.value = '';
-                    return;
+            // Criar dropdown customizado
+            const dropdown = document.createElement('div');
+            dropdown.className = 'participant-select-dropdown';
+            dropdown.id = 'participantDropdownWinners';
+            selectElement.parentElement.appendChild(dropdown);
+
+            // Função para filtrar e mostrar opções
+            const filterAndShowOptions = (searchTerm) => {
+                const term = searchTerm.toLowerCase().trim();
+                const options = Array.from(selectElement.options);
+                dropdown.innerHTML = '';
+
+                // Adicionar opção "Todos os participantes"
+                const allOption = document.createElement('div');
+                allOption.className = 'participant-option';
+                allOption.textContent = 'Todos os participantes';
+                allOption.dataset.value = '';
+                allOption.style.padding = '8px 12px';
+                allOption.style.cursor = 'pointer';
+                allOption.style.borderBottom = '1px solid #e9ecef';
+                
+                if (term === '' || 'todos os participantes'.includes(term)) {
+                    allOption.style.display = 'block';
+                } else {
+                    allOption.style.display = 'none';
                 }
 
-                const matchingOption = Array.from(userDatalist.options).find(option => option.value ===
-                    inputValue);
-                userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
+                allOption.addEventListener('click', () => {
+                    searchInput.value = '';
+                    hiddenInput.value = '';
+                    dropdown.classList.remove('show');
+                });
+
+                allOption.addEventListener('mouseenter', () => {
+                    allOption.style.backgroundColor = '#f8f9fa';
+                });
+                allOption.addEventListener('mouseleave', () => {
+                    allOption.style.backgroundColor = '';
+                });
+
+                dropdown.appendChild(allOption);
+
+                // Filtrar e adicionar outras opções
+                options.forEach(option => {
+                    if (option.value === '') return; // Já adicionamos "Todos"
+                    
+                    const label = option.dataset.label || option.textContent;
+                    const matches = term === '' || label.toLowerCase().includes(term);
+
+                    if (matches) {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'participant-option';
+                        optionDiv.textContent = label;
+                        optionDiv.dataset.value = option.value;
+                        optionDiv.style.padding = '8px 12px';
+                        optionDiv.style.cursor = 'pointer';
+                        optionDiv.style.borderBottom = '1px solid #e9ecef';
+
+                        optionDiv.addEventListener('click', () => {
+                            searchInput.value = label;
+                            hiddenInput.value = option.value;
+                            dropdown.classList.remove('show');
+                        });
+
+                        optionDiv.addEventListener('mouseenter', () => {
+                            optionDiv.style.backgroundColor = '#f8f9fa';
+                        });
+                        optionDiv.addEventListener('mouseleave', () => {
+                            optionDiv.style.backgroundColor = '';
+                        });
+
+                        dropdown.appendChild(optionDiv);
+                    }
+                });
+
+                // Mostrar dropdown se houver opções (já filtradas acima)
+                if (dropdown.children.length > 0) {
+                    dropdown.classList.add('show');
+                } else {
+                    dropdown.classList.remove('show');
+                }
             };
 
-            userInput.addEventListener('change', syncUserHiddenValue);
-            userInput.addEventListener('blur', syncUserHiddenValue);
-            userInput.addEventListener('input', () => {
-                if (!userInput.value.trim()) {
-                    userHiddenInput.value = '';
+            // Event listeners
+            searchInput.addEventListener('input', (e) => {
+                filterAndShowOptions(e.target.value);
+            });
+
+            searchInput.addEventListener('focus', () => {
+                filterAndShowOptions(searchInput.value);
+            });
+
+            searchInput.addEventListener('blur', (e) => {
+                // Delay para permitir clique nas opções
+                setTimeout(() => {
+                    dropdown.classList.remove('show');
+                }, 200);
+            });
+
+            // Manter dropdown visível quando hover
+            dropdown.addEventListener('mouseenter', () => {
+                dropdown.classList.add('show');
+            });
+
+            dropdown.addEventListener('mouseleave', () => {
+                dropdown.classList.remove('show');
+            });
+
+            // Limpar quando campo estiver vazio
+            searchInput.addEventListener('input', () => {
+                if (searchInput.value.trim() === '') {
+                    hiddenInput.value = '';
                 }
             });
         });

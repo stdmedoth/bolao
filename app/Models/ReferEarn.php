@@ -17,6 +17,14 @@ class ReferEarn extends Model
     'amount',
   ];
 
+  protected function casts(): array
+  {
+    return [
+      'invited_user_bought' => 'boolean',
+      'earn_paid' => 'boolean',
+    ];
+  }
+
   public function referUser()
   {
     return $this->belongsTo(User::class, 'refer_user_id');

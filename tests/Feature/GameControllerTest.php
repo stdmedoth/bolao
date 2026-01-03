@@ -53,8 +53,8 @@ class GameControllerTest extends TestCase
     // Simulate current game
     $currentGame = $gameOpened;
 
-    // Act: run the query as in the controller
-    $games = Game::select(['id', 'status', 'name'])
+    // Act: run the query as in the controller (sem eager loading para evitar problemas)
+    $games = Game::without(['awards'])->select(['id', 'status', 'name'])
       ->whereIn('status', ['OPENED', 'CLOSED'])
       ->whereNotIn('id', [$currentGame->id])
       ->get();

@@ -105,6 +105,7 @@
                         'user_awards' => $user_awards,
                         'game' => $game,
                         'users' => $users ?? [],
+                        'participants' => $participants ?? collect(),
                     ])
                 </div>
             </div>

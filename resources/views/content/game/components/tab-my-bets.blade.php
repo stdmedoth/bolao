@@ -425,27 +425,29 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label d-flex justify-content-between">
-                    <span>Usuário</span>
-                </label>
-                <input type="text" id="userFilterInput" class="form-control"
-                    placeholder="Digite o nome do usuário"
-                    list="userFilterOptions" autocomplete="off" value="{{ $selectedUserLabel }}">
-                <input type="hidden" name="user" id="userFilterHidden" value="{{ request('user') }}">
-                <datalist id="userFilterOptions">
-                    @if (isset($users))
-                        @foreach ($users as $user)
-                            @php
-                                $userLabel = $formatUserLabel($user);
-                            @endphp
-                            <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
-                        @endforeach
-                    @endif
-                </datalist>
-            </div>
+            @if (auth()->user()->role->level_id == 'admin')
+                <div class="col-md-3">
+                    <label class="form-label d-flex justify-content-between">
+                        <span>Usuário</span>
+                    </label>
+                    <input type="text" id="userFilterInput" class="form-control"
+                        placeholder="Digite o nome do usuário"
+                        list="userFilterOptions" autocomplete="off" value="{{ $selectedUserLabel }}">
+                    <input type="hidden" name="user" id="userFilterHidden" value="{{ request('user') }}">
+                    <datalist id="userFilterOptions">
+                        @if (isset($users))
+                            @foreach ($users as $user)
+                                @php
+                                    $userLabel = $formatUserLabel($user);
+                                @endphp
+                                <option value="{{ $userLabel }}" data-id="{{ $user->id }}"></option>
+                            @endforeach
+                        @endif
+                    </datalist>
+                </div>
+            @endif
 
-            <div class="col-md-2">
+            <div class="{{ auth()->user()->role->level_id == 'admin' ? 'col-md-2' : 'col-md-5' }}">
                 <button class="btn btn-info w-100" type="submit"><i class="bx bx-filter me-1"></i>Aplicar Filtros</button>
             </div>
         </div>

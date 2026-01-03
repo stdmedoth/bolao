@@ -26,11 +26,12 @@ class UserRegistrationTest extends TestCase
         ]);
         
         // Criar admin padrão
+        $adminRoleId = DB::table('role_users')->where('level_id', 'admin')->value('id');
         User::create([
             'name' => 'Admin',
             'email' => 'admin@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 1,
+            'role_user_id' => $adminRoleId,
             'phone' => '11999999999',
             'game_credit' => 0,
             'comission_percent' => 0,
@@ -43,20 +44,23 @@ class UserRegistrationTest extends TestCase
         $response = $this->post('/auth/register-basic', [
             'name' => 'Apostador Teste',
             'email' => 'apostador@test.com',
-            'document' => '12345678901',
+            'document' => '11144477735',
             'phone' => '11988888888',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
 
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
+        
         $this->assertDatabaseHas('users', [
             'email' => 'apostador@test.com',
-            'role_user_id' => 3, // gambler
+            'role_user_id' => $gamblerRoleId,
         ]);
 
         $user = User::where('email', 'apostador@test.com')->first();
         $this->assertNotNull($user);
-        $this->assertEquals(1, $user->seller_id); // Deve ter admin como seller padrão
+        $this->assertEquals($adminId, $user->seller_id); // Deve ter admin como seller padrão
         $this->assertNull($user->invited_by_id);
     }
 
@@ -64,11 +68,12 @@ class UserRegistrationTest extends TestCase
     public function test_can_register_gambler_with_seller_referral()
     {
         // Criar vendedor
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor Teste',
             'email' => 'vendedor@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2, // seller
+            'role_user_id' => $sellerRoleId,
             'phone' => '11977777777',
             'game_credit' => 0,
             'comission_percent' => 0.1, // 10%
@@ -77,16 +82,17 @@ class UserRegistrationTest extends TestCase
         $response = $this->post('/auth/register-basic', [
             'name' => 'Apostador Indicado',
             'email' => 'apostador2@test.com',
-            'document' => '12345678902',
+            'document' => '12345678909',
             'phone' => '11966666666',
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'refered_by_id' => $seller->id,
         ]);
 
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $this->assertDatabaseHas('users', [
             'email' => 'apostador2@test.com',
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'invited_by_id' => $seller->id,
             'seller_id' => $seller->id,
         ]);
@@ -104,20 +110,22 @@ class UserRegistrationTest extends TestCase
     public function test_can_register_gambler_with_gambler_referral()
     {
         // Criar apostador que vai indicar
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
+        $adminId = User::where('email', 'admin@test.com')->value('id');
         $referrer = User::create([
             'name' => 'Apostador Indicador',
             'email' => 'indicador@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 3, // gambler
+            'role_user_id' => $gamblerRoleId,
             'phone' => '11955555555',
             'game_credit' => 0,
-            'seller_id' => 1, // admin como seller
+            'seller_id' => $adminId,
         ]);
 
         $response = $this->post('/auth/register-basic', [
             'name' => 'Apostador Indicado',
             'email' => 'apostador3@test.com',
-            'document' => '12345678903',
+            'document' => '98765432100',
             'phone' => '11944444444',
             'password' => 'password123',
             'password_confirmation' => 'password123',
@@ -128,7 +136,8 @@ class UserRegistrationTest extends TestCase
         $this->assertNotNull($user);
         $this->assertEquals($referrer->id, $user->invited_by_id);
         // Se o referrer não é seller, deve usar admin como seller padrão
-        $this->assertEquals(1, $user->seller_id);
+        $adminId = User::where('email', 'admin@test.com')->value('id');
+        $this->assertEquals($adminId, $user->seller_id);
     }
 
     /** @test */
@@ -136,6 +145,7 @@ class UserRegistrationTest extends TestCase
     {
         $admin = User::where('email', 'admin@test.com')->first();
         
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $response = $this->actingAs($admin)->post('/usuarios', [
             'name' => 'Vendedor Criado',
             'email' => 'vendedor2@test.com',
@@ -144,12 +154,13 @@ class UserRegistrationTest extends TestCase
             'game_credit' => 1000,
             'game_credit_limit' => 500,
             'comission_percent' => 0.15, // 15%
-            'role_user_id' => 2, // seller
+            'role_user_id' => $sellerRoleId,
         ]);
 
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $this->assertDatabaseHas('users', [
             'email' => 'vendedor2@test.com',
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'game_credit' => 1000,
             'game_credit_limit' => 500,
             'comission_percent' => 0.15,
@@ -162,16 +173,18 @@ class UserRegistrationTest extends TestCase
         $admin = User::where('email', 'admin@test.com')->first();
         
         // Criar vendedor primeiro
+        $sellerRoleId = DB::table('role_users')->where('level_id', 'seller')->value('id');
         $seller = User::create([
             'name' => 'Vendedor Link',
             'email' => 'vendedor3@test.com',
             'password' => Hash::make('password'),
-            'role_user_id' => 2,
+            'role_user_id' => $sellerRoleId,
             'phone' => '11922222222',
             'game_credit' => 0,
             'comission_percent' => 0.12,
         ]);
 
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $response = $this->actingAs($admin)->post('/usuarios', [
             'name' => 'Apostador Vinculado',
             'email' => 'apostador4@test.com',
@@ -180,13 +193,14 @@ class UserRegistrationTest extends TestCase
             'game_credit' => 100,
             'game_credit_limit' => 0,
             'comission_percent' => 0,
-            'role_user_id' => 3, // gambler
+            'role_user_id' => $gamblerRoleId,
             'seller_id' => $seller->id,
         ]);
 
+        $gamblerRoleId = DB::table('role_users')->where('level_id', 'gambler')->value('id');
         $this->assertDatabaseHas('users', [
             'email' => 'apostador4@test.com',
-            'role_user_id' => 3,
+            'role_user_id' => $gamblerRoleId,
             'seller_id' => $seller->id,
         ]);
     }
