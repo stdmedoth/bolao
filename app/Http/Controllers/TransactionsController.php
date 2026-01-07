@@ -255,6 +255,20 @@ class TransactionsController extends Controller
         continue;
       }
 
+      // Verifica se REFER_EARN foi estornado antes de acumular totais
+      if ($type === 'REFER_EARN') {
+        $referEarnKey = $transaction->user_id . '_' . $transaction->amount;
+        if (isset($withdrawalsMap['refer_earn_withdrawals'][$referEarnKey])) {
+          $withdrawals = $withdrawalsMap['refer_earn_withdrawals'][$referEarnKey];
+          foreach ($withdrawals as $withdrawal) {
+            if ($withdrawal->created_at > $transaction->created_at) {
+              // Este bônus foi estornado, não deve ser contado nos totais
+              continue 2; // Pula para a próxima transação
+            }
+          }
+        }
+      }
+
       // Acumula totais
       if ($typeCategories[$type] === 'income') {
         $totalIncome += $amount;
@@ -374,47 +388,71 @@ class TransactionsController extends Controller
   {
     // Coleta todos os purchase_ids únicos
     $purchaseIds = [];
+    // Coleta user_ids e amounts para verificar estornos de REFER_EARN
+    $referEarnKeys = [];
     
     foreach ($transactions as $transaction) {
       if ($transaction->purchase_id) {
         $purchaseIds[$transaction->purchase_id] = true;
       }
+      if ($transaction->type === 'REFER_EARN') {
+        // Cria uma chave única: user_id + amount para identificar estornos
+        $key = $transaction->user_id . '_' . $transaction->amount;
+        $referEarnKeys[$key] = true;
+      }
     }
     
     $uniquePurchaseIds = array_keys($purchaseIds);
+    $uniqueReferEarnKeys = array_keys($referEarnKeys);
     
-    if (empty($uniquePurchaseIds)) {
-      return [
-        'purchase_withdrawals' => [],
-        'commission_withdrawals' => [],
-        'award_withdrawals' => [],
-      ];
+    $result = [
+      'purchase_withdrawals' => [],
+      'commission_withdrawals' => [],
+      'award_withdrawals' => [],
+      'refer_earn_withdrawals' => [],
+    ];
+    
+    if (!empty($uniquePurchaseIds)) {
+      // Carrega todos os estornos de uma vez (apenas campos necessários)
+      $result['purchase_withdrawals'] = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
+        ->where('type', 'PAY_PURCHASE_WITHDRAWAL')
+        ->select('id', 'purchase_id', 'created_at')
+        ->get()
+        ->groupBy('purchase_id');
+      
+      $result['commission_withdrawals'] = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
+        ->where('type', 'PAY_PURCHASE_COMISSION_WITHDRAWAL')
+        ->select('id', 'purchase_id', 'created_at')
+        ->get()
+        ->groupBy('purchase_id');
+      
+      $result['award_withdrawals'] = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
+        ->where('type', 'PAY_AWARD_WITHDRAWAL')
+        ->select('id', 'user_award_id', 'purchase_id', 'created_at')
+        ->get()
+        ->groupBy('user_award_id');
     }
     
-    // Carrega todos os estornos de uma vez (apenas campos necessários)
-    $purchaseWithdrawals = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
-      ->where('type', 'PAY_PURCHASE_WITHDRAWAL')
-      ->select('id', 'purchase_id', 'created_at')
-      ->get()
-      ->groupBy('purchase_id');
+    // Carrega estornos de REFER_EARN baseado em user_id e amount
+    if (!empty($uniqueReferEarnKeys)) {
+      $referEarnWithdrawals = Transactions::where('type', 'REFER_EARN_REVERSAL')
+        ->select('id', 'user_id', 'amount', 'created_at')
+        ->get();
+      
+      // Agrupa por chave user_id_amount
+      $groupedReferEarnWithdrawals = [];
+      foreach ($referEarnWithdrawals as $withdrawal) {
+        $key = $withdrawal->user_id . '_' . $withdrawal->amount;
+        if (!isset($groupedReferEarnWithdrawals[$key])) {
+          $groupedReferEarnWithdrawals[$key] = [];
+        }
+        $groupedReferEarnWithdrawals[$key][] = $withdrawal;
+      }
+      
+      $result['refer_earn_withdrawals'] = $groupedReferEarnWithdrawals;
+    }
     
-    $commissionWithdrawals = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
-      ->where('type', 'PAY_PURCHASE_COMISSION_WITHDRAWAL')
-      ->select('id', 'purchase_id', 'created_at')
-      ->get()
-      ->groupBy('purchase_id');
-    
-    $awardWithdrawals = Transactions::whereIn('purchase_id', $uniquePurchaseIds)
-      ->where('type', 'PAY_AWARD_WITHDRAWAL')
-      ->select('id', 'user_award_id', 'purchase_id', 'created_at')
-      ->get()
-      ->groupBy('user_award_id');
-    
-    return [
-      'purchase_withdrawals' => $purchaseWithdrawals,
-      'commission_withdrawals' => $commissionWithdrawals,
-      'award_withdrawals' => $awardWithdrawals,
-    ];
+    return $result;
   }
 
   /**
@@ -674,6 +712,16 @@ class TransactionsController extends Controller
   {
     switch ($type) {
       case 'REFER_EARN':
+        // Verifica se há estorno posterior
+        $referEarnKey = $transaction->user_id . '_' . $transaction->amount;
+        if (isset($withdrawalsMap['refer_earn_withdrawals'][$referEarnKey])) {
+          $withdrawals = $withdrawalsMap['refer_earn_withdrawals'][$referEarnKey];
+          foreach ($withdrawals as $withdrawal) {
+            if ($withdrawal->created_at > $transaction->created_at) {
+              return null; // Deve pular esta transação (foi estornada)
+            }
+          }
+        }
         return 'Bônus de indicação';
       
       case 'GAME_CREDIT':

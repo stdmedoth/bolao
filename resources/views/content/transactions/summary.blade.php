@@ -410,6 +410,7 @@
             const userDatalist = document.getElementById('userFilterOptions');
 
             if (userInput && userHiddenInput && userDatalist) {
+                let syncTimeout = null;
                 const syncUserHiddenValue = () => {
                     const inputValue = userInput.value.trim();
                     if (!inputValue) {
@@ -428,14 +429,44 @@
                     }
                 };
 
+                // Função para sincronizar com delay para mobile
+                const delayedSync = () => {
+                    if (syncTimeout) {
+                        clearTimeout(syncTimeout);
+                    }
+                    syncTimeout = setTimeout(syncUserHiddenValue, 100);
+                };
+
+                // Eventos para desktop
                 userInput.addEventListener('change', syncUserHiddenValue);
                 userInput.addEventListener('blur', syncUserHiddenValue);
+                
+                // Eventos para mobile - captura quando o valor muda
                 userInput.addEventListener('input', () => {
                     if (!userInput.value.trim()) {
                         userHiddenInput.value = '';
                         updateTransactionUserField('');
+                    } else {
+                        // Usa delay para dar tempo do datalist atualizar no mobile
+                        delayedSync();
                     }
                 });
+
+                // Adiciona eventos de touch/click para mobile
+                userInput.addEventListener('touchstart', () => {
+                    // Limpa o timeout anterior
+                    if (syncTimeout) {
+                        clearTimeout(syncTimeout);
+                    }
+                });
+
+                // Quando o input perde o foco, força sincronização
+                userInput.addEventListener('focusout', () => {
+                    setTimeout(syncUserHiddenValue, 200);
+                });
+
+                // Sincroniza quando uma opção é selecionada (mobile)
+                userInput.addEventListener('select', syncUserHiddenValue);
             }
 
             // Inicializa o campo de lançamento com o valor do filtro se já houver um selecionado

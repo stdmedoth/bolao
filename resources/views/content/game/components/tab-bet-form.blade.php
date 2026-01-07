@@ -151,6 +151,7 @@
                     return;
                 }
 
+                let syncTimeout = null;
                 const syncSellerHiddenValue = () => {
                     const inputValue = sellerInput.value.trim();
                     if (!inputValue) {
@@ -163,13 +164,43 @@
                     sellerHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
                 };
 
+                // Função para sincronizar com delay para mobile
+                const delayedSync = () => {
+                    if (syncTimeout) {
+                        clearTimeout(syncTimeout);
+                    }
+                    syncTimeout = setTimeout(syncSellerHiddenValue, 100);
+                };
+
+                // Eventos para desktop
                 sellerInput.addEventListener('change', syncSellerHiddenValue);
                 sellerInput.addEventListener('blur', syncSellerHiddenValue);
+                
+                // Eventos para mobile - captura quando o valor muda
                 sellerInput.addEventListener('input', () => {
                     if (!sellerInput.value.trim()) {
                         sellerHiddenInput.value = '';
+                    } else {
+                        // Usa delay para dar tempo do datalist atualizar no mobile
+                        delayedSync();
                     }
                 });
+
+                // Adiciona eventos de touch/click para mobile
+                sellerInput.addEventListener('touchstart', () => {
+                    // Limpa o timeout anterior
+                    if (syncTimeout) {
+                        clearTimeout(syncTimeout);
+                    }
+                });
+
+                // Quando o input perde o foco, força sincronização
+                sellerInput.addEventListener('focusout', () => {
+                    setTimeout(syncSellerHiddenValue, 200);
+                });
+
+                // Sincroniza quando uma opção é selecionada (mobile)
+                sellerInput.addEventListener('select', syncSellerHiddenValue);
 
                 // Validação antes de submeter o formulário
                 if (betForm) {
