@@ -8,12 +8,12 @@
             table-layout: fixed;
             font-size: 0.85rem;
         }
-        
+
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         /* Coluna de Checkbox - primeira coluna */
         .table-my-bets th:nth-child(1),
         .table-my-bets td:nth-child(1) {
@@ -192,13 +192,14 @@
 
         /* Responsividade para mobile */
         @media (max-width: 768px) {
+
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
                 width: 35px;
                 min-width: 35px;
                 max-width: 35px;
             }
-            
+
             /* Coluna de Participantes no tablet */
             .table-my-bets th:nth-child(2),
             .table-my-bets td:nth-child(2) {
@@ -293,13 +294,14 @@
         }
 
         @media (max-width: 576px) {
+
             .table-my-bets th:nth-child(1),
             .table-my-bets td:nth-child(1) {
                 width: 30px;
                 min-width: 30px;
                 max-width: 30px;
             }
-            
+
             /* Coluna de Participantes no mobile pequeno */
             .table-my-bets th:nth-child(2),
             .table-my-bets td:nth-child(2) {
@@ -354,7 +356,7 @@
                 max-width: 160px;
                 font-size: 0.6rem;
             }
-            
+
             .table-my-bets .btn-sm {
                 padding: 1px 1px;
                 font-size: 0.5rem;
@@ -431,8 +433,8 @@
                         <span>Usuário</span>
                     </label>
                     <input type="text" id="userFilterInput" class="form-control"
-                        placeholder="Digite o nome do usuário"
-                        list="userFilterOptions" autocomplete="off" value="{{ $selectedUserLabel }}">
+                        placeholder="Digite o nome do usuário" list="userFilterOptions" autocomplete="off"
+                        value="{{ $selectedUserLabel }}">
                     <input type="hidden" name="user" id="userFilterHidden" value="{{ request('user') }}">
                     <datalist id="userFilterOptions">
                         @if (isset($users))
@@ -448,15 +450,15 @@
             @endif
 
             <div class="{{ auth()->user()->role->level_id == 'admin' ? 'col-md-2' : 'col-md-5' }}">
-                <button class="btn btn-info w-100" type="submit"><i class="bx bx-filter me-1"></i>Aplicar Filtros</button>
+                <button class="btn btn-info w-100" type="submit"><i class="bx bx-filter me-1"></i>Aplicar
+                    Filtros</button>
             </div>
         </div>
     </form>
 
     <!-- Botão de Download PDF -->
     <div class="mb-3">
-        <a href="{{ route('game-my-bets-pdf', array_merge([$game->id], request()->query())) }}" 
-           class="btn btn-danger">
+        <a href="{{ route('game-my-bets-pdf', array_merge([$game->id], request()->query())) }}" class="btn btn-danger">
             <i class="bx bx-download me-1"></i>Baixar PDF
         </a>
     </div>
@@ -520,7 +522,8 @@
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="repeat_game_id_batch">Jogo para repetir</label>
-                                <select name="repeat_game_id" id="repeat_game_id_batch_tab" class="form-select" required>
+                                <select name="repeat_game_id" id="repeat_game_id_batch_tab" class="form-select"
+                                    required>
                                     @foreach ($games->where('status', 'OPENED') as $game)
                                         <option value="{{ $game->id }}"
                                             {{ request('game_id') == $game->id ? 'selected' : '' }}>
@@ -531,11 +534,12 @@
 
                             <div class="form-group mt-3">
                                 <label>Apostas selecionadas: <span id="selected_count_batch_tab">0</span></label>
-                                <div id="selected_purchases_list_tab" class="mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                <div id="selected_purchases_list_tab" class="mt-2"
+                                    style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
                                     <p class="text-muted">Nenhuma aposta selecionada</p>
                                 </div>
                             </div>
-                            
+
                             <div id="repeat_game_purchase_ids_container_tab"></div>
                         </div>
                     </div>
@@ -554,20 +558,22 @@
             <div class="modal-content">
 
                 <!-- request()->all() -->
-                <form action="{{ url()->query('/purchase/delete', request()->all()) }}" method="POST" class="mb-4">
+                <form action="{{ url()->query('/purchase/delete', request()->all()) }}" method="POST"
+                    class="mb-4">
                     @csrf
                     @method('POST')
 
                     <div class="modal-header">
                         <h5 class="modal-title">Deletar jogo</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="delete_game_name">Jogo Concurso</label>
-                                <input id="delete_game_name" name="delete_game_name" type="text" class="form-control"
-                                    disabled>
+                                <input id="delete_game_name" name="delete_game_name" type="text"
+                                    class="form-control" disabled>
                             </div>
 
                             <div class="form-group">
@@ -641,7 +647,8 @@
                     return;
                 }
 
-                const matchingOption = Array.from(userDatalist.options).find(option => option.value === inputValue);
+                const matchingOption = Array.from(userDatalist.options).find(option => option.value ===
+                    inputValue);
                 userHiddenInput.value = matchingOption ? (matchingOption.dataset.id || '') : '';
             };
 
@@ -656,7 +663,7 @@
             // Eventos para desktop
             userInput.addEventListener('change', syncUserHiddenValue);
             userInput.addEventListener('blur', syncUserHiddenValue);
-            
+
             // Eventos para mobile - captura quando o valor muda
             userInput.addEventListener('input', () => {
                 if (!userInput.value.trim()) {
@@ -805,15 +812,15 @@
                         @foreach ($purchases as $purchase)
                             <tr>
                                 <td>
-                                    <input type="checkbox" class="purchase-checkbox-tab" 
-                                        value="{{ $purchase->id }}"
+                                    <input type="checkbox" class="purchase-checkbox-tab" value="{{ $purchase->id }}"
                                         data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
                                         data-game-name="{{ $purchase->game->name }}"
                                         data-gambler-name="{{ $purchase->gambler_name }}">
                                 </td>
                                 <td>
                                     <div class="my-bets-participants">
-                                        <span class="participant-name">{{ Str::limit($purchase->gambler_name, 20) }}</span>
+                                        <span
+                                            class="participant-name">{{ Str::limit($purchase->gambler_name, 20) }}</span>
                                         @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
                                             <small class="participant-info">
                                                 @if (in_array($purchase->seller->role->level_id, ['seller']))
@@ -828,8 +835,8 @@
                                 </td>
 
                                 <td>
-                                    
-                                    @if($purchase->status == 'PAID')
+
+                                    @if ($purchase->status == 'PAID')
                                         @php
                                             $badgeColor = 'secondary';
                                             $userAward = $purchase->userAwards->first();
@@ -850,7 +857,7 @@
                                             }
 
                                         @endphp
-                                        <span class="badge bg-{{$badgeColor}} fw-bold fs-6">
+                                        <span class="badge bg-{{ $badgeColor }} fw-bold fs-6">
                                             {{ $purchase->points }}
                                         </span>
                                     @else
@@ -864,11 +871,12 @@
                                             $displayNumbers = explode(' ', $purchase->numbers);
                                             $matchedNumbers = $purchase->matched_numbers ?? [];
                                         @endphp
-                                        
+
                                         @foreach ($displayNumbers as $number)
                                             @php
                                                 $paddedNumber = str_pad($number, 2, '0', STR_PAD_LEFT);
-                                                $isHit = in_array($number, $matchedNumbers) && $purchase->status == 'PAID';
+                                                $isHit =
+                                                    in_array($number, $matchedNumbers) && $purchase->status == 'PAID';
                                             @endphp
                                             <div class="my-bets-number-ball {{ $isHit ? 'hit' : 'miss' }}">
                                                 {{ $paddedNumber }}
@@ -884,12 +892,13 @@
                                             'PAID' => 'bg-success',
                                             'PENDING' => 'bg-warning text-dark',
                                             'CANCELED' => 'bg-danger',
-                                            'FINISHED' => 'bg-info'
+                                            'FINISHED' => 'bg-info',
                                         ];
                                         $statusColor = $statusColors[$purchase->status] ?? 'bg-secondary';
                                     @endphp
                                     <span class="badge {{ $statusColor }} me-1">
-                                        <i class="bx {{ $purchase->status == 'PAID' ? 'bx-check-circle' : ($purchase->status == 'PENDING' ? 'bx-time' : ($purchase->status == 'CANCELED' ? 'bx-x-circle' : 'bx-check')) }} me-1"></i>
+                                        <i
+                                            class="bx {{ $purchase->status == 'PAID' ? 'bx-check-circle' : ($purchase->status == 'PENDING' ? 'bx-time' : ($purchase->status == 'CANCELED' ? 'bx-x-circle' : 'bx-check')) }} me-1"></i>
                                         {{ __($purchase->status) }}
                                     </span>
                                 </td>
@@ -905,6 +914,13 @@
                                 @php
                                     $is_imported = $purchase->imported;
                                     $is_admin = auth()->user()->role->level_id == 'admin';
+                                    // Permite estornar quem pagou (paid_by_user_id), quem criou a aposta (user_id) ou admin
+                                    $can_withdraw =
+                                        $purchase->status === 'PAID' &&
+                                        !in_array($purchase->game->status, ['CLOSED', 'FINISHED']) &&
+                                        //$is_admin ||
+                                        ($purchase->paid_by_user_id === auth()->user()->id ||
+                                            $purchase->user_id === auth()->user()->id);
                                 @endphp
                                 <td>
                                     <div style="display: flex; flex-wrap: wrap; gap: 2px;">
@@ -913,17 +929,10 @@
                                             Pagar
                                         </a>
 
-                                        @if ($is_imported)
-                                            <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                                class="btn btn-sm btn-warning btn-loadonclick {{ !$is_admin || ($purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED') ? 'disabled' : '' }}">
-                                                Estornar
-                                            </a>
-                                        @else
-                                            <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                                class="btn btn-sm btn-warning btn-loadonclick {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
-                                                Estornar
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
+                                            class="btn btn-sm btn-warning btn-loadonclick {{ $can_withdraw ? '' : 'disabled' }}">
+                                            Estornar
+                                        </a>
 
                                         <a href="#" data-purchase_id="{{ $purchase->id }}"
                                             data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
@@ -990,10 +999,10 @@
                 if (!purchaseCheckboxes || purchaseCheckboxes.length === 0) {
                     return;
                 }
-                
+
                 const selected = Array.from(purchaseCheckboxes).filter(cb => cb && cb.checked);
                 const count = selected.length;
-                
+
                 // Atualiza contador
                 if (selectedCountSpan) selectedCountSpan.textContent = count;
 
@@ -1014,14 +1023,14 @@
                         const gamblerName = cb.getAttribute('data-gambler-name') || '';
                         return `<div class="mb-1"><small><strong>${gameName}</strong> - ${gamblerName}: ${numbers}</small></div>`;
                     }).join('');
-                    
+
                     // Atualiza input hidden com IDs
                     const ids = selected.map(cb => cb ? cb.value : null).filter(id => id); // Remove valores vazios
-                    
+
                     // Remove inputs antigos
                     if (repeatPurchaseIdsContainer) {
                         repeatPurchaseIdsContainer.innerHTML = '';
-                        
+
                         // Adiciona novos inputs apenas com valores válidos
                         ids.forEach(id => {
                             if (id) {
@@ -1033,10 +1042,11 @@
                             }
                         });
                     }
-                    
+
                     if (repeatButtonBatch) repeatButtonBatch.disabled = false;
                 } else {
-                    if (selectedPurchasesList) selectedPurchasesList.innerHTML = '<p class="text-muted">Nenhuma aposta selecionada</p>';
+                    if (selectedPurchasesList) selectedPurchasesList.innerHTML =
+                        '<p class="text-muted">Nenhuma aposta selecionada</p>';
                     if (repeatPurchaseIdsContainer) repeatPurchaseIdsContainer.innerHTML = '';
                     if (repeatButtonBatch) repeatButtonBatch.disabled = true;
                 }
@@ -1100,17 +1110,18 @@
                         alert('Selecione pelo menos uma aposta para repetir');
                         return;
                     }
-                    
+
                     // Atualiza a UI antes de abrir o modal para garantir que os inputs estejam corretos
                     updateBatchUI();
-                    
-                    const myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game_batch'), {
+
+                    const myModal = new bootstrap.Modal(document.getElementById(
+                        'modal_repeat_game_batch'), {
                         focus: true
                     });
                     myModal.show();
                 });
             }
-            
+
             // Atualiza os inputs quando o modal é aberto (evento show do Bootstrap)
             if (modalRepeatBatch) {
                 modalRepeatBatch.addEventListener('show.bs.modal', function() {
@@ -1122,28 +1133,36 @@
             // Inicializa UI
             updateBatchUI();
 
+            const modalRepeatGameEl = document.getElementById('modal_repeat_game');
+            let modalRepeatGameInstance = null;
+
             // Funcionalidade de repetir jogo individual
             const repeat_game_buttons = document.getElementsByClassName('repeat_game_button');
             for (var i = 0; i < repeat_game_buttons.length; i++) {
                 (function(index) {
                     repeat_game_buttons[index].addEventListener("click", function(e) {
                         e.preventDefault();
-                        var myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game'), {
+                        var myModal = new bootstrap.Modal(modalRepeatGameEl, {
                             focus: true
                         });
 
                         const numbers = e.target.getAttribute('data-numbers');
-                        const repeat_game_numbers_id = document.getElementById('repeat_game_numbers_id');
+                        const repeat_game_numbers_id = document.getElementById(
+                            'repeat_game_numbers_id');
                         if (repeat_game_numbers_id) repeat_game_numbers_id.value = numbers;
 
                         const purchase_id = e.target.getAttribute('data-purchase_id');
-                        const repeat_game_purchase_id = document.getElementById('repeat_game_purchase_id');
+                        const repeat_game_purchase_id = document.getElementById(
+                            'repeat_game_purchase_id');
                         if (repeat_game_purchase_id) repeat_game_purchase_id.value = purchase_id;
 
                         myModal.show();
                     });
                 })(i);
             }
+            modalRepeatGameEl.addEventListener('hidden.bs.modal', function() {
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            });
 
             // Funcionalidade de deletar jogo
             const delete_game_buttons = document.getElementsByClassName('delete_game_button');
@@ -1151,7 +1170,8 @@
                 (function(index) {
                     delete_game_buttons[index].addEventListener("click", function(e) {
                         e.preventDefault();
-                        var myModal = new bootstrap.Modal(document.getElementById('modal_delete_game'), {
+                        var myModal = new bootstrap.Modal(document.getElementById(
+                            'modal_delete_game'), {
                             focus: true
                         });
 
@@ -1163,16 +1183,19 @@
                         const delete_game_name = document.getElementById('delete_game_name');
                         if (delete_game_name) delete_game_name.value = game_name;
 
-                        const gambler_name = e.target.getAttribute('data-gambler_name大师');
-                        const delete_game_gambler_name = document.getElementById('delete_game_gambler_name');
+                        const gambler_name = e.target.getAttribute('data-gambler_name');
+                        const delete_game_gambler_name = document.getElementById(
+                            'delete_game_gambler_name');
                         if (delete_game_gambler_name) delete_game_gambler_name.value = gambler_name;
 
                         const gambler_phone = e.target.getAttribute('data-gambler_phone');
-                        const delete_game_gambler_phone = document.getElementById('delete_game_gambler_phone');
+                        const delete_game_gambler_phone = document.getElementById(
+                            'delete_game_gambler_phone');
                         if (delete_game_gambler_phone) delete_game_gambler_phone.value = gambler_phone;
 
                         const purchase_id = e.target.getAttribute('data-purchase_id');
-                        const delete_game_purchase_id = document.getElementById('delete_game_purchase_id');
+                        const delete_game_purchase_id = document.getElementById(
+                            'delete_game_purchase_id');
                         if (delete_game_purchase_id) delete_game_purchase_id.value = purchase_id;
 
                         myModal.show();

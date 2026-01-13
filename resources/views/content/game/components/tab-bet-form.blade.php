@@ -37,7 +37,7 @@
                             $selectedSellerId = old('seller_id');
                             $selectedSeller = null;
                             $selectedSellerLabel = '';
-                            
+
                             if ($selectedSellerId) {
                                 if ($selectedSellerId == auth()->user()->id) {
                                     $selectedSellerLabel = 'Banca Central';
@@ -57,7 +57,8 @@
                                 <option value="Banca Central" data-id="{{ auth()->user()->id }}"></option>
                                 @if (isset($sellers))
                                     @foreach ($sellers as $seller)
-                                        <option value="{{ $formatSellerLabel($seller) }}" data-id="{{ $seller->id }}"></option>
+                                        <option value="{{ $formatSellerLabel($seller) }}" data-id="{{ $seller->id }}">
+                                        </option>
                                     @endforeach
                                 @endif
                             </datalist>
@@ -175,7 +176,7 @@
                 // Eventos para desktop
                 sellerInput.addEventListener('change', syncSellerHiddenValue);
                 sellerInput.addEventListener('blur', syncSellerHiddenValue);
-                
+
                 // Eventos para mobile - captura quando o valor muda
                 sellerInput.addEventListener('input', () => {
                     if (!sellerInput.value.trim()) {
@@ -217,4 +218,96 @@
             });
         </script>
     @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('bet_form');
+            if (!form) return;
+
+            const manualInput = document.getElementById('manual_numbers');
+            const numbersHidden = document.getElementById('numbers');
+            const submitBtn = form.querySelector('button[type="submit"].btn-loadonclick');
+            const selectionRadios = form.querySelectorAll('input[name="selection_method"]');
+            const gridContainer = document.getElementById('grid_input_container');
+
+            let originalBtnText = submitBtn ? submitBtn.textContent.trim() : 'Comprar Dezenas';
+
+            const enableSubmit = () => {
+                if (!submitBtn) return;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('disabled');
+                submitBtn.textContent = originalBtnText;
+            };
+            const disableSubmit = () => {
+                if (!submitBtn) return;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('disabled');
+                submitBtn.textContent = 'Processando...';
+            };
+
+            const currentMethod = () => {
+                const checked = form.querySelector('input[name="selection_method"]:checked');
+                return checked ? checked.value : 'text';
+            };
+
+            const normalizeManual = (raw) => {
+                if (!raw) return '';
+                const arr = raw.trim().split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 11)
+                    .map(n => {
+                        const onlyDigits = n.replace(/\D/g, '');
+                        if (!onlyDigits) return null;
+                        return onlyDigits.length === 1 ? '0' + onlyDigits : onlyDigits.slice(-2);
+                    })
+                    .filter(Boolean);
+                return arr.join(' ');
+            };
+
+            form.addEventListener('submit', function(e) {
+                const method = currentMethod();
+
+                if (method === 'text') {
+                    const normalized = normalizeManual(manualInput ? manualInput.value : '');
+                    numbersHidden.value = normalized;
+                } else {
+                    if (!numbersHidden.value && gridContainer) {
+                        const selectedBtns = gridContainer.querySelectorAll(
+                            '.number-button.active, .number-button.selected');
+                        if (selectedBtns.length) {
+                            const vals = Array.from(selectedBtns).map(b => {
+                                let v = b.dataset.number || b.textContent || '';
+                                v = v.trim();
+                                return v.length === 1 ? '0' + v : v.slice(-2);
+                            }).slice(0, 11);
+                            numbersHidden.value = vals.join(' ');
+                        }
+                    }
+                }
+
+                const finalNumbers = (numbersHidden.value || '').trim();
+                if (!finalNumbers) {
+                    e.preventDefault();
+                    enableSubmit();
+                    if (method === 'text' && manualInput) {
+                        manualInput.focus();
+                    } else if (gridContainer) {
+                        gridContainer.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                    alert('Por favor, selecione ou insira até 11 dezenas antes de enviar a aposta.');
+                    return false;
+                }
+
+                // tudo OK, desabilita botão e deixa submeter
+                disableSubmit();
+                return true;
+            });
+
+            if (manualInput) manualInput.addEventListener('input', enableSubmit);
+            if (gridContainer) gridContainer.addEventListener('click', enableSubmit, true);
+            selectionRadios.forEach(r => r.addEventListener('change', enableSubmit));
+        });
+    </script>
 </div>

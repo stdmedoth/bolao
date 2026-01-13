@@ -93,18 +93,20 @@
 
                                 <div class="form-group mt-3">
                                     <label>Apostas selecionadas: <span id="selected_count_batch">0</span></label>
-                                    <div id="selected_purchases_list" class="mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                    <div id="selected_purchases_list" class="mt-2"
+                                        style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
                                         <p class="text-muted">Nenhuma aposta selecionada</p>
                                     </div>
                                 </div>
-                                
-                                <input id="repeat_game_purchase_ids_batch" name="repeat_game_purchase_ids[]" type="hidden" value="">
+
+                                <input id="repeat_game_purchase_ids_batch" name="repeat_game_purchase_ids[]" type="hidden"
+                                    value="">
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                            <button id="repeat_game_repeat_button_batch_id" type="submit"
-                                class="btn btn-primary" disabled>Repetir Selecionadas</button>
+                            <button id="repeat_game_repeat_button_batch_id" type="submit" class="btn btn-primary"
+                                disabled>Repetir Selecionadas</button>
                         </div>
                     </form>
                 </div>
@@ -128,8 +130,8 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="delete_game_name">Jogo Concurso</label>
-                                    <input id="delete_game_name" name="delete_game_name" type="text" class="form-control"
-                                        disabled>
+                                    <input id="delete_game_name" name="delete_game_name" type="text"
+                                        class="form-control" disabled>
                                 </div>
 
                                 <div class="form-group">
@@ -254,8 +256,7 @@
                         @foreach ($purchases as $purchase)
                             <tr>
                                 <td>
-                                    <input type="checkbox" class="purchase-checkbox" 
-                                        value="{{ $purchase->id }}"
+                                    <input type="checkbox" class="purchase-checkbox" value="{{ $purchase->id }}"
                                         data-numbers="{{ collect(explode(' ', $purchase->numbers))->map(fn($num) => str_pad($num, 2, '0', STR_PAD_LEFT))->implode(' ') }}"
                                         data-game-name="{{ $purchase->game->name }}"
                                         data-gambler-name="{{ $purchase->gambler_name }}">
@@ -314,8 +315,17 @@
                                         Pagar
                                     </a>
 
+                                    @php
+                                        $is_admin = auth()->user()->role->level_id == 'admin';
+                                        $can_withdraw =
+                                            $purchase->status === 'PAID' &&
+                                            !in_array($purchase->game->status, ['CLOSED', 'FINISHED']) &&
+                                            //$is_admin ||
+                                            ($purchase->paid_by_user_id === auth()->user()->id ||
+                                                $purchase->user_id === auth()->user()->id);
+                                    @endphp
                                     <a href="{{ route('purchase-withdraw', array_merge([$purchase->id], request()->query())) }}"
-                                        class="btn btn-warning {{ $purchase->status !== 'PAID' || $purchase->game->status == 'CLOSED' || $purchase->game->status == 'FINISHED' || $purchase->paid_by_user_id !== auth()->user()->id ? 'disabled' : '' }}">
+                                        class="btn btn-warning {{ $can_withdraw ? '' : 'disabled' }}">
                                         Estornar
                                     </a>
 
@@ -433,7 +443,7 @@
             function updateBatchUI() {
                 const selected = Array.from(purchaseCheckboxes).filter(cb => cb.checked);
                 const count = selected.length;
-                
+
                 // Atualiza contador
                 selectedCountSpan.textContent = count;
 
@@ -452,7 +462,7 @@
                         const gamblerName = cb.getAttribute('data-gambler-name');
                         return `<div class="mb-1"><small><strong>${gameName}</strong> - ${gamblerName}: ${numbers}</small></div>`;
                     }).join('');
-                    
+
                     // Atualiza input hidden com IDs
                     const ids = selected.map(cb => cb.value).filter(id => id); // Remove valores vazios
                     // Remove inputs antigos (incluindo o original se estiver vazio)
@@ -460,7 +470,7 @@
                         const container = repeatPurchaseIdsBatch.parentNode;
                         const oldInputs = container.querySelectorAll('input[name="repeat_game_purchase_ids[]"]');
                         oldInputs.forEach(input => input.remove()); // Remove todos, incluindo o original
-                        
+
                         // Adiciona novos inputs apenas com valores válidos
                         ids.forEach(id => {
                             const input = document.createElement('input');
@@ -470,7 +480,7 @@
                             container.appendChild(input);
                         });
                     }
-                    
+
                     repeatButtonBatch.disabled = false;
                 } else {
                     selectedPurchasesList.innerHTML = '<p class="text-muted">Nenhuma aposta selecionada</p>';
@@ -529,8 +539,9 @@
                         alert('Selecione pelo menos uma aposta para repetir');
                         return;
                     }
-                    
-                    const myModal = new bootstrap.Modal(document.getElementById('modal_repeat_game_batch'), {
+
+                    const myModal = new bootstrap.Modal(document.getElementById(
+                        'modal_repeat_game_batch'), {
                         focus: true
                     });
                     myModal.show();

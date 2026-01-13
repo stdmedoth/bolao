@@ -118,25 +118,116 @@
         // Script global para bloquear botões após submit
         document.addEventListener('DOMContentLoaded', function() {
             // Seleciona todos os botões com classe btn-loadonclick na página
-            const loadOnClickButtons = document.querySelectorAll('.btn-loadonclick');
+            const loadOnClickButtons = document.querySelectorAll('#bet-form .btn-loadonclick');
 
             loadOnClickButtons.forEach(button => {
-                button.addEventListener('click', function(event) {
-                    // Verifica se o botão já está desabilitado pela lógica do Blade
-                    if (this.classList.contains('disabled')) {
-                        event.preventDefault(); // Impede a navegação se já estiver desabilitado
-                        return;
-                    }
+                let form = button.closest('form');
+                if (form) {
+                    // Registra se o botão já estava desabilitado no carregamento da página
+                    const initiallyDisabled = button.classList.contains('disabled') || button.disabled;
 
-                    // Desabilita o botão imediatamente para evitar clique duplo
-                    this.classList.add('disabled');
-                    this.textContent = 'Processando...';
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            // Let the browser show the "Required" bubbles
+                            return;
+                        }
 
-                    // Para botões de submit de formulário, o navegador continuará com o submit normalmente.
-                    // Para links, o navegador continuará com a navegação normalmente.
-                    // Não precisamos de setTimeout ou reativar o botão, pois a página vai recarregar.
-                });
+                        // Se o botão já vinha desabilitado quando a página carregou, Bloqueia submit
+                        if (initiallyDisabled) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        // Adia a desabilitação para permitir que outros handlers de submit (validações
+                        // específicas de formulário) rodem e possam cancelar o submit via
+                        // event.preventDefault(). Se o submit for prevenido, não muda o botão.
+                        setTimeout(() => {
+                            try {
+                                if (event.defaultPrevented) return;
+                                // Marca botão como processando
+                                button.classList.add('disabled');
+                                try {
+                                    button.textContent = 'Processando...';
+                                } catch (e) {}
+
+                                // Fallback: se após X segundos ainda estivermos na mesma página, reabilita botão
+                                // para evitar ficar permanentemente travado quando o submit for interceptado.
+                                const existingTimer = button.getAttribute(
+                                    'data-processing-timer');
+                                if (existingTimer) {
+                                    try {
+                                        clearTimeout(Number(existingTimer));
+                                    } catch (e) {}
+                                }
+                                const t = setTimeout(() => {
+                                    try {
+                                        button.classList.remove('disabled');
+                                        // Restaura texto apenas se estiver em Processando...
+                                        if ((button.textContent || '').trim() ===
+                                            'Processando...') {
+                                            // tenta restaurar um label mais genérico
+                                            // se o botão tem data-original-text, restaura
+                                            const orig = button.getAttribute(
+                                                'data-original-text');
+                                            if (orig) button.textContent = orig;
+                                            else button.textContent = 'Enviar';
+                                        }
+                                        button.removeAttribute(
+                                            'data-processing-timer');
+                                    } catch (e) {
+                                        console.error(
+                                            'Erro ao reabilitar botão de fallback:',
+                                            e);
+                                    }
+                                }, 8000);
+                                button.setAttribute('data-processing-timer', String(t));
+                            } catch (err) {
+                                console.error('Erro ao definir estado do botão:', err);
+                            }
+                        }, 0);
+                    });
+                }
             });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bloqueia o botão repeat_game_repeat_button_batch_id_tab para evitar múltiplos submits
+            const repeatButton = document.getElementById('repeat_game_repeat_button_batch_id_tab');
+            if (repeatButton) {
+                let form = repeatButton.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            // Let the browser show the "Required" bubbles
+                            return;
+                        }
+                        // Marca botão como processando
+                        repeatButton.classList.add('disabled');
+                        try {
+                            repeatButton.textContent = 'Processando...';
+                        } catch (e) {}
+                    });
+                }
+            }
+
+            // O mesmo para o repeat_game_repeat_button_id
+            const repeatButton2 = document.getElementById('repeat_game_repeat_button_id');
+            if (repeatButton2) {
+                let form = repeatButton2.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            // Let the browser show the "Required" bubbles
+                            return;
+                        }
+                        // Marca botão como processando
+                        repeatButton2.classList.add('disabled');
+                        try {
+                            repeatButton2.textContent = 'Processando...';
+                        } catch (e) {}
+                    });
+                }
+            }
         });
     </script>
 

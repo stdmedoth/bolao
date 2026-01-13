@@ -93,7 +93,7 @@ class PurchaseController extends Controller
     // Se o criador for admin, debita do vendedor vinculado (purchase->seller_id)
     $creatorUser = User::find($purchase->user_id);
     $creatorRole = $creatorUser->role->level_id;
-    
+
     // Se quem criou foi admin, debita do vendedor vinculado
     if ($creatorRole == 'admin') {
       $sellerId = $purchase->seller_id;
@@ -104,11 +104,11 @@ class PurchaseController extends Controller
       $creatorUser = User::find($sellerId);
       $creatorRole = $creatorUser->role->level_id;
     }
-    
+
     // Calcula o valor a ser debitado
     // Sempre debita o valor completo do jogo
     $amountToPay = $purchase->price;
-    
+
     // Verifica saldo e debita
     if ($creatorUser->game_credit < $amountToPay) {
       if ($isAdmin) {
@@ -120,17 +120,17 @@ class PurchaseController extends Controller
           ->withErrors(['error' => "Sua conta não tem crédito suficiente para realizar a operação"]);
       }
     }
-    
+
     $creatorUser->game_credit -= $amountToPay;
     $creatorUser->save();
-    
+
     // Se quem criou foi apostador, verifica indicação (apenas na primeira compra paga)
     if ($creatorRole == 'gambler') {
       if ($creatorUser->invited_by_id) {
         $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
           ->where('status', 'PAID')
           ->exists();
-        
+
         if (!$has_previous_paid_purchases) {
           $refer = ReferEarn::where(
             'refer_user_id',
@@ -157,14 +157,14 @@ class PurchaseController extends Controller
     $purchase->load('game');
     $payingUser = Auth::user();
     $sellerId = $purchase->seller_id;
-    
+
     // Determina se o vendedor deve receber comissão
     $shouldPayCommission = false;
     if ($sellerId) {
       // Sempre paga comissão quando há vendedor vinculado
       $shouldPayCommission = true;
     }
-    
+
     // Paga comissão ao vendedor vinculado
     if ($shouldPayCommission) {
       $seller = User::find($sellerId);
@@ -220,6 +220,20 @@ class PurchaseController extends Controller
   {
     $purchase = Purchase::find($id);
 
+    if (!$purchase) {
+      return redirect()->back()->withErrors(['error' => 'Aposta não encontrada.']);
+    }
+
+    // Autorização: permite estornar quem pagou (paid_by_user_id), quem criou a aposta (user_id) ou admin
+    $currentUser = Auth::user();
+    $isAdmin = $currentUser->role->level_id == 'admin';
+    $isPayer = $purchase->paid_by_user_id && $purchase->paid_by_user_id === $currentUser->id;
+    $isCreator = $purchase->user_id === $currentUser->id;
+
+    if (!($isAdmin || $isPayer || $isCreator)) {
+      return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->withErrors(['error' => 'Você não tem permissão para estornar esta aposta.']);
+    }
+
     if ($purchase->status == "PENDING") {
       return redirect()->route('show-game', array_merge(['id' => $purchase->game_id], request()->query()))->with('success', 'Aposta já estava pendente!');
     }
@@ -228,7 +242,7 @@ class PurchaseController extends Controller
     // Mesma lógica usada no método pay()
     $creatorUser = User::find($purchase->user_id);
     $creatorRole = $creatorUser->role->level_id;
-    
+
     // Se quem criou foi admin, o saldo foi debitado do vendedor vinculado
     if ($creatorRole == 'admin') {
       $sellerId = $purchase->seller_id;
@@ -239,7 +253,7 @@ class PurchaseController extends Controller
       $creatorUser = User::find($sellerId);
       $creatorRole = $creatorUser->role->level_id;
     }
-    
+
     // Calcula o valor a ser estornado (sempre o valor completo do jogo)
     $amountToRefund = $purchase->price;
 
@@ -253,7 +267,7 @@ class PurchaseController extends Controller
       $purchase_qnt = Purchase::where('user_id', $creatorUser->id)
         ->where('status', 'PAID')
         ->count();
-      
+
       // Se esta é a primeira compra (count = 1), remove a indicação
       if ($purchase_qnt == 1 && $creatorUser->invited_by_id) {
         $refer = ReferEarn::where(
@@ -284,7 +298,7 @@ class PurchaseController extends Controller
     if ($sellerId) {
       // Sempre estorna comissão quando há vendedor vinculado (agora sempre recebe comissão)
       $shouldRefundCommission = true;
-      
+
       if ($shouldRefundCommission) {
         $seller = User::find($sellerId);
         if ($seller) {
@@ -425,7 +439,7 @@ class PurchaseController extends Controller
           $has_previous_paid_purchases = Purchase::where('user_id', $gamblerUser->id)
             ->where('status', 'PAID')
             ->exists();
-          
+
           // Se NÃO tem compras pagas anteriores, esta é a primeira
           if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
@@ -452,7 +466,7 @@ class PurchaseController extends Controller
       // Se quem criou foi admin, debita do vendedor do jogo
       $creatorUser = User::find($request->user_id);
       $creatorRole = $creatorUser->role->level_id;
-      
+
       // Se quem criou foi admin, debita do vendedor
       if ($creatorRole == 'admin') {
         $sellerId = $request->seller_id ?? $purchase->seller_id;
@@ -462,25 +476,25 @@ class PurchaseController extends Controller
         $creatorUser = User::find($sellerId);
         $creatorRole = $creatorUser->role->level_id;
       }
-      
+
       // Calcula o valor a ser debitado (sempre o valor completo)
       $amountToPay = $basePrice;
-      
+
       // Verifica saldo e debita
       if ($creatorUser->game_credit < $amountToPay) {
         return redirect()->back()->withErrors(['error' => "O usuário responsável não tem crédito suficiente para realizar a operação"]);
       }
-      
+
       $creatorUser->game_credit -= $amountToPay;
       $creatorUser->save();
-      
+
       // Se quem criou foi apostador, verifica indicação
       if ($creatorRole == 'gambler') {
         if ($creatorUser->invited_by_id && $purchase->price >= 10.00) {
           $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
             ->where('status', 'PAID')
             ->exists();
-          
+
           if (!$has_previous_paid_purchases) {
             $refer = ReferEarn::where(
               'refer_user_id',
@@ -501,7 +515,7 @@ class PurchaseController extends Controller
           }
         }
       }
-      
+
       // Quando admin cria, o pagador é quem criou a compra (ou vendedor se admin)
       $payingUser = $creatorUser;
     }
@@ -509,14 +523,14 @@ class PurchaseController extends Controller
     // Paga comissão ao vendedor vinculado
     // Regra: Vendedor sempre recebe comissão quando a aposta é paga, se houver vendedor vinculado
     $sellerId = $request->seller_id ?? $purchase->seller_id;
-    
+
     // Determina se o vendedor deve receber comissão
     $shouldPayCommission = false;
     if ($sellerId) {
       // Sempre paga comissão quando há vendedor vinculado
       $shouldPayCommission = true;
     }
-    
+
     // Paga comissão ao vendedor vinculado
     if ($shouldPayCommission) {
       $seller = User::find($sellerId);
@@ -579,15 +593,15 @@ class PurchaseController extends Controller
     ];
 
     // Verifica se é repetição em lote ou individual
-    $has_batch_ids = $request->has('repeat_game_purchase_ids') && 
-                     is_array($request->repeat_game_purchase_ids);
-    
+    $has_batch_ids = $request->has('repeat_game_purchase_ids') &&
+      is_array($request->repeat_game_purchase_ids);
+
     if ($has_batch_ids) {
       // Remove valores vazios/null e verifica se há pelo menos um ID
-      $purchase_ids = array_filter($request->repeat_game_purchase_ids, function($id) {
+      $purchase_ids = array_filter($request->repeat_game_purchase_ids, function ($id) {
         return !empty($id);
       });
-      
+
       if (!empty($purchase_ids)) {
         // Repetição em lote - valida array de purchase_ids
         $rules['repeat_game_purchase_ids'] = 'required|array|min:1';
@@ -635,14 +649,14 @@ class PurchaseController extends Controller
           ->where('gambler_name', $old_purchase->gambler_name)
           ->where('status', '!=', 'CANCELED') // Considera apenas apostas ativas (PAID, PENDING, FINISHED)
           ->get();
-        
+
         $existingPurchase = null;
         foreach ($existingPurchases as $purchase) {
           // Normaliza os números da aposta do banco para comparar
           $purchaseNumbers = explode(' ', $purchase->numbers);
           $purchaseNumbers = array_map('intval', $purchaseNumbers);
           $purchaseNumbers = implode(' ', $purchaseNumbers);
-          
+
           if ($purchaseNumbers === $normalizedNumbers) {
             $existingPurchase = $purchase;
             break;
@@ -709,7 +723,7 @@ class PurchaseController extends Controller
               $has_previous_paid_purchases = Purchase::where('user_id', $user->id)
                 ->where('status', 'PAID')
                 ->exists();
-              
+
               // Se NÃO tem compras pagas anteriores, esta é a primeira
               if (!$has_previous_paid_purchases) {
                 $refer = ReferEarn::where(
@@ -731,7 +745,7 @@ class PurchaseController extends Controller
               }
             }
           }
-          
+
           $newPurchase->status = "PAID";
           $newPurchase->paid_by_user_id = $user->id;
         } else {
@@ -739,7 +753,7 @@ class PurchaseController extends Controller
           // Se quem criou foi admin, debita do vendedor do jogo
           $creatorUser = User::find($newPurchase->user_id);
           $creatorRole = $creatorUser->role->level_id;
-          
+
           // Se quem criou foi admin, debita do vendedor
           if ($creatorRole == 'admin') {
             $sellerId = $newPurchase->seller_id;
@@ -750,27 +764,27 @@ class PurchaseController extends Controller
             $creatorUser = User::find($sellerId);
             $creatorRole = $creatorUser->role->level_id;
           }
-          
+
           // Calcula o valor a ser debitado (sempre o valor completo)
           $amountToPay = $basePrice;
-          
+
           // Verifica saldo e debita
           if ($creatorUser->game_credit < $amountToPay) {
             $failed_count++;
             continue;
           }
-          
+
           $creatorUser->game_credit -= $amountToPay;
           $creatorUser->save();
           $total_price += $amountToPay;
-          
+
           // Se quem criou foi apostador, verifica indicação
           if ($creatorRole == 'gambler') {
             if ($creatorUser->invited_by_id && $basePrice >= 10.00) {
               $has_previous_paid_purchases = Purchase::where('user_id', $creatorUser->id)
                 ->where('status', 'PAID')
                 ->exists();
-              
+
               if (!$has_previous_paid_purchases) {
                 $refer = ReferEarn::where(
                   'refer_user_id',
@@ -791,25 +805,25 @@ class PurchaseController extends Controller
               }
             }
           }
-          
+
           // Quando admin repete, o pagador é quem criou a nova compra (ou vendedor se admin)
           $newPurchase->status = "PAID";
           $newPurchase->paid_by_user_id = $creatorUser->id;
         }
-        
+
         $newPurchase->save();
 
         // Paga comissão ao vendedor vinculado
         // Regra: Vendedor sempre recebe comissão quando a aposta é paga, se houver vendedor vinculado
         $sellerId = $newPurchase->seller_id;
-        
+
         // Determina se o vendedor deve receber comissão
         $shouldPayCommission = false;
         if ($sellerId) {
           // Sempre paga comissão quando há vendedor vinculado
           $shouldPayCommission = true;
         }
-        
+
         // Paga comissão ao vendedor vinculado
         if ($shouldPayCommission) {
           $seller = User::find($sellerId);
@@ -859,7 +873,7 @@ class PurchaseController extends Controller
       }
     }
 
-    
+
     // Redirecionamento com mensagem
     $errorMessage = '';
     if ($already_repeated_count > 0) {
@@ -867,8 +881,8 @@ class PurchaseController extends Controller
     }
 
     if ($success_count > 0 && $failed_count == 0 && $already_repeated_count == 0) {
-      $message = count($purchase_ids) > 1 
-        ? "{$success_count} compras realizadas com sucesso!" 
+      $message = count($purchase_ids) > 1
+        ? "{$success_count} compras realizadas com sucesso!"
         : 'Compra realizada com sucesso!';
       return redirect()->back()->with(['success' => $message, 'tab' => 'tab-mybets']);
     } elseif ($success_count > 0) {
