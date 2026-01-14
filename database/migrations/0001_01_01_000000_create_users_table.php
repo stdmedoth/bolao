@@ -48,7 +48,7 @@ return new class extends Migration
         "EVP",
       ])->nullable();
 
-      $table->string('external_finnancial_id')->nullable();
+      $table->string('external_financial_id')->nullable();
 
       $table->unsignedBigInteger('role_user_id');
       $table->foreign('role_user_id')->references('id')->on('role_users');
