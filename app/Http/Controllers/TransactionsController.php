@@ -215,6 +215,7 @@ class TransactionsController extends Controller
       'game_credit' => $selectedUser->game_credit ?? 0,
       'game_credit_limit' => $selectedUser->game_credit_limit ?? 0,
       'credit_debt' => max(0, ($selectedUser->game_credit_limit ?? 0) - ($selectedUser->game_credit ?? 0)),
+      'available_balance' => max(0, ($selectedUser->game_credit ?? 0) - ($selectedUser->game_credit_limit ?? 0)),
     ];
   }
 

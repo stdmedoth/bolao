@@ -180,12 +180,12 @@
         .my-bets-participants .participant-name {
             font-weight: bold;
             color: #3b82f6;
-            font-size: 0.85rem;
+            font-size: 1rem;
         }
 
         .my-bets-participants .participant-info {
             font-size: 0.6rem;
-            color: #6b7280;
+            color: #000000;
             line-height: 1.2;
             margin-top: 2px;
         }
@@ -267,7 +267,7 @@
             }
 
             .my-bets-participants .participant-name {
-                font-size: 0.75rem;
+                font-size: 0.7.5rem;
             }
 
             .my-bets-participants .participant-info {
@@ -308,7 +308,7 @@
                 width: 120px;
                 min-width: 120px;
                 max-width: 120px;
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
 
             /* Coluna de Pontos no mobile pequeno */
@@ -367,13 +367,14 @@
                 height: 14px;
                 font-size: 0.5rem;
             }
-
+			
+            /* Nome do "Usuário" no mobile pequeno */
             .my-bets-participants .participant-name {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
             }
 
             .my-bets-participants .participant-info {
-                font-size: 0.5rem;
+                font-size: 0.6rem;
             }
 
             /* Coluna "Usuário" no mobile pequeno */
@@ -824,9 +825,9 @@
                                         @if (in_array(auth()->user()->role->level_id, ['admin', 'seller']))
                                             <small class="participant-info">
                                                 @if (in_array($purchase->seller->role->level_id, ['seller']))
-                                                    Vendedor: {{ Str::limit($purchase->seller->name, 20) }}
+                                                    Vend: {{ Str::limit($purchase->seller->name, 20) }}
                                                 @else
-                                                    Vendedor: Banca Central
+                                                    Vend: Banca Central
                                                 @endif
                                             </small>
                                         @endif

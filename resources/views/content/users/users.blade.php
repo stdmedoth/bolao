@@ -20,11 +20,11 @@
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mt-2 mb-3">
             <h1 class="mb-3 mb-md-0">Usuários</h1>
             @if (auth()->user()->role->level_id == 'admin')
-                <a class="btn btn-primary" href="/usuarios/create_user">Criar novo usuário</a>
+                <a class="btn btn-primary" href="{{ url('usuarios/create_user') }}">Criar novo usuário</a>
             @endif
 
             @if (auth()->user()->role->level_id == 'seller')
-                <a class="btn btn-primary" href="/usuarios/create_user">Trazer novo apostador</a>
+                <a class="btn btn-primary" href="{{ url('usuarios/create_user') }}">Trazer novo apostador</a>
             @endif
         </div>
 
@@ -95,12 +95,12 @@
                                 </td>
                                 @if (auth()->user()->role->level_id == 'admin')
                                     <td class="text-end">
-                                        <div class="btn-group" role="group">
-                                            <a href="/usuarios/edit/{{ $user->id }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                                            <form action="/usuarios/delete/{{ $user->id }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
+                                        <div class="d-flex gap-2 align-items-stretch" role="group">
+                                            <a href="{{ url('usuarios/edit/'.$user->id) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center px-3 h-100">Editar</a>
+                                            <form action="{{ url('usuarios/delete/'.$user->id) }}" method="POST" class="m-0 d-flex align-items-stretch" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" {{ $user->id === auth()->user()->id ? 'disabled' : '' }}>Excluir</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center px-3 h-100" {{ $user->id === auth()->user()->id ? 'disabled' : '' }}>Excluir</button>
                                             </form>
                                         </div>
                                     </td>
@@ -122,7 +122,8 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex align-items-start gap-3">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 p-0 overflow-hidden"
+                                 style="width:40px;height:40px;border-radius:50%;">
                                 {{ mb_substr($user->name, 0, 1) }}
                             </div>
                             <div class="w-100">
@@ -137,13 +138,19 @@
                                 </div>
 
                                 @if (auth()->user()->role->level_id == 'admin')
-                                    <div class="d-flex gap-2 mt-3">
-                                        <a href="/usuarios/edit/{{ $user->id }}" class="btn btn-sm btn-outline-primary flex-fill">Editar</a>
-                                        <form action="/usuarios/delete/{{ $user->id }}" method="POST" class="flex-fill" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" {{ $user->id === auth()->user()->id ? 'disabled' : '' }}>Excluir</button>
-                                        </form>
+                                    <div class="d-flex gap-2 mt-3 align-items-stretch">
+                                        <div class="flex-fill d-flex">
+                                            <form action="{{ url('usuarios/edit/'.$user->id) }}" method="GET" class="w-100 d-flex m-0 align-items-stretch">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary w-100 d-flex align-items-center justify-content-center py-2 h-100 lh-1">Editar</button>
+                                            </form>
+                                        </div>
+                                        <div class="flex-fill d-flex">
+                                            <form action="{{ url('usuarios/delete/'.$user->id) }}" method="POST" class="w-100 d-flex m-0 align-items-stretch" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center py-2 h-100 lh-1" {{ $user->id === auth()->user()->id ? 'disabled' : '' }}>Excluir</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 @endif
                             </div>

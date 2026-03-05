@@ -160,6 +160,7 @@ class AdminController extends Controller
       'invited_by_id.exists' => 'O usuário referenciador não existe.',
     ]);
 
+    if ($validatedData['game_credit_limit'] == NULL) $validatedData['game_credit_limit'] = 0;
 
     // Validação customizada para seller_id
     if (!$this->validateSellerId($validatedData['invited_by_id'] ?? null)) {
@@ -209,6 +210,7 @@ class AdminController extends Controller
         $requestData[$field] = str_replace(",", ".", $requestData[$field]);
       }
     }
+    if (isset($request->game_credit_limit) && ($request->game_credit_limit == NULL)) $request->game_credit_limit = 0;
 
     // Cria uma nova request com os dados convertidos para validação
     $request->merge($requestData);
@@ -294,6 +296,8 @@ class AdminController extends Controller
     if ($request->filled('password')) {
       $user->password = Hash::make($request->input('password'));
     }
+
+    if (isset($validatedData['game_credit_limit']) && ($validatedData['game_credit_limit'] == NULL)) $user->game_credit_limit = 0;
 
     // Força o save e usa touch() para atualizar updated_at mesmo sem mudanças detectadas
     $user->touch();
@@ -936,7 +940,7 @@ class AdminController extends Controller
     if ($game->status === 'FINISHED') {
       $winnerAward = GameAward::where('game_id', $game_id)
         ->where('condition_type', 'WINNER')
-        ->where('only_when_finish_round', 1)
+        //->where('only_when_finish_round', 1)
         ->first();
 
       if ($winnerAward) {
@@ -1047,6 +1051,27 @@ class AdminController extends Controller
       $allAddedNumbers = array_merge($allAddedNumbers, array_map('intval', explode(" ", $history->numbers)));
     }
 
+    if (empty($historiesToReprocessData)) {
+      // Recalcula os pontos com base nos históricos restantes
+      $allAddedNumbers = GameHistory::where('game_id', $game_id)
+        ->where('round', $round)
+        ->where('type', 'ADDING_NUMBER')
+        ->orderBy('created_at', 'asc')
+        ->get()
+        ->pluck('numbers')
+        ->flatMap(fn($numbers) => explode(" ", $numbers))
+        ->map(fn($num) => intval($num))
+        ->toArray();
+
+      $purchasePoints = $this->calculateUserPoints($purchases, $allAddedNumbers);
+
+      foreach ($purchases as $purchase) {
+        $points = $purchasePoints[$purchase->id] ?? 0;
+        $purchase->points = $points;
+        $purchase->save();
+      }
+    }
+
 
     foreach ($historiesToReprocessData as $historyData) {
       // Os números deste histórico são adicionados ao conjunto total de números sorteados
@@ -1091,7 +1116,7 @@ class AdminController extends Controller
     if ($game->status === 'FINISHED') {
       $winnerAward = GameAward::where('game_id', $game_id)
         ->where('condition_type', 'WINNER')
-        ->where('only_when_finish_round', 1)
+        //->where('only_when_finish_round', 1)
         ->first();
 
       if ($winnerAward) {

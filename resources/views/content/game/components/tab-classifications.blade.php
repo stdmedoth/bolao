@@ -38,7 +38,7 @@
             width: 130px;
             min-width: 130px;
             max-width: 130px;
-            text-align: center;
+            text-align: middle;
             font-size: 1rem;
             vertical-align: middle;
             padding: 3px 8px 3px 8px;
@@ -71,20 +71,22 @@
         /* Botão de ações ultra compacto */
         .table-classifications .btn-sm {
             padding: 2px 4px;
-            font-size: 0.5rem;
-            line-height: 1;
-            border-radius: 2px;
+            font-size: 0.6rem;
+            line-height: 1rem;
+            border-radius: 1px;
         }
 
+        /* Botão de ações desktop */
         .table-classifications .btn-sm i {
-            font-size: 0.6rem;
+            font-size: 1rem;
         }
 
         /* Texto do vendedor ultra compacto */
         .table-classifications .text-muted {
             font-size: 0.6rem;
-            line-height: 0.8;
+            line-height: 1.4;
             margin-top: 0px;
+            color: #000000 !important;
         }
 
 
@@ -106,11 +108,11 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 100%;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 800;
             border: 1px solid;
             margin: 0;
             flex-shrink: 0;
@@ -142,7 +144,7 @@
                 width: 160px;
                 min-width: 160px;
                 max-width: 160px;
-                font-size: 0.9rem;
+                font-size: 2rem;
                 padding: 2px 1px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -186,7 +188,7 @@
             }
 
             .table-classifications .btn-sm i {
-                font-size: 0.5rem;
+                font-size: 0.rem;
             }
 
             /* Texto do vendedor no tablet */
@@ -203,14 +205,14 @@
 
         @media (max-width: 576px) {
             .classification-numbers-container {
-                max-width: 105px;
-                height: 16px;
+                max-width: 200px;
+                height: 15px;
             }
 
             .classification-number-ball {
-                width: 15px;
-                height: 15px;
-                font-size: 0.50rem;
+                width: 16px;
+                height: 16px;
+                font-size: 0.55rem;
             }
 
             .prize-type-badge {
@@ -224,7 +226,7 @@
                 width: 150px;
                 min-width: 150px;
                 max-width: 150px;
-                font-size: 0.5rem;
+                font-size: 0.6rem;
                 padding: 2px 1px 2px 2px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -234,11 +236,11 @@
             /* Números no mobile pequeno */
             .table-classifications th:nth-child(2),
             .table-classifications td:nth-child(2) {
-                width: 135px;
-                min-width: 135px;
-                max-width: 135px;
-                font-size: 0.35rem;
-                padding: 2px 2px 2px 2px;
+                width: 140px;
+                min-width: 140px;
+                max-width: 140px;
+                font-size: 0.6rem;
+                padding: 1px 1px 1px 1px;
             }
 
             /* Pontos mínimo no mobile pequeno */
@@ -247,7 +249,7 @@
                 width: 100px;
                 min-width: 100px;
                 max-width: 100px;
-                font-size: 0.4rem;
+                font-size: 0.6rem;
                 padding: 2px 2px 2px 2px;
             }
 
@@ -267,20 +269,22 @@
                 font-size: 0.3rem;
             }
 
+            /* Botão de ações no mobile */
             .table-classifications .btn-sm i {
-                font-size: 0.4rem;
+                font-size: 1rem;
             }
 
             /* Texto do vendedor no mobile pequeno */
             .table-classifications .text-muted {
-                font-size: 0.3rem;
+                font-size: 0.8rem;
+                color: #000000 !important;
             }
         }
 
         /* Grid de dezenas - ultra compacto */
         .numbers-grid-compact {
             background-color: #f8f9fa;
-            border-radius: 4px;
+            border-radius: 40px;
             border: 1px solid #e9ecef;
             padding: 8px;
             margin-bottom: 0;
@@ -350,7 +354,7 @@
 
             .number-cell {
                 height: 12px;
-                font-size: 0.5rem;
+                font-size: 0.7rem;
             }
         }
 
@@ -529,13 +533,13 @@
                                         <span
                                             class="fw-bold text-primary">{{ Str::limit($classification->gambler_name, 20) }}</span>
                                         @if (in_array($classification->seller->role->level_id, ['seller']))
-                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor:
+                                            <small class="text-muted" style="font-size: 0.55rem;">Vend:
                                                 {{ Str::limit($classification->seller->name, 20) }}</small>
                                         @else
-                                            <small class="text-muted" style="font-size: 0.5rem;">Vendedor: Banca
+                                            <small class="text-muted" style="font-size: 0.55rem;">Vend: Banca
                                                 Central</small>
                                         @endif
-                                        <small class="text-muted" style="font-size: 0.5rem;">Ticket:
+                                        <small class="text-muted" style="font-size: 0.55rem;">Ticket:
                                             {{ $classification->identifier }}</small>
                                     </div>
                                 </td>
